@@ -34,14 +34,24 @@ namespace Remote_Windows_Administrator {
 			var query = string.Format( @"SELECT * FROM Win32_Product WHERE IdentifyingNumber='{0}'", guid );
 			using( var objSearch = new ManagementObjectSearcher( scope, query ) ) {
 				Debug.Assert( 1 == objSearch.Get( ).Count );
-				foreach( ManagementObject package in objSearch.Get( ) ) {
-					Debug.WriteLine( string.Format( @"Uninstalling '{0}' from {1}", package.Properties["Name"].Value.ToString( ), computerName ) );
-					var outParams = package.InvokeMethod( @"Uninstall", null, null );
-					var retVal = Int32.Parse( outParams["returnValue"].ToString( ) );
-					if( 0 != retVal ) {
-						MessageBox.Show( string.Format( @"Error uninstalling '{0}' from {1}. Returned a value of {2}", package.Properties["Name"].Value.ToString( ), computerName, retVal ), @"Error", MessageBoxButtons.OK );
+				
+					foreach( var packageObj in objSearch.Get( ) ) {
+						ManagementObject package = null;
+						try {
+							package = packageObj as ManagementObject;
+						} catch( InvalidCastException ex ) {
+							MessageBox.Show( string.Format( "There was an unexpected error in WMI Uninstall\n{0}", ex.Message ) );
+						}
+
+						Debug.Assert( package != null, @"Software item in WMI was null.  This is not allowed" );
+						Debug.WriteLine( string.Format( @"Uninstalling '{0}' from {1}", package.Properties["Name"].Value, computerName ) );
+						var outParams = package.InvokeMethod( @"Uninstall", null, null );
+						Debug.Assert( outParams != null, @"Return value from uninstall was null.  This is not allowed" );
+						var retVal = Int32.Parse( outParams[@"returnValue"].ToString( ) );
+						if( 0 != retVal ) {
+							MessageBox.Show( string.Format( @"Error uninstalling '{0}' from {1}. Returned a value of {2}", package.Properties["Name"].Value, computerName, retVal ), @"Error", MessageBoxButtons.OK );
+						}
 					}
-				}
 			}
 		}
 
@@ -81,7 +91,7 @@ namespace Remote_Windows_Administrator {
 			DateTime? result = null;
 			var strDteTime = GetString( rk, value );
 			if( string.IsNullOrEmpty( strDteTime ) ) {
-				return result;
+				return null;
 			}
 			string[] dteFormats = { @"yyyy-MM-dd", @"yyyyMMdd", @"MM-dd-yyyy" };
 			DateTime tmp;
@@ -145,7 +155,7 @@ namespace Remote_Windows_Administrator {
 				}
 			} catch( System.IO.IOException ) {
 				MessageBox.Show( @"Error connecting to computer or another IO Error" );
-			} catch( System.UnauthorizedAccessException ) {
+			} catch( UnauthorizedAccessException ) {
 				MessageBox.Show( @"You do not have permission to open this computer" );
 			} catch( System.Security.SecurityException ) {
 				MessageBox.Show( @"Security error while connecting" );
