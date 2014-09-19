@@ -1,21 +1,20 @@
-﻿using System.Globalization;
-using System.Windows.Forms;
-using daw.Collections;
+﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Management;
-using System.Text;
-using Microsoft.Win32;
+using System.Windows.Forms;
 
 namespace Remote_Windows_Administrator {
 
-	public class WmiWin32Product {
+	public class WmiWin32Product: IComparable {
 		public string Name { get; set; }
 		public string Publisher { get; set; }
 		public string Version { get; set; }
 		public DateTime InstallDate { get; set; }
-		public float Size { get; set; }
+		public string Size { get; set; }
 
 		public string Guid { get; set; }
 		public string HelpLink { get; set; }
@@ -23,42 +22,78 @@ namespace Remote_Windows_Administrator {
 
 		public WmiWin32Product( ) { }
 
-		public static void UninstallGuidOnComputerName( string computerName, string guid ) {
-			MessageBox.Show( string.Format( @"Uninstalling {1} from {0}", guid, computerName ) );
+		public bool valid( ) {
+			return !string.IsNullOrEmpty( Name ) && !string.IsNullOrEmpty( Guid );
 		}
 
-		public static SyncList<WmiWin32Product> FromComputerName( string computerName ) {
-			var result = new SyncList<WmiWin32Product>( );
+		public static void UninstallGuidOnComputerName( string computerName, string guid ) {
+			MessageBox.Show( string.Format( @"Uninstalling {1} from {0}", computerName, guid ) );
+			var scope = string.Format( @"\\{0}\root\CIMV2", computerName );
+			var query = string.Format( @"SELECT * FROM Win32_Product WHERE IdentifyingNumber='{0}'", guid );
+			using( var objSearch = new ManagementObjectSearcher( scope, query ) ) {
+				Debug.Assert( 1 == objSearch.Get( ).Count );
+				foreach( var package in objSearch.Get( ) ) {
+					Debug.WriteLine( package.Properties["Name"].Value.ToString( ) );
+					//var outParams = package.InvokeMethod( @"Uninstall", null, null );
+				}
+			}
+		}
+
+		private static bool HasGuid( IEnumerable<WmiWin32Product> values, string guid ) {
+			return values.Any( currentValue => guid.Equals( currentValue.Guid, StringComparison.InvariantCultureIgnoreCase ) );
+		}
+
+		private static string GetString( RegistryKey rk, string value ) {
+			var result = string.Empty;
+			var obj = rk.GetValue( value );
+			if( null == obj ) {
+				return result;
+			}
+			result = obj as string;
+			result = result.Trim( );
+			return result;
+		}
+
+		private static DateTime GetDateTime( RegistryKey rk, string value ) {
+			var result = DateTime.FromBinary( 0 );
+			var strDteTime = GetString( rk, value );
+			if( string.IsNullOrEmpty( strDteTime ) ) {
+				return result;
+			}
+			string[] dteFormats = { @"yyyy-MM-dd", @"yyyyMMdd" };
+			DateTime.TryParseExact( strDteTime, dteFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out result );
+			return result;
+		}
+
+		private static Int32 GetDword( RegistryKey rk, string value ) {
+			return (Int32)rk.GetValue( value, 0 );
+		}
+
+		public static IEnumerable<WmiWin32Product> FromComputerName( string computerName ) {
+			var result = new List<WmiWin32Product>( );
 			try {
-				using( var regKey = RegistryKey.OpenRemoteBaseKey( RegistryHive.LocalMachine, computerName ).OpenSubKey( @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", false ) ) {
-					if( null != regKey ) {
-						foreach( var currentGuid in regKey.GetSubKeyNames( ) ) {
-							if( currentGuid.StartsWith( @"{" ) ) {
-								using( var regCurrentPackage = regKey.OpenSubKey( currentGuid, false ) ) {
-									if( null != regCurrentPackage ) {
-										var currentProduct = new WmiWin32Product( );
-										currentProduct.Guid = currentGuid;
-										currentProduct.Name = regCurrentPackage.GetValue( @"DisplayName", string.Empty ) as string;
-										currentProduct.Publisher = regCurrentPackage.GetValue( @"Publisher", string.Empty ) as string;
-										currentProduct.Version = regCurrentPackage.GetValue( @"DisplayVersion", string.Empty ) as string;
-										{
-											var strDate = regCurrentPackage.GetValue( @"InstallDate", string.Empty ) as string;
-											if( !string.IsNullOrEmpty( strDate ) ) {
-												string[] dteFormats = { @"yyyy-MM-dd", @"yyyyMMdd" };
-												currentProduct.InstallDate = DateTime.ParseExact( strDate, dteFormats, CultureInfo.InvariantCulture, DateTimeStyles.None );
-											}
-										}
-										{
-											var currentSize = regCurrentPackage.GetValue( @"EstimatedSize", 0 );
-											if( null != currentSize ) {
-												var iSize = (Int32)currentSize;
-												currentProduct.Size = (float)iSize/(float)(1024.0*1024.0);
-											}
-										}
-										currentProduct.HelpLink = regCurrentPackage.GetValue( @"HelpLink", string.Empty ) as string;
-										currentProduct.Comment = regCurrentPackage.GetValue( @"Comment", string.Empty ) as string;
-										result.Add( currentProduct );
-									}
+				string[] regPaths = { @"SOFTWARE\Wow6432node\Microsoft\Windows\CurrentVersion\Uninstall", @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" };
+				foreach( var currentPath in regPaths ) {
+					using( var regKey = RegistryKey.OpenRemoteBaseKey( RegistryHive.LocalMachine, computerName ).OpenSubKey( currentPath, false ) ) {
+						if( null == regKey ) {
+							continue;
+						}
+						foreach( var currentGuid in regKey.GetSubKeyNames( ).Where( currentGuid => currentGuid.StartsWith( @"{" ) && !HasGuid( result, currentGuid ) ) ) {
+							using( var regCurrentPackage = regKey.OpenSubKey( currentGuid, false ) ) {
+								if( null == regCurrentPackage ) {
+									continue;
+								}
+								var currentProduct = new WmiWin32Product( );
+								currentProduct.Guid = currentGuid;
+								currentProduct.Name = GetString( regCurrentPackage, @"DisplayName" );
+								currentProduct.Publisher = GetString( regCurrentPackage, @"Publisher" );
+								currentProduct.Version = GetString( regCurrentPackage, @"DisplayVersion" );
+								currentProduct.InstallDate = GetDateTime( regCurrentPackage, @"InstallDate" );
+								currentProduct.Size = Math.Round( (float)GetDword( regCurrentPackage, @"EstimatedSize" ) / (float)1024, 2, MidpointRounding.AwayFromZero ).ToString( ) + " MB";
+								currentProduct.HelpLink = GetString( regCurrentPackage, @"HelpLink" );
+								currentProduct.Comment = GetString( regCurrentPackage, @"Comment" );
+								if( currentProduct.valid( ) ) {
+									result.Add( currentProduct );
 								}
 							}
 						}
@@ -72,6 +107,11 @@ namespace Remote_Windows_Administrator {
 				MessageBox.Show( @"Security error while connecting" );
 			}
 			return result;
+		}
+
+		public int CompareTo( object obj ) {
+			var other = obj as string;
+			return String.Compare( Name, other, StringComparison.InvariantCultureIgnoreCase );
 		}
 	}
 }

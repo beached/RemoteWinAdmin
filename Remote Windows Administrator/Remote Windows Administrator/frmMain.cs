@@ -1,28 +1,24 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
-using daw.Collections;
 
 namespace Remote_Windows_Administrator {
 	public partial class frmMain: Form {
-		private daw.Collections.SyncList<WmiWin32Product> _dataSource = new SyncList<WmiWin32Product>( );
+		private readonly daw.Collections.SyncList<WmiWin32Product> _dataSource = new daw.Collections.SyncList<WmiWin32Product>( );
 
 		public frmMain( ) {
-			InitializeComponent( );			
+			InitializeComponent( );
+			dgvInstalledPrograms.DataSource = _dataSource;
 		}
 
 		private void btnQueryRemoteComputer_Click( object sender, EventArgs e ) {
-			_dataSource.Clear( );
 			dgvInstalledPrograms.DataSource = null;
+			_dataSource.Clear( );
 			foreach( var item in WmiWin32Product.FromComputerName( txtComputerName.Text ) ) {
 				_dataSource.Add( item );
 			}
 			dgvInstalledPrograms.DataSource = _dataSource;
+
 			foreach( DataGridViewColumn curCol in dgvInstalledPrograms.Columns ) {
 				curCol.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
 			}
@@ -33,30 +29,35 @@ namespace Remote_Windows_Administrator {
 		}
 
 		private void dgvInstalledPrograms_CellMouseClick( object sender, DataGridViewCellMouseEventArgs e ) {
-			if( MouseButtons.Right == e.Button ) {
-				var row_guid = dgvInstalledPrograms.Rows[e.RowIndex].Cells["Guid"];
-				var ds = dgvInstalledPrograms.DataSource;
-				if( null != row_guid ) {
-					var strGuid = row_guid.Value;
-					EventHandler handler = ( Object, EventArgs ) => {
-						dgvInstalledPrograms.Enabled = false;
-						try {
-
-							WmiWin32Product.UninstallGuidOnComputerName( txtComputerName.Text, strGuid );
-
-						} finally {
-							dgvInstalledPrograms.Enabled = true;
-						}
-					};
-					var m = new ContextMenu( );
-					m.MenuItems.Add( new MenuItem( @"Uninstall", handler ) );
-					m.Show( dgvInstalledPrograms, new Point( e.Location.X, e.Location.Y ) );
-				}
+			if( MouseButtons.Right != e.Button ) {
+				return;
 			}
+			var rowGuid = dgvInstalledPrograms.Rows[e.RowIndex].Cells["Guid"];
+			var ds = dgvInstalledPrograms.DataSource;
+			if( null == rowGuid ) {
+				return;
+			}
+			var strGuid = rowGuid.Value as string;
+			dgvInstalledPrograms.Rows[e.RowIndex].Selected = true;
+			EventHandler handler = ( Object, EventArgs ) => {
+				dgvInstalledPrograms.Enabled = false;
+				try {
+					if( DialogResult.Yes != MessageBox.Show( @"Are you sure?", @"Alert", MessageBoxButtons.YesNo ) ) {
+						return;
+					}
+					WmiWin32Product.UninstallGuidOnComputerName( txtComputerName.Text, strGuid );
+					btnQueryRemoteComputer_Click( null, null );
+				} finally {
+					dgvInstalledPrograms.Enabled = true;
+				}
+			};
+			var m = new ContextMenu( );
+			m.MenuItems.Add( new MenuItem( @"Uninstall", handler ) );
+			m.Show( dgvInstalledPrograms, dgvInstalledPrograms.PointToClient( new Point( Cursor.Position.X, Cursor.Position.Y ) ) );
 		}
 
 		private void txtComputerName_TextChanged( object sender, EventArgs e ) {
-			dgvInstalledPrograms.DataSource = null;
+			_dataSource.Clear( );
 		}
 	}
 }
