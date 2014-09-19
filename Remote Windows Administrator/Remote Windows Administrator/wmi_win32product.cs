@@ -14,7 +14,7 @@ namespace Remote_Windows_Administrator {
 		public string Publisher { get; set; }
 		public string Version { get; set; }
 		public DateTime InstallDate { get; set; }
-		public string Size { get; set; }
+		public float Size { get; set; }
 
 		public string Guid { get; set; }
 		public string HelpLink { get; set; }
@@ -40,7 +40,7 @@ namespace Remote_Windows_Administrator {
 		}
 
 		private static bool HasGuid( IEnumerable<WmiWin32Product> values, string guid ) {
-			return values.Any( currentValue => guid.Equals( currentValue.Guid, StringComparison.InvariantCultureIgnoreCase ) );
+			return values.Any( currentValue => guid.Equals( currentValue.Guid, StringComparison.OrdinalIgnoreCase ) );
 		}
 
 		private static string GetString( RegistryKey rk, string value ) {
@@ -89,7 +89,7 @@ namespace Remote_Windows_Administrator {
 								currentProduct.Publisher = GetString( regCurrentPackage, @"Publisher" );
 								currentProduct.Version = GetString( regCurrentPackage, @"DisplayVersion" );
 								currentProduct.InstallDate = GetDateTime( regCurrentPackage, @"InstallDate" );
-								currentProduct.Size = Math.Round( (float)GetDword( regCurrentPackage, @"EstimatedSize" ) / (float)1024, 2, MidpointRounding.AwayFromZero ).ToString( ) + " MB";
+								currentProduct.Size = (float)Math.Round( (float)GetDword( regCurrentPackage, @"EstimatedSize" ) / (float)1024, 2, MidpointRounding.AwayFromZero );
 								currentProduct.HelpLink = GetString( regCurrentPackage, @"HelpLink" );
 								currentProduct.Comment = GetString( regCurrentPackage, @"Comment" );
 								if( currentProduct.valid( ) ) {
@@ -105,13 +105,13 @@ namespace Remote_Windows_Administrator {
 				MessageBox.Show( @"You do not have permission to open this computer" );
 			} catch( System.Security.SecurityException ) {
 				MessageBox.Show( @"Security error while connecting" );
-			}
-			return result;
+			}			
+			return result.OrderBy( x => x.Name ).ToList(  );
 		}
 
 		public int CompareTo( object obj ) {
 			var other = obj as string;
-			return String.Compare( Name, other, StringComparison.InvariantCultureIgnoreCase );
+			return String.Compare( Name, other, StringComparison.OrdinalIgnoreCase );
 		}
 	}
 }
