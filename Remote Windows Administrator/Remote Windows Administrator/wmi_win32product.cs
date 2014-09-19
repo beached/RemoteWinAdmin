@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using System.Net.NetworkInformation;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -36,6 +37,20 @@ namespace Remote_Windows_Administrator {
 					Debug.WriteLine( package.Properties["Name"].Value.ToString( ) );
 					//var outParams = package.InvokeMethod( @"Uninstall", null, null );
 				}
+			}
+		}
+
+		public static bool IsAlive( string computerName ) {
+			var pingSender = new Ping( );
+			try {
+				var reply = pingSender.Send( computerName, 5000 );
+				if( null != reply && IPStatus.Success == reply.Status ) {
+					return true;
+				}
+				Debug.WriteLine( string.Format( @"Ping Status for '{0}' is {1}", computerName, reply.Status ) );
+				return false;
+			} catch( Exception ) {
+				return false;
 			}
 		}
 

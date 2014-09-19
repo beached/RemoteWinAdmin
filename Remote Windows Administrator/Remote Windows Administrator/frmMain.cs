@@ -51,11 +51,13 @@ namespace Remote_Windows_Administrator {
 
 		private void btnQueryRemoteComputer_Click( object sender, EventArgs e ) {
 			_dataSource.Clear( );
-			
-			foreach( var item in WmiWin32Product.FromComputerName( txtComputerName.Text ) ) {
-				_dataSource.Add( item );
+			if( WmiWin32Product.IsAlive( txtComputerName.Text ) ) {
+				foreach( var item in WmiWin32Product.FromComputerName( txtComputerName.Text ) ) {
+					_dataSource.Add( item );
+				}
+			} else {
+				MessageBox.Show( @"Could not connect to other computer", @"Alert", MessageBoxButtons.OK );
 			}
-
 			_dataSource.ResetBindings( );
 		}
 
