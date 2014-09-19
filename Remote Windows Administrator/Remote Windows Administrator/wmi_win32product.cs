@@ -23,9 +23,9 @@ namespace Remote_Windows_Administrator {
 		public string Comment { get; set; }
 		public string UrlInfoAbout { get; set; }
 
-		public WmiWin32Product( ) { }
+// 		public WmiWin32Product( ) { }
 
-		public bool valid( ) {
+		public bool Valid( ) {
 			return !string.IsNullOrEmpty( Name ) && !string.IsNullOrEmpty( Guid );
 		}
 
@@ -52,6 +52,7 @@ namespace Remote_Windows_Administrator {
 				if( null != reply && IPStatus.Success == reply.Status ) {
 					return true;
 				}
+				Debug.Assert( reply != null, "Ping reply was null, this shouldn't happen" );
 				Debug.WriteLine( string.Format( @"Ping Status for '{0}' is {1}", computerName, reply.Status ) );
 				return false;
 			} catch( Exception ) {
@@ -64,12 +65,14 @@ namespace Remote_Windows_Administrator {
 		}
 
 		private static string GetString( RegistryKey rk, string value ) {
-			var result = string.Empty;
 			var obj = rk.GetValue( value );
 			if( null == obj ) {
-				return result;
+				return string.Empty;
 			}
-			result = obj as string;
+			var result = obj as string;
+			if( result == null ) {
+				return string.Empty;
+			}
 			result = result.Trim( );
 			return result;
 		}
@@ -89,15 +92,7 @@ namespace Remote_Windows_Administrator {
 		}
 
 		private static Int32? GetDword( RegistryKey rk, string value, Int32? defaultValue = null ) {
-			Int32? result = rk.GetValue( value ) as Int32?;
-			if( null == result && null != defaultValue ) {
-				result = defaultValue;
-			}
-			return result;
-		}
-
-		private static bool? GetBoolean( RegistryKey rk, string value, bool? defaultValue = null ) {
-			bool? result = rk.GetValue( value ) as bool?;
+			var result = rk.GetValue( value ) as Int32?;
 			if( null == result && null != defaultValue ) {
 				result = defaultValue;
 			}
@@ -124,14 +119,13 @@ namespace Remote_Windows_Administrator {
 								if( null == curReg || !string.IsNullOrEmpty( GetString( curReg, @"ParentKeyName" ) ) ) {
 									continue;
 								}
-								var currentProduct = new WmiWin32Product( );
-								currentProduct.Guid = curGuid;
-								currentProduct.Name = GetString( curReg, @"DisplayName" );
-								currentProduct.Publisher = GetString( curReg, @"Publisher" );
-								currentProduct.Version = GetString( curReg, @"DisplayVersion" );
-								currentProduct.InstallDate = GetDateTime( curReg, @"InstallDate" );
-								currentProduct.CanRemove = 0 == GetDword( curReg, @"NoRemove", 0 );
-								currentProduct.SystemComponent = 1 == GetDword( curReg, @"SystemComponent", 0 );
+								var currentProduct = new WmiWin32Product {Guid = curGuid, 
+									Name = GetString( curReg, @"DisplayName" ), 
+									Publisher = GetString( curReg, @"Publisher" ), 
+									Version = GetString( curReg, @"DisplayVersion" ), 
+									InstallDate = GetDateTime( curReg, @"InstallDate" ), 
+									CanRemove = 0 == GetDword( curReg, @"NoRemove", 0 ), 
+									SystemComponent = 1 == GetDword( curReg, @"SystemComponent", 0 )};
 								{
 									var estSize = GetDword( curReg, @"EstimatedSize" );
 									if( null != estSize ) {
@@ -142,7 +136,7 @@ namespace Remote_Windows_Administrator {
 								currentProduct.HelpLink = GetString( curReg, @"HelpLink" );
 								currentProduct.Comment = GetString( curReg, @"Comment" );
 								currentProduct.UrlInfoAbout = GetString( curReg, @"UrlInfoAbout" );
-								if( currentProduct.valid( ) && !currentProduct.IsHidden( showHidden ) ) {
+								if( currentProduct.Valid( ) && !currentProduct.IsHidden( showHidden ) ) {
 									result.Add( currentProduct );
 								}
 							}

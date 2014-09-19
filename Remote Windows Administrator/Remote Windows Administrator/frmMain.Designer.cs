@@ -1,5 +1,5 @@
 ﻿namespace Remote_Windows_Administrator {
-	partial class frmMain {
+	partial class FrmMain {
 		/// <summary>
 		/// Required designer variable.
 		/// </summary>
@@ -129,7 +129,7 @@
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1164, 575);
 			this.Controls.Add(this.tcMain);
-			this.Name = "frmMain";
+			this.Name = "FrmMain";
 			this.Text = "DAW - Remote Windows Administrator";
 			this.tcMain.ResumeLayout(false);
 			this.tpAddRemovePrograms.ResumeLayout(false);

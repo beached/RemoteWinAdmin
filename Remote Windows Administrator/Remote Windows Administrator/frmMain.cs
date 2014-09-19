@@ -5,18 +5,18 @@ using System.Drawing;
 using System.Windows.Forms;
 
 namespace Remote_Windows_Administrator {
-	public partial class frmMain: Form {
+	public partial class FrmMain: Form {
 		private readonly daw.Collections.SyncList<WmiWin32Product> _dataSource = new daw.Collections.SyncList<WmiWin32Product>( );
 
 		
 
-		private void clearData( ) {
+		private void ClearData( ) {
 			_dataSource.Clear( );
 			_dataSource.ResetBindings( );
 		}
 
 		private void QueryRemoveComputer( ) {
-			clearData( );
+			ClearData( );
 			if( WmiWin32Product.IsAlive( txtComputerName.Text ) ) {
 				foreach( var item in WmiWin32Product.FromComputerName( txtComputerName.Text, chkShowHidden.Checked ) ) {
 					_dataSource.Add( item );
@@ -32,11 +32,11 @@ namespace Remote_Windows_Administrator {
 		}
 
 		private void txtComputerName_TextChanged( object sender, EventArgs e ) {
-			clearData( );
+			ClearData( );
 		}
 
 		private void chkShowHidden_CheckedChanged( object sender, EventArgs e ) {
-			clearData( );
+			ClearData( );
 		}
 
 		private bool IsLink( DataGridViewCell cell ) {
@@ -53,7 +53,7 @@ namespace Remote_Windows_Administrator {
 			}
 		}
 
-		private string getGuid( int row ) {
+		private string GetGuid( int row ) {
 			string result = string.Empty;
 			if( 0 > row ) {
 				return result;
@@ -105,12 +105,12 @@ namespace Remote_Windows_Administrator {
 				return;
 			}
 			
-			var strGuid = getGuid( e.RowIndex );
+			var strGuid = GetGuid( e.RowIndex );
 			if( string.IsNullOrEmpty( strGuid ) ) {
 				return;
 			}			
 			
-			EventHandler handler = ( Object, EventArgs ) => {
+			EventHandler handler = ( Object, eventArgs ) => {
 				dgvInstalledPrograms.Enabled = false;
 				var oldCursor = Cursor;
 				Cursor = Cursors.WaitCursor;
@@ -135,7 +135,7 @@ namespace Remote_Windows_Administrator {
 
 
 
-		public frmMain( ) {
+		public FrmMain( ) {
 			InitializeComponent( );
 			dgvInstalledPrograms.AutoGenerateColumns = false;
 			dgvInstalledPrograms.RowHeadersVisible = true;
