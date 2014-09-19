@@ -1,41 +1,14 @@
-﻿using System;
+﻿using SyncList;
+using System;
 using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
-using System.Runtime.Remoting.Messaging;
 using System.Windows.Forms;
 
 namespace Remote_Windows_Administrator {
 	public partial class frmMain: Form {
 		private readonly daw.Collections.SyncList<WmiWin32Product> _dataSource = new daw.Collections.SyncList<WmiWin32Product>( );
 
-		private static DataGridViewColumn MakeColumn( string name, string headerName, bool hidden = false, bool canSort = true ) {
-			return new DataGridViewColumn {Name = headerName, AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells, ReadOnly = true, DataPropertyName = name, SortMode = (canSort ? DataGridViewColumnSortMode.Automatic: DataGridViewColumnSortMode.NotSortable), CellTemplate = new DataGridViewTextBoxCell(  ), Visible = !hidden};
-		}
-
-		public static DataGridViewColumn MakeLinkColumn( string name, string headerName, bool hidden = false, bool canSort = true ) {							
-			var cellTemplate = new DataGridViewLinkCell( );
-			cellTemplate.TrackVisitedState = false;
-			cellTemplate.UseColumnTextForLinkValue = true;
-			cellTemplate.LinkBehavior = LinkBehavior.NeverUnderline;			
-			var col = MakeColumn( name, headerName, hidden, canSort );
-			col.DefaultCellStyle.NullValue = string.Empty;
-			col.CellTemplate = cellTemplate;
-			return col;				
-		}
-
-		public static DataGridViewColumn MakeCheckedColumn( string name, string headerName, bool hidden = false, bool canSort = true ) {
-			var col = MakeColumn( name, headerName, hidden, canSort );
-			col.DefaultCellStyle.NullValue = false;
-			col.CellTemplate = new DataGridViewCheckBoxCell( );
-			return col;
-		}
-
-		public static DataGridViewColumn MakeDateColumn( string name, string headerName, bool hidden = false, bool canSort = true ) {
-			var col = MakeColumn( @"InstallDate", @"Install Date", hidden, canSort );
-			col.DefaultCellStyle.Format = @"yyyy/MM/dd";
-			return col;
-		}		
+		
 
 		private void clearData( ) {
 			_dataSource.Clear( );
@@ -168,17 +141,17 @@ namespace Remote_Windows_Administrator {
 			dgvInstalledPrograms.RowHeadersVisible = true;
 			dgvInstalledPrograms.MultiSelect = true;
 
-			dgvInstalledPrograms.Columns.Add( MakeColumn( @"Name", @"Name" ) );
-			dgvInstalledPrograms.Columns.Add( MakeColumn( @"Publisher", @"Publisher" ) );
-			dgvInstalledPrograms.Columns.Add( MakeColumn( @"Version", @"Version" ) );
-			dgvInstalledPrograms.Columns.Add( MakeDateColumn( @"InstallDate", @"Install Date" ) );
-			dgvInstalledPrograms.Columns.Add( MakeColumn( @"Size", @"Size(MB)" ) );
-			dgvInstalledPrograms.Columns.Add( MakeColumn( @"Guid", @"Guid", true ) );
+			dgvInstalledPrograms.Columns.Add( DataGridViewHelpers.MakeColumn( @"Name", @"Name" ) );
+			dgvInstalledPrograms.Columns.Add( DataGridViewHelpers.MakeColumn( @"Publisher", @"Publisher" ) );
+			dgvInstalledPrograms.Columns.Add( DataGridViewHelpers.MakeColumn( @"Version", @"Version" ) );
+			dgvInstalledPrograms.Columns.Add( DataGridViewHelpers.MakeDateColumn( @"InstallDate", @"Install Date" ) );
+			dgvInstalledPrograms.Columns.Add( DataGridViewHelpers.MakeColumn( @"Size", @"Size(MB)" ) );
+			dgvInstalledPrograms.Columns.Add( DataGridViewHelpers.MakeColumn( @"Guid", @"Guid", true ) );
 
-			dgvInstalledPrograms.Columns.Add( MakeLinkColumn( @"HelpLink", @"Help Link" ) );
-			dgvInstalledPrograms.Columns.Add( MakeLinkColumn( @"UrlInfoAbout", @"About Link" ) );
-			dgvInstalledPrograms.Columns.Add( MakeCheckedColumn( @"ShouldHide", @"Hidden" ) );
-			dgvInstalledPrograms.Columns.Add( MakeColumn( @"Comment", @"Comment" ) );
+			dgvInstalledPrograms.Columns.Add( DataGridViewHelpers.MakeLinkColumn( @"HelpLink", @"Help Link" ) );
+			dgvInstalledPrograms.Columns.Add( DataGridViewHelpers.MakeLinkColumn( @"UrlInfoAbout", @"About Link" ) );
+			dgvInstalledPrograms.Columns.Add( DataGridViewHelpers.MakeCheckedColumn( @"ShouldHide", @"Hidden" ) );
+			dgvInstalledPrograms.Columns.Add( DataGridViewHelpers.MakeColumn( @"Comment", @"Comment" ) );
 
 			dgvInstalledPrograms.DataSource = _dataSource;
 		}
