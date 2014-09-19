@@ -43,30 +43,45 @@ namespace RemoteWindowsAdministrator {
 			return cell != null && cell.GetType( ) == typeof( DataGridViewLinkCell );
 		}
 
+		private void OpenLink( string link ) {
+			if( !string.IsNullOrEmpty( link ) ) {
+				Process.Start( link );
+			}		
+		}
+
 		private void OpenLink( DataGridViewCell cell ) {
 			if( null == cell ) {
 				return;
 			}
-			var strLink = cell.Value.ToString( );
-			if( !string.IsNullOrEmpty( strLink ) ) {
-				Process.Start( strLink );
-			}
+			OpenLink( cell.Value.ToString(  ) );
 		}
 
-		private string GetGuid( int row ) {
-			string result = string.Empty;
+		private string GetCellString( int row, string columnName ) {
+			var result = string.Empty;
 			if( 0 > row ) {
 				return result;
 			}
-			var rowGuid = dgvInstalledPrograms.Rows[row].Cells["Guid"];
-			if( null == rowGuid ) {
+			var cell = dgvInstalledPrograms.Rows[row].Cells[columnName];
+			if( null == cell ) {
 				return result;
 			}
-			var strTmp = rowGuid.Value as string;
+			var strTmp = cell.Value as string;
 			if( !string.IsNullOrEmpty( strTmp ) ) {
 				result = strTmp;
 			}
-			return result;
+			return result;			
+		}
+
+		private string GetGuid( int row ) {
+			return GetCellString( row, @"Guid" );
+		}
+
+		private string GetProgram( int row ) {
+			return GetCellString( row, @"Name" );
+		}
+
+		private string GetPublisher( int row ) {
+			return GetCellString( row, @"Publisher" );
 		}
 
 		private void UnselectAll( ) {
@@ -92,6 +107,11 @@ namespace RemoteWindowsAdministrator {
 			dgvInstalledPrograms.Rows[row].Cells[col].Selected = true;
 		}
 
+		private void SearchWeb( string query ) {
+			var strQuery = string.Format( @"https://www.google.ca/search?q={0}", System.Web.HttpUtility.UrlEncode( query ) );
+			OpenLink( strQuery );
+		}
+
 		private void dgvInstalledPrograms_CellMouseClick( object sender, DataGridViewCellMouseEventArgs e ) {
 			if( 0 > e.RowIndex || 0 > e.ColumnIndex ) {
 				return;
@@ -110,7 +130,7 @@ namespace RemoteWindowsAdministrator {
 				return;
 			}			
 			
-			EventHandler handler = ( Object, eventArgs ) => {
+			EventHandler uninstallHandler = ( Object, eventArgs ) => {
 				dgvInstalledPrograms.Enabled = false;
 				var oldCursor = Cursor;
 				Cursor = Cursors.WaitCursor;
@@ -127,9 +147,28 @@ namespace RemoteWindowsAdministrator {
 					dgvInstalledPrograms.Update( );
 				}
 			};
-			var m = new ContextMenu( );
-			m.MenuItems.Add( new MenuItem( @"Uninstall", handler ) );
 
+			EventHandler searchGuidHandler = ( Object, eventArgs ) => SearchWeb( strGuid );
+ 			var m = new ContextMenu( );
+			m.MenuItems.Add( new MenuItem( @"Uninstall", uninstallHandler ) );
+			var lookupMenu = new MenuItem( @"Lookup" );
+			lookupMenu.MenuItems.Add( new MenuItem( @"GUID", searchGuidHandler ) );
+			{
+				var programName = GetProgram( e.RowIndex );
+				if( !string.IsNullOrEmpty( programName ) ) {
+					EventHandler searchProgramHandler = ( Object, eventArgs ) => SearchWeb( programName );
+					lookupMenu.MenuItems.Add( new MenuItem( @"Program Name", searchProgramHandler ) );
+				}
+			}
+			{
+				var publisherName = GetPublisher( e.RowIndex );
+				if( !string.IsNullOrEmpty( publisherName ) ) {
+					EventHandler searchPublisherHandler = ( Object, eventArgs ) => SearchWeb( publisherName );
+					lookupMenu.MenuItems.Add( new MenuItem( @"Publisher", searchPublisherHandler ) );
+				}
+			}
+
+			m.MenuItems.Add( lookupMenu );
 			m.Show( dgvInstalledPrograms, dgvInstalledPrograms.PointToClient( new Point( Cursor.Position.X, Cursor.Position.Y ) ) );
 		}
 
