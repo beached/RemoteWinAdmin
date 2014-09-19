@@ -14,12 +14,14 @@ namespace Remote_Windows_Administrator {
 		public string Name { get; set; }
 		public string Publisher { get; set; }
 		public string Version { get; set; }
-		public DateTime InstallDate { get; set; }
-		public float Size { get; set; }
-
+		public DateTime? InstallDate { get; set; }
+		public float? Size { get; set; }
+		public bool CanRemove { get; set; }
+		public bool SystemComponent { get; set; }
 		public string Guid { get; set; }
 		public string HelpLink { get; set; }
 		public string Comment { get; set; }
+		public string UrlInfoAbout { get; set; }
 
 		public WmiWin32Product( ) { }
 
@@ -28,14 +30,17 @@ namespace Remote_Windows_Administrator {
 		}
 
 		public static void UninstallGuidOnComputerName( string computerName, string guid ) {
-			MessageBox.Show( string.Format( @"Uninstalling {1} from {0}", computerName, guid ) );
 			var scope = string.Format( @"\\{0}\root\CIMV2", computerName );
 			var query = string.Format( @"SELECT * FROM Win32_Product WHERE IdentifyingNumber='{0}'", guid );
 			using( var objSearch = new ManagementObjectSearcher( scope, query ) ) {
 				Debug.Assert( 1 == objSearch.Get( ).Count );
-				foreach( var package in objSearch.Get( ) ) {
-					Debug.WriteLine( package.Properties["Name"].Value.ToString( ) );
-					//var outParams = package.InvokeMethod( @"Uninstall", null, null );
+				foreach( ManagementObject package in objSearch.Get( ) ) {
+					Debug.WriteLine( string.Format( @"Uninstalling '{0}' from {1}", package.Properties["Name"].Value.ToString( ), computerName ) );
+					var outParams = package.InvokeMethod( @"Uninstall", null, null );
+					var retVal = Int32.Parse( outParams["returnValue"].ToString( ) );
+					if( 0 != retVal ) {
+						MessageBox.Show( string.Format( @"Error uninstalling '{0}' from {1}. Returned a value of {2}", package.Properties["Name"].Value.ToString( ), computerName, retVal ), @"Error", MessageBoxButtons.OK );
+					}
 				}
 			}
 		}
@@ -69,22 +74,43 @@ namespace Remote_Windows_Administrator {
 			return result;
 		}
 
-		private static DateTime GetDateTime( RegistryKey rk, string value ) {
-			var result = DateTime.FromBinary( 0 );
+		private static DateTime? GetDateTime( RegistryKey rk, string value ) {
+			DateTime? result = null;
 			var strDteTime = GetString( rk, value );
 			if( string.IsNullOrEmpty( strDteTime ) ) {
 				return result;
 			}
-			string[] dteFormats = { @"yyyy-MM-dd", @"yyyyMMdd" };
-			DateTime.TryParseExact( strDteTime, dteFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out result );
+			string[] dteFormats = { @"yyyy-MM-dd", @"yyyyMMdd", @"MM-dd-yyyy" };
+			DateTime tmp;
+			if( DateTime.TryParseExact( strDteTime, dteFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out tmp ) ) {
+				result = tmp;
+			}
 			return result;
 		}
 
-		private static Int32 GetDword( RegistryKey rk, string value ) {
-			return (Int32)rk.GetValue( value, 0 );
+		private static Int32? GetDword( RegistryKey rk, string value, Int32? defaultValue = null ) {
+			Int32? result = rk.GetValue( value ) as Int32?;
+			if( null == result && null != defaultValue ) {
+				result = defaultValue;
+			}
+			return result;
 		}
 
-		public static IEnumerable<WmiWin32Product> FromComputerName( string computerName ) {
+		private static bool? GetBoolean( RegistryKey rk, string value, bool? defaultValue = null ) {
+			bool? result = rk.GetValue( value ) as bool?;
+			if( null == result && null != defaultValue ) {
+				result = defaultValue;
+			}
+			return result;
+		}
+
+		public bool ShouldHide { get { return IsHidden( ); } }
+
+		private bool IsHidden( bool shown = false ) {
+			return !shown && (SystemComponent || !CanRemove);
+		}
+
+		public static IEnumerable<WmiWin32Product> FromComputerName( string computerName, bool showHidden = false ) {
 			var result = new List<WmiWin32Product>( );
 			try {
 				string[] regPaths = { @"SOFTWARE\Wow6432node\Microsoft\Windows\CurrentVersion\Uninstall", @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" };
@@ -93,21 +119,30 @@ namespace Remote_Windows_Administrator {
 						if( null == regKey ) {
 							continue;
 						}
-						foreach( var currentGuid in regKey.GetSubKeyNames( ).Where( currentGuid => currentGuid.StartsWith( @"{" ) && !HasGuid( result, currentGuid ) ) ) {
-							using( var regCurrentPackage = regKey.OpenSubKey( currentGuid, false ) ) {
-								if( null == regCurrentPackage ) {
+						foreach( var curGuid in regKey.GetSubKeyNames( ).Where( currentGuid => currentGuid.StartsWith( @"{" ) && !HasGuid( result, currentGuid ) ) ) {
+							using( var curReg = regKey.OpenSubKey( curGuid, false ) ) {
+								if( null == curReg || !string.IsNullOrEmpty( GetString( curReg, @"ParentKeyName" ) ) ) {
 									continue;
 								}
 								var currentProduct = new WmiWin32Product( );
-								currentProduct.Guid = currentGuid;
-								currentProduct.Name = GetString( regCurrentPackage, @"DisplayName" );
-								currentProduct.Publisher = GetString( regCurrentPackage, @"Publisher" );
-								currentProduct.Version = GetString( regCurrentPackage, @"DisplayVersion" );
-								currentProduct.InstallDate = GetDateTime( regCurrentPackage, @"InstallDate" );
-								currentProduct.Size = (float)Math.Round( (float)GetDword( regCurrentPackage, @"EstimatedSize" ) / (float)1024, 2, MidpointRounding.AwayFromZero );
-								currentProduct.HelpLink = GetString( regCurrentPackage, @"HelpLink" );
-								currentProduct.Comment = GetString( regCurrentPackage, @"Comment" );
-								if( currentProduct.valid( ) ) {
+								currentProduct.Guid = curGuid;
+								currentProduct.Name = GetString( curReg, @"DisplayName" );
+								currentProduct.Publisher = GetString( curReg, @"Publisher" );
+								currentProduct.Version = GetString( curReg, @"DisplayVersion" );
+								currentProduct.InstallDate = GetDateTime( curReg, @"InstallDate" );
+								currentProduct.CanRemove = 0 == GetDword( curReg, @"NoRemove", 0 );
+								currentProduct.SystemComponent = 1 == GetDword( curReg, @"SystemComponent", 0 );
+								{
+									var estSize = GetDword( curReg, @"EstimatedSize" );
+									if( null != estSize ) {
+										currentProduct.Size = (float)Math.Round( (float)estSize / (float)1024, 2, MidpointRounding.AwayFromZero );
+									}
+								}
+								
+								currentProduct.HelpLink = GetString( curReg, @"HelpLink" );
+								currentProduct.Comment = GetString( curReg, @"Comment" );
+								currentProduct.UrlInfoAbout = GetString( curReg, @"UrlInfoAbout" );
+								if( currentProduct.valid( ) && !currentProduct.IsHidden( showHidden ) ) {
 									result.Add( currentProduct );
 								}
 							}
