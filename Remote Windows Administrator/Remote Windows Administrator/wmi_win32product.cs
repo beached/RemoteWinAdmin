@@ -113,7 +113,7 @@ namespace RemoteWindowsAdministrator {
 		public bool ShouldHide { get { return IsHidden( ); } }
 
 		private bool IsHidden( bool shown = false ) {
-			return !shown && (SystemComponent || !CanRemove);
+			return !shown && SystemComponent;
 		}
 
 		public static IEnumerable<WmiWin32Product> FromComputerName( string computerName, bool showHidden = false ) {
