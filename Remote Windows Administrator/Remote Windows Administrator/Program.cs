@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 
-namespace Remote_Windows_Administrator {
+namespace RemoteWindowsAdministrator {
 	static class Program {
 		/// <summary>
 		/// The main entry point for the application.

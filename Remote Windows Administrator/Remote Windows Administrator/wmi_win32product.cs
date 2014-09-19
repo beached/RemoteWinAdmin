@@ -8,7 +8,7 @@ using System.Management;
 using System.Net.NetworkInformation;
 using System.Windows.Forms;
 
-namespace Remote_Windows_Administrator {
+namespace RemoteWindowsAdministrator {
 
 	public class WmiWin32Product: IComparable {
 		public string Name { get; set; }
@@ -55,16 +55,17 @@ namespace Remote_Windows_Administrator {
 			}
 		}
 
-		public static bool IsAlive( string computerName ) {
-			var pingSender = new Ping( );
+		public static bool IsAlive( string computerName ) {			
 			try {
-				var reply = pingSender.Send( computerName, 5000 );
-				if( null != reply && IPStatus.Success == reply.Status ) {
-					return true;
+				using( var pingSender = new Ping( ) ) {
+					var reply = pingSender.Send( computerName, 5000 );
+					if( null != reply && IPStatus.Success == reply.Status ) {
+						return true;
+					}
+					Debug.Assert( reply != null, "Ping reply was null, this shouldn't happen" );
+					Debug.WriteLine( string.Format( @"Ping Status for '{0}' is {1}", computerName, reply.Status ) );
+					return false;
 				}
-				Debug.Assert( reply != null, "Ping reply was null, this shouldn't happen" );
-				Debug.WriteLine( string.Format( @"Ping Status for '{0}' is {1}", computerName, reply.Status ) );
-				return false;
 			} catch( Exception ) {
 				return false;
 			}
@@ -139,7 +140,7 @@ namespace Remote_Windows_Administrator {
 								{
 									var estSize = GetDword( curReg, @"EstimatedSize" );
 									if( null != estSize ) {
-										currentProduct.Size = (float)Math.Round( (float)estSize / (float)1024, 2, MidpointRounding.AwayFromZero );
+										currentProduct.Size = (float)Math.Round( (float)estSize/1024.0, 2, MidpointRounding.AwayFromZero );
 									}
 								}
 								
@@ -154,11 +155,11 @@ namespace Remote_Windows_Administrator {
 					}
 				}
 			} catch( System.IO.IOException ) {
-				MessageBox.Show( @"Error connecting to computer or another IO Error" );
+				MessageBox.Show( @"Error connecting to computer or another IO Error", @"Error", MessageBoxButtons.OK );
 			} catch( UnauthorizedAccessException ) {
-				MessageBox.Show( @"You do not have permission to open this computer" );
+				MessageBox.Show( @"You do not have permission to open this computer", @"Error", MessageBoxButtons.OK );
 			} catch( System.Security.SecurityException ) {
-				MessageBox.Show( @"Security error while connecting" );
+				MessageBox.Show( @"Security error while connecting", @"Error", MessageBoxButtons.OK );
 			}			
 			return result.OrderBy( x => x.Name ).ToList(  );
 		}

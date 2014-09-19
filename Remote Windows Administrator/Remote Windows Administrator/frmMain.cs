@@ -4,9 +4,9 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace Remote_Windows_Administrator {
+namespace RemoteWindowsAdministrator {
 	public partial class FrmMain: Form {
-		private readonly daw.Collections.SyncList<WmiWin32Product> _dataSource = new daw.Collections.SyncList<WmiWin32Product>( );
+		private readonly SyncList<WmiWin32Product> _dataSource = new SyncList<WmiWin32Product>( );
 
 		
 

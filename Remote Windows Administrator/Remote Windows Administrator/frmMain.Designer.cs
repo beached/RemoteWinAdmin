@@ -1,4 +1,4 @@
-﻿namespace Remote_Windows_Administrator {
+﻿namespace RemoteWindowsAdministrator {
 	partial class FrmMain {
 		/// <summary>
 		/// Required designer variable.
