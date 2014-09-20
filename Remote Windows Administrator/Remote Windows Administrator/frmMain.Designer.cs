@@ -25,6 +25,8 @@
 		private void InitializeComponent( ) {
 			this.tcMain = new System.Windows.Forms.TabControl();
 			this.tpAddRemovePrograms = new System.Windows.Forms.TabPage();
+			this.txtFilter = new System.Windows.Forms.TextBox();
+			this.lblFilter = new System.Windows.Forms.Label();
 			this.dgvInstalledPrograms = new System.Windows.Forms.DataGridView();
 			this.gbComputer = new System.Windows.Forms.GroupBox();
 			this.chkShowHidden = new System.Windows.Forms.CheckBox();
@@ -48,6 +50,8 @@
 			// 
 			// tpAddRemovePrograms
 			// 
+			this.tpAddRemovePrograms.Controls.Add(this.txtFilter);
+			this.tpAddRemovePrograms.Controls.Add(this.lblFilter);
 			this.tpAddRemovePrograms.Controls.Add(this.dgvInstalledPrograms);
 			this.tpAddRemovePrograms.Controls.Add(this.gbComputer);
 			this.tpAddRemovePrograms.Location = new System.Drawing.Point(4, 22);
@@ -57,6 +61,25 @@
 			this.tpAddRemovePrograms.TabIndex = 0;
 			this.tpAddRemovePrograms.Text = "Add/Remove Programs";
 			this.tpAddRemovePrograms.UseVisualStyleBackColor = true;
+			// 
+			// txtFilter
+			// 
+			this.txtFilter.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+			this.txtFilter.Location = new System.Drawing.Point(46, 523);
+			this.txtFilter.Name = "txtFilter";
+			this.txtFilter.Size = new System.Drawing.Size(243, 20);
+			this.txtFilter.TabIndex = 6;
+			this.txtFilter.TextChanged += new System.EventHandler(this.txtFilter_TextChanged);
+			// 
+			// lblFilter
+			// 
+			this.lblFilter.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+			this.lblFilter.AutoSize = true;
+			this.lblFilter.Location = new System.Drawing.Point(11, 525);
+			this.lblFilter.Name = "lblFilter";
+			this.lblFilter.Size = new System.Drawing.Size(29, 13);
+			this.lblFilter.TabIndex = 4;
+			this.lblFilter.Text = "Filter";
 			// 
 			// dgvInstalledPrograms
 			// 
@@ -71,7 +94,7 @@
 			this.dgvInstalledPrograms.Name = "dgvInstalledPrograms";
 			this.dgvInstalledPrograms.ReadOnly = true;
 			this.dgvInstalledPrograms.ShowEditingIcon = false;
-			this.dgvInstalledPrograms.Size = new System.Drawing.Size(1141, 481);
+			this.dgvInstalledPrograms.Size = new System.Drawing.Size(1141, 455);
 			this.dgvInstalledPrograms.TabIndex = 3;
 			this.dgvInstalledPrograms.CellMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvInstalledPrograms_CellMouseClick);
 			// 
@@ -108,7 +131,7 @@
 			this.txtComputerName.Location = new System.Drawing.Point(6, 13);
 			this.txtComputerName.Name = "txtComputerName";
 			this.txtComputerName.Size = new System.Drawing.Size(951, 20);
-			this.txtComputerName.TabIndex = 1;
+			this.txtComputerName.TabIndex = 0;
 			this.txtComputerName.TextChanged += new System.EventHandler(this.txtComputerName_TextChanged);
 			// 
 			// btnQueryRemoteComputer
@@ -122,7 +145,7 @@
 			this.btnQueryRemoteComputer.UseVisualStyleBackColor = true;
 			this.btnQueryRemoteComputer.Click += new System.EventHandler(this.btnQueryRemoteComputer_Click);
 			// 
-			// frmMain
+			// FrmMain
 			// 
 			this.AcceptButton = this.btnQueryRemoteComputer;
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -131,8 +154,10 @@
 			this.Controls.Add(this.tcMain);
 			this.Name = "FrmMain";
 			this.Text = "DAW - Remote Windows Administrator";
+			this.Shown += new System.EventHandler(this.FrmMain_Shown);
 			this.tcMain.ResumeLayout(false);
 			this.tpAddRemovePrograms.ResumeLayout(false);
+			this.tpAddRemovePrograms.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.dgvInstalledPrograms)).EndInit();
 			this.gbComputer.ResumeLayout(false);
 			this.gbComputer.PerformLayout();
@@ -149,6 +174,8 @@
 		private System.Windows.Forms.Button btnQueryRemoteComputer;
 		private System.Windows.Forms.DataGridView dgvInstalledPrograms;
 		private System.Windows.Forms.CheckBox chkShowHidden;
+		private System.Windows.Forms.TextBox txtFilter;
+		private System.Windows.Forms.Label lblFilter;
 	}
 }
 

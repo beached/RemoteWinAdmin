@@ -23,7 +23,10 @@ namespace RemoteWindowsAdministrator {
 		public string Comment { get; set; }
 		public string UrlInfoAbout { get; set; }
 
-// 		public WmiWin32Product( ) { }
+		public bool ContainsString( string value ) {
+			value = value.ToUpperInvariant( );
+			return Name.ToUpperInvariant( ).Contains( value ) || Publisher.ToUpperInvariant( ).Contains( value ) || this.Version.ToUpperInvariant( ).Contains( value ) || InstallDate.ToString( ).ToUpperInvariant( ).Contains( value ) || this.Size.ToString( ).ToUpperInvariant( ).Contains( value ) || Guid.ToUpperInvariant( ).Contains( value );
+		}
 
 		public bool Valid( ) {
 			return !string.IsNullOrEmpty( Name ) && !string.IsNullOrEmpty( Guid );
