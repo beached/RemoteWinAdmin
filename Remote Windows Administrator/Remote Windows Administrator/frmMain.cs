@@ -69,10 +69,10 @@ namespace RemoteWindowsAdministrator {
 				return result;
 			}
 			var cell = dgvInstalledPrograms.Rows[row].Cells[column];
-			if( null == cell ) {
+			if( null == cell || null == cell.Value ) {
 				return result;
 			}
-			var strTmp = cell.Value as string;
+			var strTmp = cell.Value.ToString(  );
 			if( !string.IsNullOrEmpty( strTmp ) ) {
 				result = strTmp;
 			}
@@ -85,10 +85,10 @@ namespace RemoteWindowsAdministrator {
 				return result;
 			}
 			var cell = dgvInstalledPrograms.Rows[row].Cells[columnName];
-			if( null == cell ) {
+			if( null == cell || null == cell.Value ) {
 				return result;
 			}
-			var strTmp = cell.Value as string;
+			var strTmp = cell.Value.ToString(  );
 			if( !string.IsNullOrEmpty( strTmp ) ) {
 				result = strTmp;
 			}
