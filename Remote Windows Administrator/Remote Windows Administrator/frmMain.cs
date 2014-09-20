@@ -336,7 +336,7 @@ namespace RemoteWindowsAdministrator {
 			}
 			var computerNames = nameSource.Split( new[] {@";", @",", @"	", @" ", "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries ).Distinct().Where( item => !string.IsNullOrEmpty( item ) ).ToArray(  );
 			_dsComputerInfoThreadCount = computerNames.Count( );
-			
+
 			foreach( var computerName in computerNames ) {
 				var currentName = computerName;
 				new Thread( ( ) => {
