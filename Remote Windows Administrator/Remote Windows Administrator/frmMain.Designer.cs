@@ -24,23 +24,32 @@
 		/// </summary>
 		private void InitializeComponent( ) {
 			this.tcMain = new System.Windows.Forms.TabControl();
-			this.tpAddRemovePrograms = new System.Windows.Forms.TabPage();
+			this.tpSoftware = new System.Windows.Forms.TabPage();
 			this.txtFilter = new System.Windows.Forms.TextBox();
 			this.lblFilter = new System.Windows.Forms.Label();
-			this.dgvInstalledPrograms = new System.Windows.Forms.DataGridView();
+			this.dgvSoftware = new System.Windows.Forms.DataGridView();
 			this.gbComputer = new System.Windows.Forms.GroupBox();
 			this.chkShowHidden = new System.Windows.Forms.CheckBox();
 			this.txtComputerName = new System.Windows.Forms.TextBox();
 			this.btnQueryRemoteComputer = new System.Windows.Forms.Button();
+			this.tpComputerInfo = new System.Windows.Forms.TabPage();
+			this.dgvComputerInfo = new System.Windows.Forms.DataGridView();
+			this.gbInfoComputerName = new System.Windows.Forms.GroupBox();
+			this.txtInfoComputerName = new System.Windows.Forms.TextBox();
+			this.btnInfoQuery = new System.Windows.Forms.Button();
 			this.tcMain.SuspendLayout();
-			this.tpAddRemovePrograms.SuspendLayout();
-			((System.ComponentModel.ISupportInitialize)(this.dgvInstalledPrograms)).BeginInit();
+			this.tpSoftware.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.dgvSoftware)).BeginInit();
 			this.gbComputer.SuspendLayout();
+			this.tpComputerInfo.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.dgvComputerInfo)).BeginInit();
+			this.gbInfoComputerName.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// tcMain
 			// 
-			this.tcMain.Controls.Add(this.tpAddRemovePrograms);
+			this.tcMain.Controls.Add(this.tpSoftware);
+			this.tcMain.Controls.Add(this.tpComputerInfo);
 			this.tcMain.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.tcMain.Location = new System.Drawing.Point(0, 0);
 			this.tcMain.Name = "tcMain";
@@ -48,19 +57,19 @@
 			this.tcMain.Size = new System.Drawing.Size(1164, 575);
 			this.tcMain.TabIndex = 5;
 			// 
-			// tpAddRemovePrograms
+			// tpSoftware
 			// 
-			this.tpAddRemovePrograms.Controls.Add(this.txtFilter);
-			this.tpAddRemovePrograms.Controls.Add(this.lblFilter);
-			this.tpAddRemovePrograms.Controls.Add(this.dgvInstalledPrograms);
-			this.tpAddRemovePrograms.Controls.Add(this.gbComputer);
-			this.tpAddRemovePrograms.Location = new System.Drawing.Point(4, 22);
-			this.tpAddRemovePrograms.Name = "tpAddRemovePrograms";
-			this.tpAddRemovePrograms.Padding = new System.Windows.Forms.Padding(3);
-			this.tpAddRemovePrograms.Size = new System.Drawing.Size(1156, 549);
-			this.tpAddRemovePrograms.TabIndex = 0;
-			this.tpAddRemovePrograms.Text = "Add/Remove Programs";
-			this.tpAddRemovePrograms.UseVisualStyleBackColor = true;
+			this.tpSoftware.Controls.Add(this.txtFilter);
+			this.tpSoftware.Controls.Add(this.lblFilter);
+			this.tpSoftware.Controls.Add(this.dgvSoftware);
+			this.tpSoftware.Controls.Add(this.gbComputer);
+			this.tpSoftware.Location = new System.Drawing.Point(4, 22);
+			this.tpSoftware.Name = "tpSoftware";
+			this.tpSoftware.Padding = new System.Windows.Forms.Padding(3);
+			this.tpSoftware.Size = new System.Drawing.Size(1156, 549);
+			this.tpSoftware.TabIndex = 0;
+			this.tpSoftware.Text = "Software";
+			this.tpSoftware.UseVisualStyleBackColor = true;
 			// 
 			// txtFilter
 			// 
@@ -81,22 +90,22 @@
 			this.lblFilter.TabIndex = 4;
 			this.lblFilter.Text = "Filter";
 			// 
-			// dgvInstalledPrograms
+			// dgvSoftware
 			// 
-			this.dgvInstalledPrograms.AllowUserToAddRows = false;
-			this.dgvInstalledPrograms.AllowUserToDeleteRows = false;
-			this.dgvInstalledPrograms.AllowUserToOrderColumns = true;
-			this.dgvInstalledPrograms.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+			this.dgvSoftware.AllowUserToAddRows = false;
+			this.dgvSoftware.AllowUserToDeleteRows = false;
+			this.dgvSoftware.AllowUserToOrderColumns = true;
+			this.dgvSoftware.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.dgvInstalledPrograms.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-			this.dgvInstalledPrograms.Location = new System.Drawing.Point(7, 60);
-			this.dgvInstalledPrograms.Name = "dgvInstalledPrograms";
-			this.dgvInstalledPrograms.ReadOnly = true;
-			this.dgvInstalledPrograms.ShowEditingIcon = false;
-			this.dgvInstalledPrograms.Size = new System.Drawing.Size(1141, 455);
-			this.dgvInstalledPrograms.TabIndex = 3;
-			this.dgvInstalledPrograms.CellMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvInstalledPrograms_CellMouseClick);
+			this.dgvSoftware.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+			this.dgvSoftware.Location = new System.Drawing.Point(7, 60);
+			this.dgvSoftware.Name = "dgvSoftware";
+			this.dgvSoftware.ReadOnly = true;
+			this.dgvSoftware.ShowEditingIcon = false;
+			this.dgvSoftware.Size = new System.Drawing.Size(1143, 455);
+			this.dgvSoftware.TabIndex = 3;
+			this.dgvSoftware.CellMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvInstalledPrograms_CellMouseClick);
 			// 
 			// gbComputer
 			// 
@@ -105,7 +114,7 @@
 			this.gbComputer.Controls.Add(this.chkShowHidden);
 			this.gbComputer.Controls.Add(this.txtComputerName);
 			this.gbComputer.Controls.Add(this.btnQueryRemoteComputer);
-			this.gbComputer.Location = new System.Drawing.Point(8, 6);
+			this.gbComputer.Location = new System.Drawing.Point(7, 6);
 			this.gbComputer.Name = "gbComputer";
 			this.gbComputer.Size = new System.Drawing.Size(1140, 47);
 			this.gbComputer.TabIndex = 3;
@@ -145,6 +154,62 @@
 			this.btnQueryRemoteComputer.UseVisualStyleBackColor = true;
 			this.btnQueryRemoteComputer.Click += new System.EventHandler(this.btnQueryRemoteComputer_Click);
 			// 
+			// tpComputerInfo
+			// 
+			this.tpComputerInfo.Controls.Add(this.dgvComputerInfo);
+			this.tpComputerInfo.Controls.Add(this.gbInfoComputerName);
+			this.tpComputerInfo.Location = new System.Drawing.Point(4, 22);
+			this.tpComputerInfo.Name = "tpComputerInfo";
+			this.tpComputerInfo.Padding = new System.Windows.Forms.Padding(3);
+			this.tpComputerInfo.Size = new System.Drawing.Size(1156, 549);
+			this.tpComputerInfo.TabIndex = 1;
+			this.tpComputerInfo.Text = "Computer Info";
+			this.tpComputerInfo.UseVisualStyleBackColor = true;
+			// 
+			// dgvComputerInfo
+			// 
+			this.dgvComputerInfo.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.dgvComputerInfo.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+			this.dgvComputerInfo.Location = new System.Drawing.Point(6, 59);
+			this.dgvComputerInfo.Name = "dgvComputerInfo";
+			this.dgvComputerInfo.Size = new System.Drawing.Size(1144, 487);
+			this.dgvComputerInfo.TabIndex = 5;
+			// 
+			// gbInfoComputerName
+			// 
+			this.gbInfoComputerName.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.gbInfoComputerName.Controls.Add(this.txtInfoComputerName);
+			this.gbInfoComputerName.Controls.Add(this.btnInfoQuery);
+			this.gbInfoComputerName.Location = new System.Drawing.Point(6, 6);
+			this.gbInfoComputerName.Name = "gbInfoComputerName";
+			this.gbInfoComputerName.Size = new System.Drawing.Size(1140, 47);
+			this.gbInfoComputerName.TabIndex = 4;
+			this.gbInfoComputerName.TabStop = false;
+			this.gbInfoComputerName.Text = "Computer(s)";
+			// 
+			// txtInfoComputerName
+			// 
+			this.txtInfoComputerName.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.txtInfoComputerName.Location = new System.Drawing.Point(6, 13);
+			this.txtInfoComputerName.Name = "txtInfoComputerName";
+			this.txtInfoComputerName.Size = new System.Drawing.Size(1047, 20);
+			this.txtInfoComputerName.TabIndex = 0;
+			// 
+			// btnInfoQuery
+			// 
+			this.btnInfoQuery.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.btnInfoQuery.Location = new System.Drawing.Point(1059, 11);
+			this.btnInfoQuery.Name = "btnInfoQuery";
+			this.btnInfoQuery.Size = new System.Drawing.Size(75, 23);
+			this.btnInfoQuery.TabIndex = 2;
+			this.btnInfoQuery.Text = "&Query";
+			this.btnInfoQuery.UseVisualStyleBackColor = true;
+			this.btnInfoQuery.Click += new System.EventHandler(this.btnInfoQuery_Click);
+			// 
 			// FrmMain
 			// 
 			this.AcceptButton = this.btnQueryRemoteComputer;
@@ -156,11 +221,15 @@
 			this.Text = "DAW - Remote Windows Administrator";
 			this.Shown += new System.EventHandler(this.FrmMain_Shown);
 			this.tcMain.ResumeLayout(false);
-			this.tpAddRemovePrograms.ResumeLayout(false);
-			this.tpAddRemovePrograms.PerformLayout();
-			((System.ComponentModel.ISupportInitialize)(this.dgvInstalledPrograms)).EndInit();
+			this.tpSoftware.ResumeLayout(false);
+			this.tpSoftware.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)(this.dgvSoftware)).EndInit();
 			this.gbComputer.ResumeLayout(false);
 			this.gbComputer.PerformLayout();
+			this.tpComputerInfo.ResumeLayout(false);
+			((System.ComponentModel.ISupportInitialize)(this.dgvComputerInfo)).EndInit();
+			this.gbInfoComputerName.ResumeLayout(false);
+			this.gbInfoComputerName.PerformLayout();
 			this.ResumeLayout(false);
 
 		}
@@ -168,14 +237,19 @@
 		#endregion
 
 		private System.Windows.Forms.TabControl tcMain;
-		private System.Windows.Forms.TabPage tpAddRemovePrograms;
+		private System.Windows.Forms.TabPage tpSoftware;
 		private System.Windows.Forms.GroupBox gbComputer;
 		private System.Windows.Forms.TextBox txtComputerName;
 		private System.Windows.Forms.Button btnQueryRemoteComputer;
-		private System.Windows.Forms.DataGridView dgvInstalledPrograms;
+		private System.Windows.Forms.DataGridView dgvSoftware;
 		private System.Windows.Forms.CheckBox chkShowHidden;
 		private System.Windows.Forms.TextBox txtFilter;
 		private System.Windows.Forms.Label lblFilter;
+		private System.Windows.Forms.TabPage tpComputerInfo;
+		private System.Windows.Forms.DataGridView dgvComputerInfo;
+		private System.Windows.Forms.GroupBox gbInfoComputerName;
+		private System.Windows.Forms.TextBox txtInfoComputerName;
+		private System.Windows.Forms.Button btnInfoQuery;
 	}
 }
 
