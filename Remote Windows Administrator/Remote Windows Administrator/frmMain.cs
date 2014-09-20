@@ -12,9 +12,9 @@ using System.Windows.Forms;
 
 namespace RemoteWindowsAdministrator {
 	public partial class FrmMain: Form {
-		private readonly SyncList<WmiWin32Product> _dsSoftware;
+		private SyncList<WmiWin32Product> _dsSoftware;
 		private SyncList<ComputerInfo> _dsComputerInfo;
-
+		private Int32 _dsComputerInfoThreadCount = 0;
 		public FrmMain( ) {
 			InitializeComponent( );
 			_dsComputerInfo = new SyncList<ComputerInfo>( dgvComputerInfo );
@@ -50,31 +50,61 @@ namespace RemoteWindowsAdministrator {
 			dgvComputerInfo.DataSource = _dsComputerInfo;
 		}
 
+		private void OnStartSoftwareQuery( ) {
+			gbComputer.Enabled = false;
+			txtFilter.Enabled = false;
+		}
+
+		private void OnEndSoftwareQuery( ) {
+			gbComputer.Enabled = true;
+			txtFilter.Enabled = true;
+			MessageBox.Show( @"Computer Software Query Complete", @"Complete", MessageBoxButtons.OK );
+		}
+
+		public void OnEndSoftwareQueryInvoke( ) {
+			this.Invoke( new Action( OnEndSoftwareQuery ) );
+		}
+
+		private void OnStartInfoQuery( ) {
+			gbInfoComputerName.Enabled = false;
+		}
+
+		private void OnEndInfoQuery( ) {
+			gbInfoComputerName.Enabled = true;
+			MessageBox.Show( @"Computer Info Query Complete", @"Complete", MessageBoxButtons.OK );
+		}
+
+		public void OnEndInfoQueryInvoke( ) {
+			this.Invoke(  new Action( OnEndInfoQuery ) );
+		}
 
 		private void ClearSofwareData( ) {
+			txtFilter.Text = string.Empty;
 			_dsSoftware.Clear( );
 			dgvSoftware.DataSource = _dsSoftware;			
 		}
 
 		private void QueryRemoteComputerSoftware( ) {
 			ClearSofwareData( );
+			OnStartSoftwareQuery(  );
 			var computerName = txtComputerName.Text.Trim( );
+			bool showHidden = chkShowHidden.Checked;
 			if( WmiWin32Product.IsAlive( computerName ) ) {
-				foreach( var item in WmiWin32Product.FromComputerName( computerName, chkShowHidden.Checked ) ) {
-					_dsSoftware.Add( item );
-				}
+				new Thread( ( ) => {
+					try {
+						WmiWin32Product.FromComputerName( computerName, ref _dsSoftware, showHidden );
+					} finally {
+						_dsSoftware.ResetBindings( );
+						OnEndSoftwareQueryInvoke( );						
+					}
+				} ).Start( );
 			} else {
 				MessageBox.Show( @"Could not connect to other computer", @"Alert", MessageBoxButtons.OK );
 			}
-			_dsSoftware.ResetBindings( );
 		}
 
 		private void btnQueryRemoteComputer_Click( object sender, EventArgs e ) {
 			QueryRemoteComputerSoftware( );
-			var filter = txtFilter.Text.Trim( );
-			if( !string.IsNullOrEmpty( filter ) ) {
-				FilterText( filter );
-			}
 		}
 
 		private void txtComputerName_TextChanged( object sender, EventArgs e ) {
@@ -296,6 +326,7 @@ namespace RemoteWindowsAdministrator {
 
 		private void QueryRemoteComputerInfo( ) {
 			ClearInfoData( );
+			OnStartInfoQuery(  );
 			var nameSource = txtInfoComputerName.Text.Trim( );
 			if( string.IsNullOrEmpty( nameSource ) ) {
 				return;
@@ -304,17 +335,24 @@ namespace RemoteWindowsAdministrator {
 				nameSource = GetComputerNamesFromFile( nameSource );
 			}
 			var computerNames = nameSource.Split( new[] {@";", @",", @"	", @" ", "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries ).Distinct().Where( item => !string.IsNullOrEmpty( item ) ).ToArray(  );
+			_dsComputerInfoThreadCount = computerNames.Count( );
 			
 			foreach( var computerName in computerNames ) {
 				var currentName = computerName;
 				new Thread( ( ) => {
-					if( WmiWin32Product.IsAlive( currentName ) ) {
-						ComputerInfo.GetComputerInfo( currentName, ref _dsComputerInfo );
-					} else {
-						// TODO Better logging so that multiples can be done without interruption and threaded
-						_dsComputerInfo.Add( new ComputerInfo {LocalSystemDateTime = DateTime.Now, ComputerName = computerName, Status = @"Connection Error"} );
+					try {
+						if( WmiWin32Product.IsAlive( currentName ) ) {
+							ComputerInfo.GetComputerInfo( currentName, ref _dsComputerInfo );
+						} else {
+							// TODO Better logging so that multiples can be done without interruption and threaded
+							_dsComputerInfo.Add( new ComputerInfo {LocalSystemDateTime = DateTime.Now, ComputerName = computerName, Status = @"Connection Error"} );
+						}
+						_dsComputerInfo.ResetBindings( );
+					} finally {
+						if( 0 >= Interlocked.Decrement( ref _dsComputerInfoThreadCount ) ) {
+							OnEndInfoQueryInvoke( );
+						}
 					}
-					_dsComputerInfo.ResetBindings( );
 				} ).Start( );
 			}
 		}

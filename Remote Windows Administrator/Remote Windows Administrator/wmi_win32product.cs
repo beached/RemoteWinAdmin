@@ -7,6 +7,7 @@ using System.Linq;
 using System.Management;
 using System.Net.NetworkInformation;
 using System.Windows.Forms;
+using SyncList;
 
 namespace RemoteWindowsAdministrator {
 
@@ -119,8 +120,7 @@ namespace RemoteWindowsAdministrator {
 			return !shown && SystemComponent;
 		}
 
-		public static IEnumerable<WmiWin32Product> FromComputerName( string computerName, bool showHidden = false ) {
-			var result = new List<WmiWin32Product>( );
+		public static void FromComputerName( string computerName, ref SyncList.SyncList<WmiWin32Product> result, bool showHidden = false ) {
 			try {
 				string[] regPaths = { @"SOFTWARE\Wow6432node\Microsoft\Windows\CurrentVersion\Uninstall", @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" };
 				foreach( var currentPath in regPaths ) {
@@ -128,7 +128,8 @@ namespace RemoteWindowsAdministrator {
 						if( null == regKey ) {
 							continue;
 						}
-						foreach( var curGuid in regKey.GetSubKeyNames( ).Where( currentGuid => currentGuid.StartsWith( @"{" ) && !HasGuid( result, currentGuid ) ) ) {
+						SyncList<WmiWin32Product> list = result;
+						foreach( var curGuid in regKey.GetSubKeyNames( ).Where( currentGuid => currentGuid.StartsWith( @"{" ) && !HasGuid( list, currentGuid ) ) ) {
 							using( var curReg = regKey.OpenSubKey( curGuid, false ) ) {
 								if( null == curReg || !string.IsNullOrEmpty( GetString( curReg, @"ParentKeyName" ) ) ) {
 									continue;
@@ -151,7 +152,7 @@ namespace RemoteWindowsAdministrator {
 								currentProduct.Comment = GetString( curReg, @"Comment" );
 								currentProduct.UrlInfoAbout = GetString( curReg, @"UrlInfoAbout" );
 								if( currentProduct.Valid( ) && !currentProduct.IsHidden( showHidden ) ) {
-									result.Add( currentProduct );
+									list.Add( currentProduct );									
 								}
 							}
 						}
@@ -164,7 +165,6 @@ namespace RemoteWindowsAdministrator {
 			} catch( System.Security.SecurityException ) {
 				MessageBox.Show( @"Security error while connecting", @"Error", MessageBoxButtons.OK );
 			}			
-			return result.OrderBy( x => x.Name ).ToList(  );
 		}
 
 		public int CompareTo( object obj ) {
