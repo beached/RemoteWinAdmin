@@ -25,7 +25,7 @@ namespace RemoteWindowsAdministrator {
 
 		public bool ContainsString( string value ) {
 			value = value.ToUpperInvariant( );
-			return Name.ToUpperInvariant( ).Contains( value ) || Publisher.ToUpperInvariant( ).Contains( value ) || this.Version.ToUpperInvariant( ).Contains( value ) || InstallDate.ToString( ).ToUpperInvariant( ).Contains( value ) || this.Size.ToString( ).ToUpperInvariant( ).Contains( value ) || Guid.ToUpperInvariant( ).Contains( value );
+			return Name.ToUpperInvariant( ).Contains( value ) || Publisher.ToUpperInvariant( ).Contains( value ) || Version.ToUpperInvariant( ).Contains( value ) || InstallDate.ToString( ).ToUpperInvariant( ).Contains( value ) || this.Size.ToString( ).ToUpperInvariant( ).Contains( value ) || Guid.ToUpperInvariant( ).Contains( value ) || IsHidden( ).ToString( ).ToUpperInvariant( ).Contains( value ) || HelpLink.ToUpperInvariant(  ).Contains( value ) || UrlInfoAbout.ToUpperInvariant(  ).Contains( value );			
 		}
 
 		public bool Valid( ) {
@@ -61,7 +61,7 @@ namespace RemoteWindowsAdministrator {
 		public static bool IsAlive( string computerName ) {			
 			try {
 				using( var pingSender = new Ping( ) ) {
-					var reply = pingSender.Send( computerName, 5000 );
+					var reply = pingSender.Send( computerName, 3000 );
 					if( null != reply && IPStatus.Success == reply.Status ) {
 						return true;
 					}
