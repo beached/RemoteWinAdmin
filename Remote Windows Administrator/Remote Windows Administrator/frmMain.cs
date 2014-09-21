@@ -97,7 +97,7 @@ namespace RemoteWindowsAdministrator {
 			OnStartSoftwareQuery( );
 			var computerName = txtComputerName.Text.Trim( );
 			bool showHidden = chkShowHidden.Checked;
-			if( WmiWin32Product.IsAlive( computerName ) ) {
+			if( WmiHelpers.IsAlive( computerName ) ) {
 				new Thread( ( ) => {
 					try {
 						WmiWin32Product.FromComputerName( computerName, ref _dsSoftware, showHidden );
@@ -349,7 +349,7 @@ namespace RemoteWindowsAdministrator {
 				var currentName = computerName;
 				new Thread( ( ) => {
 					try {
-						if( WmiWin32Product.IsAlive( currentName ) ) {
+						if( WmiHelpers.IsAlive( currentName ) ) {
 							ComputerInfo.GetComputerInfo( currentName, ref _dsComputerInfo );
 						} else {
 							// TODO Better logging so that multiples can be done without interruption and threaded

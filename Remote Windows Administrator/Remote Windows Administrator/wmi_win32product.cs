@@ -33,48 +33,6 @@ namespace RemoteWindowsAdministrator {
 			return !string.IsNullOrEmpty( Name ) && !string.IsNullOrEmpty( Guid );
 		}
 
-		public static void UninstallGuidOnComputerName( string computerName, string guid ) {
-			var scope = string.Format( @"\\{0}\root\CIMV2", computerName );
-			var query = string.Format( @"SELECT * FROM Win32_Product WHERE IdentifyingNumber='{0}'", guid );
-			using( var objSearch = new ManagementObjectSearcher( scope, query ) ) {
-				Debug.Assert( 1 == objSearch.Get( ).Count );
-				
-					foreach( var packageObj in objSearch.Get( ) ) {
-						ManagementObject package = null;
-						try {
-							package = packageObj as ManagementObject;
-						} catch( InvalidCastException ex ) {
-							MessageBox.Show( string.Format( "There was an unexpected error in WMI Uninstall\n{0}", ex.Message ) );
-						}
-
-						Debug.Assert( package != null, @"Software item in WMI was null.  This is not allowed" );
-						Debug.WriteLine( string.Format( @"Uninstalling '{0}' from {1}", package.Properties["Name"].Value, computerName ) );
-						var outParams = package.InvokeMethod( @"Uninstall", null, null );
-						Debug.Assert( outParams != null, @"Return value from uninstall was null.  This is not allowed" );
-						var retVal = Int32.Parse( outParams[@"returnValue"].ToString( ) );
-						if( 0 != retVal ) {
-							MessageBox.Show( string.Format( @"Error uninstalling '{0}' from {1}. Returned a value of {2}", package.Properties["Name"].Value, computerName, retVal ), @"Error", MessageBoxButtons.OK );
-						}
-					}
-			}
-		}
-
-		public static bool IsAlive( string computerName ) {			
-			try {
-				using( var pingSender = new Ping( ) ) {
-					var reply = pingSender.Send( computerName, 3000 );
-					if( null != reply && IPStatus.Success == reply.Status ) {
-						return true;
-					}
-					Debug.Assert( reply != null, "Ping reply was null, this shouldn't happen" );
-					Debug.WriteLine( string.Format( @"Ping Status for '{0}' is {1}", computerName, reply.Status ) );
-					return false;
-				}
-			} catch( Exception ) {
-				return false;
-			}
-		}
-
 		private static bool HasGuid( IEnumerable<WmiWin32Product> values, string guid ) {
 			return values.Any( currentValue => guid.Equals( currentValue.Guid, StringComparison.OrdinalIgnoreCase ) );
 		}
@@ -171,5 +129,32 @@ namespace RemoteWindowsAdministrator {
 			var other = obj as string;
 			return String.Compare( Name, other, StringComparison.OrdinalIgnoreCase );
 		}
+
+		public static void UninstallGuidOnComputerName( string computerName, string guid ) {
+			var scope = string.Format( @"\\{0}\root\CIMV2", computerName );
+			var query = string.Format( @"SELECT * FROM Win32_Product WHERE IdentifyingNumber='{0}'", guid );
+			using( var objSearch = new ManagementObjectSearcher( scope, query ) ) {
+				Debug.Assert( 1 == objSearch.Get( ).Count );
+
+				foreach( var packageObj in objSearch.Get( ) ) {
+					ManagementObject package = null;
+					try {
+						package = packageObj as ManagementObject;
+					} catch( InvalidCastException ex ) {
+						MessageBox.Show( string.Format( "There was an unexpected error in WMI Uninstall\n{0}", ex.Message ) );
+					}
+
+					Debug.Assert( package != null, @"Software item in WMI was null.  This is not allowed" );
+					Debug.WriteLine( string.Format( @"Uninstalling '{0}' from {1}", package.Properties["Name"].Value, computerName ) );
+					var outParams = package.InvokeMethod( @"Uninstall", null, null );
+					Debug.Assert( outParams != null, @"Return value from uninstall was null.  This is not allowed" );
+					var retVal = Int32.Parse( outParams[@"returnValue"].ToString( ) );
+					if( 0 != retVal ) {
+						MessageBox.Show( string.Format( @"Error uninstalling '{0}' from {1}. Returned a value of {2}", package.Properties["Name"].Value, computerName, retVal ), @"Error", MessageBoxButtons.OK );
+					}
+				}
+			}
+		}
+
 	}
 }

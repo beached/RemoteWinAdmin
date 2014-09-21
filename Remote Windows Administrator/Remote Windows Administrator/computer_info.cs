@@ -1,9 +1,6 @@
 ﻿using System;
-using System.CodeDom;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
 using System.Management;
 using System.Windows.Forms;
 
@@ -45,56 +42,42 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public static void GetComputerInfo( string computerName, ref SyncList.SyncList<ComputerInfo> result ) {
-			var scope = string.Format( @"\\{0}\root\CIMV2", computerName );
-			var query = @"SELECT * FROM Win32_OperatingSystem";			
-
-			var ci = new ComputerInfo {LocalSystemDateTime = DateTime.Now, ComputerName = computerName, Status = @"OK"};
+			var ci = new ComputerInfo { LocalSystemDateTime = DateTime.Now, ComputerName = computerName, Status = @"OK" };
 			try {
-				using( var objSearch = new ManagementObjectSearcher( scope, query ) ) {
-					Debug.Assert( 1 == objSearch.Get( ).Count );
-					foreach( ManagementObject osItem in objSearch.Get( ) ) {
-						Debug.Assert( osItem != null, @"Operating System item in WMI was null.  This is not allowed" );
-						ci.LastBootTime = GetDate( osItem, @"LastBootUpTime" );
-						ci.SystemTime = GetDate( osItem, @"LocalDateTime" );
-						ci.Version = GetString( osItem, @"Caption" );
-						ci.Architecture = GetString( osItem, @"OSArchitecture" );
-					}
-				}
+				WmiHelpers.ForEach( computerName, @"SELECT * FROM Win32_OperatingSystem WHERE Primary=TRUE", delegate( ManagementObject osItem ) {
+					ci.LastBootTime = GetDate( osItem, @"LastBootUpTime" );
+					ci.SystemTime = GetDate( osItem, @"LocalDateTime" );
+					ci.Version = GetString( osItem, @"Caption" );
+					ci.Architecture = GetString( osItem, @"OSArchitecture" );
+				} );
 
-				query = @"SELECT * FROM Win32_BIOS";
-				using( var objSearch = new ManagementObjectSearcher( scope, query ) ) {
-					Debug.Assert( 1 == objSearch.Get( ).Count );
-					foreach( ManagementObject biosItem in objSearch.Get( ) ) {
-						Debug.Assert( biosItem != null, @"BIOS item in WMI was null.  This is not allowed" );
-						ci.Manufacturer = GetString( biosItem, @"Manufacturer" );
-						ci.HwReleaseDate = GetDate( biosItem, @"ReleaseDate" );
-						ci.SerialNumber = GetString( biosItem, @"SerialNumber" );
-						ci.BiosVersion = GetString( biosItem, @"SMBIOSBIOSVersion" );
-					}
-				}
+				WmiHelpers.ForEach( computerName, @"SELECT * FROM Win32_BIOS", delegate( ManagementObject biosItem ) {
+					ci.Manufacturer = GetString( biosItem, @"Manufacturer" );
+					ci.HwReleaseDate = GetDate( biosItem, @"ReleaseDate" );
+					ci.SerialNumber = GetString( biosItem, @"SerialNumber" );
+					ci.BiosVersion = GetString( biosItem, @"SMBIOSBIOSVersion" );
+				} );
 			} catch( UnauthorizedAccessException ) {
 				ci.Status = @"Access Denied";
 			}
-
 			result.Add( ci );
 		}
 
 		public static void RebootComputer( string computerName ) {
-			var scope = string.Format( @"\\{0}\root\CIMV2", computerName );
-			const string query = @"Win32_OperatingSystem";
 			try {
-				using( var objSearch = new ManagementObjectSearcher( scope, query ) ) {
-					Debug.Assert( 1 == objSearch.Get( ).Count );
-					foreach( var osItem in objSearch.Get( ) ) {
-						Debug.Assert( osItem != null, @"Operating System item in WMI was null.  This is not allowed" );
-						var result = ((ManagementObject)osItem).InvokeMethod( @"Reboot", new object[] {} ) as uint?;
-						if( 0 != result ) {
-							MessageBox.Show( string.Format( @"Failed to reboot {0} with error {1}", computerName, result ) );	
-						}
+				const string query = @"SELECT * FROM Win32_OperatingSystem WHERE Primary=TRUE";
+				WmiHelpers.ForEach( computerName,  query, delegate( ManagementObject obj ) {
+					var result = obj.InvokeMethod( @"Reboot", new object[] {} ) as uint?;
+					if( 0 != result ) {
+						MessageBox.Show( string.Format( @"Failed to reboot {0} with error {1}", computerName, result ) );
 					}
-				}
+				}, true );
 			} catch( UnauthorizedAccessException ) {
 				MessageBox.Show( string.Format( @"Failed to reboot {0}, permission denied", computerName ) );
+			} catch( ManagementException me ) {
+				MessageBox.Show( string.Format( "Failed to reboot {0}, WMI Error\n{1}", computerName, me.Message ) );
+			} catch( Exception e ) {
+				MessageBox.Show( string.Format( "Failed to reboot {0}, unexpected error\n{1}\n{2}", computerName, e.GetType( ).Name, e.Message ) );
 			}
 		}
 	}
