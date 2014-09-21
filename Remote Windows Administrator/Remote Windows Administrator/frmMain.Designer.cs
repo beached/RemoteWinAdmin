@@ -37,6 +37,8 @@
 			this.gbInfoComputerName = new System.Windows.Forms.GroupBox();
 			this.txtInfoComputerName = new System.Windows.Forms.TextBox();
 			this.btnInfoQuery = new System.Windows.Forms.Button();
+			this.txtFilterComputerInfo = new System.Windows.Forms.TextBox();
+			this.label1 = new System.Windows.Forms.Label();
 			this.tcMain.SuspendLayout();
 			this.tpSoftware.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.dgvSoftware)).BeginInit();
@@ -142,6 +144,8 @@
 			this.txtComputerName.Size = new System.Drawing.Size(951, 20);
 			this.txtComputerName.TabIndex = 0;
 			this.txtComputerName.TextChanged += new System.EventHandler(this.txtComputerName_TextChanged);
+			this.txtComputerName.Enter += new System.EventHandler(this.txtComputerName_Enter);
+			this.txtComputerName.Leave += new System.EventHandler(this.txtComputerName_Leave);
 			// 
 			// btnQueryRemoteComputer
 			// 
@@ -156,6 +160,8 @@
 			// 
 			// tpComputerInfo
 			// 
+			this.tpComputerInfo.Controls.Add(this.txtFilterComputerInfo);
+			this.tpComputerInfo.Controls.Add(this.label1);
 			this.tpComputerInfo.Controls.Add(this.dgvComputerInfo);
 			this.tpComputerInfo.Controls.Add(this.gbInfoComputerName);
 			this.tpComputerInfo.Location = new System.Drawing.Point(4, 22);
@@ -174,9 +180,9 @@
 			this.dgvComputerInfo.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			this.dgvComputerInfo.Location = new System.Drawing.Point(6, 59);
 			this.dgvComputerInfo.Name = "dgvComputerInfo";
-			this.dgvComputerInfo.Size = new System.Drawing.Size(1144, 487);
+			this.dgvComputerInfo.Size = new System.Drawing.Size(1144, 455);
 			this.dgvComputerInfo.TabIndex = 5;
-			this.dgvComputerInfo.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvComputerInfo_CellContentClick);
+			this.dgvComputerInfo.CellMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvComputerInfo_CellMouseClick);
 			// 
 			// gbInfoComputerName
 			// 
@@ -199,6 +205,8 @@
 			this.txtInfoComputerName.Name = "txtInfoComputerName";
 			this.txtInfoComputerName.Size = new System.Drawing.Size(1047, 20);
 			this.txtInfoComputerName.TabIndex = 0;
+			this.txtInfoComputerName.Enter += new System.EventHandler(this.txtInfoComputerName_Enter);
+			this.txtInfoComputerName.Leave += new System.EventHandler(this.txtInfoComputerName_Leave);
 			// 
 			// btnInfoQuery
 			// 
@@ -210,6 +218,25 @@
 			this.btnInfoQuery.Text = "&Query";
 			this.btnInfoQuery.UseVisualStyleBackColor = true;
 			this.btnInfoQuery.Click += new System.EventHandler(this.btnInfoQuery_Click);
+			// 
+			// txtFilterComputerInfo
+			// 
+			this.txtFilterComputerInfo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+			this.txtFilterComputerInfo.Location = new System.Drawing.Point(41, 520);
+			this.txtFilterComputerInfo.Name = "txtFilterComputerInfo";
+			this.txtFilterComputerInfo.Size = new System.Drawing.Size(243, 20);
+			this.txtFilterComputerInfo.TabIndex = 8;
+			this.txtFilterComputerInfo.TextChanged += new System.EventHandler(this.TxtFilterComputerInfo_TextChanged);
+			// 
+			// label1
+			// 
+			this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+			this.label1.AutoSize = true;
+			this.label1.Location = new System.Drawing.Point(6, 522);
+			this.label1.Name = "label1";
+			this.label1.Size = new System.Drawing.Size(29, 13);
+			this.label1.TabIndex = 7;
+			this.label1.Text = "Filter";
 			// 
 			// FrmMain
 			// 
@@ -228,6 +255,7 @@
 			this.gbComputer.ResumeLayout(false);
 			this.gbComputer.PerformLayout();
 			this.tpComputerInfo.ResumeLayout(false);
+			this.tpComputerInfo.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.dgvComputerInfo)).EndInit();
 			this.gbInfoComputerName.ResumeLayout(false);
 			this.gbInfoComputerName.PerformLayout();
@@ -251,6 +279,8 @@
 		private System.Windows.Forms.GroupBox gbInfoComputerName;
 		private System.Windows.Forms.TextBox txtInfoComputerName;
 		private System.Windows.Forms.Button btnInfoQuery;
+		private System.Windows.Forms.TextBox txtFilterComputerInfo;
+		private System.Windows.Forms.Label label1;
 	}
 }
 

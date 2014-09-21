@@ -3,7 +3,7 @@ using System.Management;
 using System.Windows.Forms;
 
 namespace RemoteWindowsAdministrator {
-	public class ComputerInfo {
+	public class ComputerInfo: IContainsString {
 		public string ComputerName { get; set; }
 		public DateTime? LocalSystemDateTime { get; set; }
 		public DateTime? LastBootTime { get; set; }
@@ -23,6 +23,10 @@ namespace RemoteWindowsAdministrator {
 				var span = SystemTime.Value - LastBootTime.Value;
 				return string.Format( @"{0} days {1}:{2}hrs", span.Days, span.Hours, span.Minutes );
 			}
+		}
+
+		public bool ContainsString( string value ) {
+			return (new ValueIsIn( value )).Test( ComputerName ).Test( LocalSystemDateTime ).Test( LastBootTime ).Test( SystemTime ).Test( Version ).Test( Architecture ).Test( Manufacturer ).Test( HwReleaseDate ).Test( SerialNumber ).Test( BiosVersion ).Test( Status ).Test( Uptime ).IsContained;
 		}
 
 		public static void GetComputerInfo( string computerName, ref SyncList.SyncList<ComputerInfo> result ) {

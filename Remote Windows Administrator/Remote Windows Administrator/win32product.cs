@@ -9,7 +9,7 @@ using System.Windows.Forms;
 
 namespace RemoteWindowsAdministrator {
 
-	public class Win32Product: IComparable {
+	public class Win32Product: IContainsString {
 		public string Name { get; set; }
 		public string Publisher { get; set; }
 		public string Version { get; set; }
@@ -23,8 +23,7 @@ namespace RemoteWindowsAdministrator {
 		public string UrlInfoAbout { get; set; }
 
 		public bool ContainsString( string value ) {
-			value = value.ToUpperInvariant( );
-			return Name.ToUpperInvariant( ).Contains( value ) || Publisher.ToUpperInvariant( ).Contains( value ) || Version.ToUpperInvariant( ).Contains( value ) || InstallDate.ToString( ).ToUpperInvariant( ).Contains( value ) || this.Size.ToString( ).ToUpperInvariant( ).Contains( value ) || Guid.ToUpperInvariant( ).Contains( value ) || IsHidden( ).ToString( ).ToUpperInvariant( ).Contains( value ) || HelpLink.ToUpperInvariant( ).Contains( value ) || UrlInfoAbout.ToUpperInvariant( ).Contains( value );
+			return (new ValueIsIn( value )).Test( Name ).Test( Publisher ).Test( Version ).Test( InstallDate ).Test( Size ).Test( Guid ).Test( IsHidden( ) ).Test( HelpLink ).Test( UrlInfoAbout ).IsContained;
 		}
 
 		public bool Valid( ) {
@@ -76,7 +75,7 @@ namespace RemoteWindowsAdministrator {
 			return !shown && SystemComponent;
 		}
 
-		public static void FromComputerName( string computerName, ref SyncList.SyncList<Win32Product> result, bool showHidden = false ) {
+		public static void FromComputerName( string computerName, ref SyncList<Win32Product> result, bool showHidden = false ) {
 			try {
 				string[] regPaths = { @"SOFTWARE\Wow6432node\Microsoft\Windows\CurrentVersion\Uninstall", @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" };
 				foreach( var currentPath in regPaths ) {
@@ -125,19 +124,14 @@ namespace RemoteWindowsAdministrator {
 			}
 		}
 
-		public int CompareTo( object obj ) {
-			var other = obj as string;
-			return String.Compare( Name, other, StringComparison.OrdinalIgnoreCase );
-		}
-
 		public static void UninstallGuidOnComputerName( string computerName, string guid ) {			
-			WmiHelpers.ForEach( computerName, string.Format( @"SELECT * FROM Win32_Product WHERE IdentifyingNumber='{0}'", guid ), package => {
-				Debug.WriteLine( string.Format( @"Uninstalling '{0}' from {1}", package.Properties["Name"].Value, computerName ) );
-				var outParams = package.InvokeMethod( @"Uninstall", null, null );
+			WmiHelpers.ForEach( computerName, string.Format( @"SELECT * FROM Win32_Product WHERE IdentifyingNumber='{0}'", guid ), obj => {
+				Debug.WriteLine( string.Format( @"Uninstalling '{0}' from {1}", obj.Properties["Name"].Value, computerName ) );
+				var outParams = obj.InvokeMethod( @"Uninstall", null, null );
 				Debug.Assert( outParams != null, @"Return value from uninstall was null.  This is not allowed" );
 				var retVal = int.Parse( outParams[@"returnValue"].ToString( ) );
 				if( 0 != retVal ) {
-					MessageBox.Show( string.Format( @"Error uninstalling '{0}' from {1}. Returned a value of {2}", package.Properties["Name"].Value, computerName, retVal ), @"Error", MessageBoxButtons.OK );
+					MessageBox.Show( string.Format( @"Error uninstalling '{0}' from {1}. Returned a value of {2}", obj.Properties["Name"].Value, computerName, retVal ), @"Error", MessageBoxButtons.OK );
 				}
 			} );
 		}
