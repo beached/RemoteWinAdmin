@@ -51,21 +51,64 @@ namespace RemoteWindowsAdministrator {
 			result.Add( ci );
 		}
 
-		public static void RebootComputer( string computerName ) {
+		public class ShutdownComputerParameters {
+			public string ComputerName { get; set; }
+			public UInt32 Timeout { get; set; }
+
+			public enum ShutdownTypes: short {
+				Logoff = 0,
+				Shutdown = 1,
+				Reboot = 2,
+				PowerOff = 8
+			};
+
+			internal short Flags {
+				get {
+					var result = (short)ShutdownType;
+					result += Forced ? (short)4 : (short)0;
+					return result;
+				}
+			}
+
+			public ShutdownTypes ShutdownType { get; set; }
+			public string Comment { get; set; }
+			public bool Forced { get; set; }
+
+			public ShutdownComputerParameters( string computerName ) {
+				if( string.IsNullOrEmpty( computerName ) ) {
+					throw new ArgumentNullException( @"computerName", @"compueterName cannot be empty or null" );
+				}
+				ComputerName = computerName;
+				Timeout = 120;
+				ShutdownType = ShutdownTypes.Reboot;
+				Comment = @"System Maintenance";
+				Forced = false;
+			}
+		}
+
+
+		public static void ShutdownComputer( ShutdownComputerParameters parameters ) {
 			try {
 				const string query = @"SELECT * FROM Win32_OperatingSystem WHERE Primary=TRUE";
-				WmiHelpers.ForEach( computerName,  query, obj => {
-					var result = obj.InvokeMethod( @"Reboot", new object[] {} ) as uint?;
-					if( 0 != result ) {
-						MessageBox.Show( string.Format( @"Failed to reboot {0} with error {1}", computerName, result ) );
+
+				WmiHelpers.ForEach( parameters.ComputerName,  query, obj => {
+					var inParams = obj.GetMethodParameters( @"Win32ShutdownTracker" );
+					inParams[@"Comment"] = parameters.Comment;
+					inParams[@"Flags"] = parameters.Flags;
+					inParams[@"ReasonCode"] = 1;	// Maintenance
+					inParams[@"Timeout"] = parameters.Timeout;
+					var outParams = obj.InvokeMethod( @"Win32ShutdownTracker", inParams, null );
+					var result = (null == outParams ? null : outParams[@"ReturnValue"]) as uint?;
+					if( null == result || 0 != result ) {
+						MessageBox.Show( string.Format( @"Failed to reboot {0} with error {1}", parameters.ComputerName, result ) );
 					}
 				}, true );
 			} catch( UnauthorizedAccessException ) {
-				MessageBox.Show( string.Format( @"Failed to reboot {0}, permission denied", computerName ) );
-			} catch( ManagementException me ) {
-				MessageBox.Show( string.Format( "Failed to reboot {0}, WMI Error\n{1}", computerName, me.Message ) );
+				MessageBox.Show( string.Format( @"Failed to reboot {0}, permission denied", parameters.ComputerName ) );
+			} catch( ManagementException e ) {
+				MessageBox.Show( string.Format( "Failed to reboot {0}, WMI Error\n{1}", parameters.ComputerName, e.Message ) );
 			} catch( Exception e ) {
-				MessageBox.Show( string.Format( "Failed to reboot {0}, unexpected error\n{1}\n{2}", computerName, e.GetType( ).Name, e.Message ) );
+				MessageBox.Show( string.Format( "Failed to reboot {0}, unexpected error\n{1}\n{2}", parameters.ComputerName, e.GetType( ).Name, e.Message ) );
 			}
 		}
 	}

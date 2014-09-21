@@ -38,13 +38,21 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
     <Reference Include="System.Management" />
     <Reference Include="System.Web" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IContainsString.cs" />
+    <Compile Include="ShutdownDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ShutdownDialog.Designer.cs">
+      <DependentUpon>ShutdownDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="ValueIsIn.cs" />
     <Compile Include="computer_info.cs" />
     <Compile Include="frmMain.cs">
@@ -71,6 +79,9 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="ShutdownDialog.resx">
+      <DependentUpon>ShutdownDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using SyncList;
+﻿using SyncList;
 using System;
 using System.Diagnostics;
 using System.Drawing;
@@ -46,12 +45,12 @@ namespace RemoteWindowsAdministrator {
 			dgvComputerInfo.Columns.Add( DgvHelpers.MakeColumn( @"SerialNumber", @"Serial Number" ) );
 			dgvComputerInfo.Columns.Add( DgvHelpers.MakeColumn( @"BiosVersion", @"BIOS Version" ) );
 			{
-				var colReboot = new DataGridViewButtonColumn( );
-				colReboot.Name = @"Reboot";
-				colReboot.HeaderText = string.Empty;
-				colReboot.Text = @"Reboot";
-				colReboot.UseColumnTextForButtonValue = true;
-				dgvComputerInfo.Columns.Add( colReboot );
+				var colShutdown = new DataGridViewButtonColumn( );
+				colShutdown.Name = @"Shutdown";
+				colShutdown.HeaderText = string.Empty;
+				colShutdown.Text = @"Shutdown";
+				colShutdown.UseColumnTextForButtonValue = true;
+				dgvComputerInfo.Columns.Add( colShutdown );
 			}
 			dgvComputerInfo.DataSource = _dsComputerInfo;
 		}
@@ -303,20 +302,20 @@ namespace RemoteWindowsAdministrator {
 				return;
 			}
 			DgvHelpers.SelectCell( dgvComputerInfo, e.RowIndex, e.ColumnIndex );
-			var rebootIndex = DgvHelpers.GetColumnIndex( dgvComputerInfo, @"Reboot" );
+			var shutdownIndex = DgvHelpers.GetColumnIndex( dgvComputerInfo, @"Shutdown" );
 			switch( e.Button ) {
 			case MouseButtons.Left: {
-					if( e.ColumnIndex == rebootIndex ) {
+					if( e.ColumnIndex == shutdownIndex ) {
 						var computerName = dgvComputerInfo.Rows[e.RowIndex].Cells[@"Computer Name"].Value.ToString( );
 						Debug.Assert( null != computerName, @"ComputerName is null.  This should never happen" );
-						if( DialogResult.Yes == MessageBox.Show( string.Format( @"Reboot {0}?", computerName ), @"Question", MessageBoxButtons.YesNo ) ) {
-							ComputerInfo.RebootComputer( computerName );
+						using( var csd = new ConfirmShutdownDialog( new ComputerInfo.ShutdownComputerParameters( computerName ) ) ) {
+							csd.ShowDialog( );
 						}
 					}
 					break;
 				}
 			case MouseButtons.Right: {
-					if( e.ColumnIndex == rebootIndex ) {
+					if( e.ColumnIndex == shutdownIndex ) {
 						return;
 					}
 					var m = new ContextMenu( );
