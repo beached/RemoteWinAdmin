@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Management;
 using System.Net.NetworkInformation;
 
@@ -33,5 +34,20 @@ namespace RemoteWindowsAdministrator {
 				}
 			}
 		}
+
+		public static string GetString( ManagementObject mo, string fieldName ) {
+			var item = mo[fieldName];
+			return null == item ? string.Empty : item.ToString( );
+		}
+
+		public static DateTime GetDate( ManagementObject mo, string fieldName ) {
+			var strItem = GetString( mo, fieldName );
+			var tz = Int32.Parse( strItem.Substring( 21 ) );
+			strItem = strItem.Substring( 0, 21 );
+			var result = DateTime.ParseExact( strItem, @"yyyyMMddHHmmss.ffffff", CultureInfo.InvariantCulture );
+			result = result.AddMinutes( tz );
+			return result;
+		}
+
 	}
 }

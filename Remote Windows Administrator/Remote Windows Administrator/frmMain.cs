@@ -1,25 +1,22 @@
-﻿using System.Collections.Generic;
+﻿using SyncList;
+using System;
+using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Windows.Forms.VisualStyles;
-using SyncList;
-using System;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Drawing;
 using System.Windows.Forms;
 
 namespace RemoteWindowsAdministrator {
 	public partial class FrmMain: Form {
-		private SyncList<WmiWin32Product> _dsSoftware;
+		private SyncList<Win32Product> _dsSoftware;
 		private SyncList<ComputerInfo> _dsComputerInfo;
-		private Int32 _dsComputerInfoThreadCount = 0;
+		private Int32 _dsComputerInfoThreadCount;
 
 		public FrmMain( ) {
 			InitializeComponent( );
 			_dsComputerInfo = new SyncList<ComputerInfo>( dgvComputerInfo );
-			_dsSoftware = new SyncList<WmiWin32Product>( dgvSoftware );
+			_dsSoftware = new SyncList<Win32Product>( dgvSoftware );
 			SetDgvDefaults( dgvSoftware );
 			dgvSoftware.Columns.Add( DataGridViewHelpers.MakeColumn( @"Name" ) );
 			dgvSoftware.Columns.Add( DataGridViewHelpers.MakeColumn( @"Publisher" ) );
@@ -70,7 +67,7 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public void OnEndSoftwareQueryInvoke( ) {
-			this.Invoke( new Action( OnEndSoftwareQuery ) );
+			Invoke( new Action( OnEndSoftwareQuery ) );
 		}
 
 		private void OnStartInfoQuery( ) {
@@ -83,7 +80,7 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public void OnEndInfoQueryInvoke( ) {
-			this.Invoke( new Action( OnEndInfoQuery ) );
+			Invoke( new Action( OnEndInfoQuery ) );
 		}
 
 		private void ClearSofwareData( ) {
@@ -100,7 +97,7 @@ namespace RemoteWindowsAdministrator {
 			if( WmiHelpers.IsAlive( computerName ) ) {
 				new Thread( ( ) => {
 					try {
-						WmiWin32Product.FromComputerName( computerName, ref _dsSoftware, showHidden );
+						Win32Product.FromComputerName( computerName, ref _dsSoftware, showHidden );
 					} finally {
 						_dsSoftware.ResetBindings( );
 						OnEndSoftwareQueryInvoke( );
@@ -196,15 +193,6 @@ namespace RemoteWindowsAdministrator {
 			}
 		}
 
-		// 		private void SelectRow( int row ) {
-		// 			if( 0 > row ) {
-		// 				return;
-		// 			}
-		// 			UnselectAll( );
-		// 			dgvInstalledPrograms.Rows[row].Selected = true;
-		// 			dgvInstalledPrograms.Update( );
-		// 		}
-
 		private static void SelectCell( DataGridView dgv, int row, int col ) {
 			if( 0 > row || 0 > col ) {
 				return;
@@ -235,8 +223,14 @@ namespace RemoteWindowsAdministrator {
 			if( string.IsNullOrEmpty( strGuid ) ) {
 				return;
 			}
-
-			EventHandler uninstallHandler = ( Object, eventArgs ) => {
+			
+			var m = new ContextMenu( );
+			if( !String.IsNullOrEmpty( GetCellString( e.RowIndex, e.ColumnIndex ).Trim( ) ) ) {
+				m.MenuItems.Add( new MenuItem( string.Format( @"Copy {0}", GetColumnName( dgvSoftware, e.ColumnIndex ) ), delegate {
+					Clipboard.SetText( dgvSoftware.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString( ) );
+				} ) );
+			}
+			m.MenuItems.Add( new MenuItem( @"Uninstall", delegate {
 				dgvSoftware.Enabled = false;
 				var oldCursor = Cursor;
 				Cursor = Cursors.WaitCursor;
@@ -245,36 +239,27 @@ namespace RemoteWindowsAdministrator {
 					if( DialogResult.Yes != MessageBox.Show( @"Are you sure?", @"Alert", MessageBoxButtons.YesNo ) ) {
 						return;
 					}
-					WmiWin32Product.UninstallGuidOnComputerName( txtComputerName.Text, strGuid );
+					Win32Product.UninstallGuidOnComputerName( txtComputerName.Text, strGuid );
 					QueryRemoteComputerSoftware( );
 				} finally {
 					dgvSoftware.Enabled = true;
 					Cursor = oldCursor;
 					dgvSoftware.Update( );
 				}
-			};
+			} ) );
 
-			EventHandler searchGuidHandler = ( Object, eventArgs ) => SearchWeb( strGuid );
-			var m = new ContextMenu( );
-			if( !String.IsNullOrEmpty( GetCellString( e.RowIndex, e.ColumnIndex ).Trim( ) ) ) {
-				EventHandler copyCellValueHandler = ( Object, eventArgs ) => Clipboard.SetText( dgvSoftware.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString( ) );
-				m.MenuItems.Add( new MenuItem( string.Format( @"Copy {0}", GetColumnName( dgvSoftware, e.ColumnIndex ) ), copyCellValueHandler ) );
-			}
-			m.MenuItems.Add( new MenuItem( @"Uninstall", uninstallHandler ) );
 			var lookupMenu = new MenuItem( @"Lookup" );
-			lookupMenu.MenuItems.Add( new MenuItem( @"GUID", searchGuidHandler ) );
+			lookupMenu.MenuItems.Add( new MenuItem( @"GUID", delegate { SearchWeb( strGuid ); } ) );
 			{
 				var programName = GetProgram( e.RowIndex );
 				if( !string.IsNullOrEmpty( programName ) ) {
-					EventHandler searchProgramHandler = ( Object, eventArgs ) => SearchWeb( programName );
-					lookupMenu.MenuItems.Add( new MenuItem( @"Program Name", searchProgramHandler ) );
+					lookupMenu.MenuItems.Add( new MenuItem( @"Program Name", delegate { SearchWeb( programName ); } ) );
 				}
 			}
 			{
 				var publisherName = GetPublisher( e.RowIndex );
 				if( !string.IsNullOrEmpty( publisherName ) ) {
-					EventHandler searchPublisherHandler = ( Object, eventArgs ) => SearchWeb( publisherName );
-					lookupMenu.MenuItems.Add( new MenuItem( @"Publisher", searchPublisherHandler ) );
+					lookupMenu.MenuItems.Add( new MenuItem( @"Publisher", delegate { SearchWeb( publisherName ); } ) );
 				}
 			}
 			m.MenuItems.Add( lookupMenu );
@@ -353,7 +338,7 @@ namespace RemoteWindowsAdministrator {
 							ComputerInfo.GetComputerInfo( currentName, ref _dsComputerInfo );
 						} else {
 							// TODO Better logging so that multiples can be done without interruption and threaded
-							_dsComputerInfo.Add( new ComputerInfo {LocalSystemDateTime = DateTime.Now, ComputerName = computerName, Status = @"Connection Error"} );
+							_dsComputerInfo.Add( new ComputerInfo {LocalSystemDateTime = DateTime.Now, ComputerName = currentName, Status = @"Connection Error"} );
 						}
 						_dsComputerInfo.ResetBindings( );
 					} finally {
@@ -377,7 +362,7 @@ namespace RemoteWindowsAdministrator {
 			var computerName = dgvComputerInfo.Rows[e.RowIndex].Cells[@"Computer Name"].Value.ToString( );
 			Debug.Assert( null != computerName, @"ComputerName is null.  This should never happen" );
 
-			if( System.Windows.Forms.DialogResult.Yes == MessageBox.Show( string.Format( @"Reboot {0}?", computerName ), @"Question", MessageBoxButtons.YesNo ) ) {
+			if( DialogResult.Yes == MessageBox.Show( string.Format( @"Reboot {0}?", computerName ), @"Question", MessageBoxButtons.YesNo ) ) {
 				ComputerInfo.RebootComputer( computerName );
 			}
 		}

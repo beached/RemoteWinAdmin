@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Globalization;
 using System.Management;
 using System.Windows.Forms;
 
@@ -27,35 +25,21 @@ namespace RemoteWindowsAdministrator {
 			}
 		}
 
-		private static string GetString( ManagementObject mo, string fieldName ) {
-			var item = mo[fieldName];
-			return null == item ? string.Empty : item.ToString( );
-		}
-
-		private static DateTime GetDate( ManagementObject mo, string fieldName ) {
-			var strItem = GetString( mo, fieldName );
-			var tz = Int32.Parse( strItem.Substring( 21 ) );
-			strItem = strItem.Substring( 0, 21 );
-			var result = DateTime.ParseExact( strItem, @"yyyyMMddHHmmss.ffffff", CultureInfo.InvariantCulture );
-			result = result.AddMinutes( tz );
-			return result;
-		}
-
 		public static void GetComputerInfo( string computerName, ref SyncList.SyncList<ComputerInfo> result ) {
 			var ci = new ComputerInfo { LocalSystemDateTime = DateTime.Now, ComputerName = computerName, Status = @"OK" };
 			try {
-				WmiHelpers.ForEach( computerName, @"SELECT * FROM Win32_OperatingSystem WHERE Primary=TRUE", delegate( ManagementObject osItem ) {
-					ci.LastBootTime = GetDate( osItem, @"LastBootUpTime" );
-					ci.SystemTime = GetDate( osItem, @"LocalDateTime" );
-					ci.Version = GetString( osItem, @"Caption" );
-					ci.Architecture = GetString( osItem, @"OSArchitecture" );
+				WmiHelpers.ForEach( computerName, @"SELECT * FROM Win32_OperatingSystem WHERE Primary=TRUE", obj => {
+					ci.LastBootTime = WmiHelpers.GetDate( obj, @"LastBootUpTime" );
+					ci.SystemTime = WmiHelpers.GetDate( obj, @"LocalDateTime" );
+					ci.Version = WmiHelpers.GetString( obj, @"Caption" );
+					ci.Architecture = WmiHelpers.GetString( obj, @"OSArchitecture" );
 				} );
 
-				WmiHelpers.ForEach( computerName, @"SELECT * FROM Win32_BIOS", delegate( ManagementObject biosItem ) {
-					ci.Manufacturer = GetString( biosItem, @"Manufacturer" );
-					ci.HwReleaseDate = GetDate( biosItem, @"ReleaseDate" );
-					ci.SerialNumber = GetString( biosItem, @"SerialNumber" );
-					ci.BiosVersion = GetString( biosItem, @"SMBIOSBIOSVersion" );
+				WmiHelpers.ForEach( computerName, @"SELECT * FROM Win32_BIOS", obj => {
+					ci.Manufacturer = WmiHelpers.GetString( obj, @"Manufacturer" );
+					ci.HwReleaseDate = WmiHelpers.GetDate( obj, @"ReleaseDate" );
+					ci.SerialNumber = WmiHelpers.GetString( obj, @"SerialNumber" );
+					ci.BiosVersion = WmiHelpers.GetString( obj, @"SMBIOSBIOSVersion" );
 				} );
 			} catch( UnauthorizedAccessException ) {
 				ci.Status = @"Access Denied";
@@ -66,7 +50,7 @@ namespace RemoteWindowsAdministrator {
 		public static void RebootComputer( string computerName ) {
 			try {
 				const string query = @"SELECT * FROM Win32_OperatingSystem WHERE Primary=TRUE";
-				WmiHelpers.ForEach( computerName,  query, delegate( ManagementObject obj ) {
+				WmiHelpers.ForEach( computerName,  query, obj => {
 					var result = obj.InvokeMethod( @"Reboot", new object[] {} ) as uint?;
 					if( 0 != result ) {
 						MessageBox.Show( string.Format( @"Failed to reboot {0} with error {1}", computerName, result ) );

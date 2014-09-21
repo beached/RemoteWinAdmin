@@ -1,17 +1,15 @@
 ﻿using Microsoft.Win32;
+using SyncList;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using System.Management;
-using System.Net.NetworkInformation;
 using System.Windows.Forms;
-using SyncList;
 
 namespace RemoteWindowsAdministrator {
 
-	public class WmiWin32Product: IComparable {
+	public class Win32Product: IComparable {
 		public string Name { get; set; }
 		public string Publisher { get; set; }
 		public string Version { get; set; }
@@ -26,14 +24,14 @@ namespace RemoteWindowsAdministrator {
 
 		public bool ContainsString( string value ) {
 			value = value.ToUpperInvariant( );
-			return Name.ToUpperInvariant( ).Contains( value ) || Publisher.ToUpperInvariant( ).Contains( value ) || Version.ToUpperInvariant( ).Contains( value ) || InstallDate.ToString( ).ToUpperInvariant( ).Contains( value ) || this.Size.ToString( ).ToUpperInvariant( ).Contains( value ) || Guid.ToUpperInvariant( ).Contains( value ) || IsHidden( ).ToString( ).ToUpperInvariant( ).Contains( value ) || HelpLink.ToUpperInvariant(  ).Contains( value ) || UrlInfoAbout.ToUpperInvariant(  ).Contains( value );			
+			return Name.ToUpperInvariant( ).Contains( value ) || Publisher.ToUpperInvariant( ).Contains( value ) || Version.ToUpperInvariant( ).Contains( value ) || InstallDate.ToString( ).ToUpperInvariant( ).Contains( value ) || this.Size.ToString( ).ToUpperInvariant( ).Contains( value ) || Guid.ToUpperInvariant( ).Contains( value ) || IsHidden( ).ToString( ).ToUpperInvariant( ).Contains( value ) || HelpLink.ToUpperInvariant( ).Contains( value ) || UrlInfoAbout.ToUpperInvariant( ).Contains( value );
 		}
 
 		public bool Valid( ) {
 			return !string.IsNullOrEmpty( Name ) && !string.IsNullOrEmpty( Guid );
 		}
 
-		private static bool HasGuid( IEnumerable<WmiWin32Product> values, string guid ) {
+		private static bool HasGuid( IEnumerable<Win32Product> values, string guid ) {
 			return values.Any( currentValue => guid.Equals( currentValue.Guid, StringComparison.OrdinalIgnoreCase ) );
 		}
 
@@ -78,7 +76,7 @@ namespace RemoteWindowsAdministrator {
 			return !shown && SystemComponent;
 		}
 
-		public static void FromComputerName( string computerName, ref SyncList.SyncList<WmiWin32Product> result, bool showHidden = false ) {
+		public static void FromComputerName( string computerName, ref SyncList.SyncList<Win32Product> result, bool showHidden = false ) {
 			try {
 				string[] regPaths = { @"SOFTWARE\Wow6432node\Microsoft\Windows\CurrentVersion\Uninstall", @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" };
 				foreach( var currentPath in regPaths ) {
@@ -86,31 +84,33 @@ namespace RemoteWindowsAdministrator {
 						if( null == regKey ) {
 							continue;
 						}
-						SyncList<WmiWin32Product> list = result;
+						SyncList<Win32Product> list = result;
 						foreach( var curGuid in regKey.GetSubKeyNames( ).Where( currentGuid => currentGuid.StartsWith( @"{" ) && !HasGuid( list, currentGuid ) ) ) {
 							using( var curReg = regKey.OpenSubKey( curGuid, false ) ) {
 								if( null == curReg || !string.IsNullOrEmpty( GetString( curReg, @"ParentKeyName" ) ) ) {
 									continue;
 								}
-								var currentProduct = new WmiWin32Product {Guid = curGuid, 
-									Name = GetString( curReg, @"DisplayName" ), 
-									Publisher = GetString( curReg, @"Publisher" ), 
-									Version = GetString( curReg, @"DisplayVersion" ), 
-									InstallDate = GetDateTime( curReg, @"InstallDate" ), 
-									CanRemove = 0 == GetDword( curReg, @"NoRemove", 0 ), 
-									SystemComponent = 1 == GetDword( curReg, @"SystemComponent", 0 )};
+								var currentProduct = new Win32Product {
+									Guid = curGuid,
+									Name = GetString( curReg, @"DisplayName" ),
+									Publisher = GetString( curReg, @"Publisher" ),
+									Version = GetString( curReg, @"DisplayVersion" ),
+									InstallDate = GetDateTime( curReg, @"InstallDate" ),
+									CanRemove = 0 == GetDword( curReg, @"NoRemove", 0 ),
+									SystemComponent = 1 == GetDword( curReg, @"SystemComponent", 0 )
+								};
 								{
 									var estSize = GetDword( curReg, @"EstimatedSize" );
 									if( null != estSize ) {
-										currentProduct.Size = (float)Math.Round( (float)estSize/1024.0, 2, MidpointRounding.AwayFromZero );
+										currentProduct.Size = (float)Math.Round( (float)estSize / 1024.0, 2, MidpointRounding.AwayFromZero );
 									}
 								}
-								
+
 								currentProduct.HelpLink = GetString( curReg, @"HelpLink" );
 								currentProduct.Comment = GetString( curReg, @"Comment" );
 								currentProduct.UrlInfoAbout = GetString( curReg, @"UrlInfoAbout" );
 								if( currentProduct.Valid( ) && !currentProduct.IsHidden( showHidden ) ) {
-									list.Add( currentProduct );									
+									list.Add( currentProduct );
 								}
 							}
 						}
@@ -122,7 +122,7 @@ namespace RemoteWindowsAdministrator {
 				MessageBox.Show( @"You do not have permission to open this computer", @"Error", MessageBoxButtons.OK );
 			} catch( System.Security.SecurityException ) {
 				MessageBox.Show( @"Security error while connecting", @"Error", MessageBoxButtons.OK );
-			}			
+			}
 		}
 
 		public int CompareTo( object obj ) {
@@ -130,31 +130,16 @@ namespace RemoteWindowsAdministrator {
 			return String.Compare( Name, other, StringComparison.OrdinalIgnoreCase );
 		}
 
-		public static void UninstallGuidOnComputerName( string computerName, string guid ) {
-			var scope = string.Format( @"\\{0}\root\CIMV2", computerName );
-			var query = string.Format( @"SELECT * FROM Win32_Product WHERE IdentifyingNumber='{0}'", guid );
-			using( var objSearch = new ManagementObjectSearcher( scope, query ) ) {
-				Debug.Assert( 1 == objSearch.Get( ).Count );
-
-				foreach( var packageObj in objSearch.Get( ) ) {
-					ManagementObject package = null;
-					try {
-						package = packageObj as ManagementObject;
-					} catch( InvalidCastException ex ) {
-						MessageBox.Show( string.Format( "There was an unexpected error in WMI Uninstall\n{0}", ex.Message ) );
-					}
-
-					Debug.Assert( package != null, @"Software item in WMI was null.  This is not allowed" );
-					Debug.WriteLine( string.Format( @"Uninstalling '{0}' from {1}", package.Properties["Name"].Value, computerName ) );
-					var outParams = package.InvokeMethod( @"Uninstall", null, null );
-					Debug.Assert( outParams != null, @"Return value from uninstall was null.  This is not allowed" );
-					var retVal = Int32.Parse( outParams[@"returnValue"].ToString( ) );
-					if( 0 != retVal ) {
-						MessageBox.Show( string.Format( @"Error uninstalling '{0}' from {1}. Returned a value of {2}", package.Properties["Name"].Value, computerName, retVal ), @"Error", MessageBoxButtons.OK );
-					}
+		public static void UninstallGuidOnComputerName( string computerName, string guid ) {			
+			WmiHelpers.ForEach( computerName, string.Format( @"SELECT * FROM Win32_Product WHERE IdentifyingNumber='{0}'", guid ), package => {
+				Debug.WriteLine( string.Format( @"Uninstalling '{0}' from {1}", package.Properties["Name"].Value, computerName ) );
+				var outParams = package.InvokeMethod( @"Uninstall", null, null );
+				Debug.Assert( outParams != null, @"Return value from uninstall was null.  This is not allowed" );
+				var retVal = int.Parse( outParams[@"returnValue"].ToString( ) );
+				if( 0 != retVal ) {
+					MessageBox.Show( string.Format( @"Error uninstalling '{0}' from {1}. Returned a value of {2}", package.Properties["Name"].Value, computerName, retVal ), @"Error", MessageBoxButtons.OK );
 				}
-			}
+			} );
 		}
-
 	}
 }
