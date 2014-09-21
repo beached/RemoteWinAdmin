@@ -3,6 +3,7 @@ using System.CodeDom;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Management;
 using System.Windows.Forms;
 
@@ -76,6 +77,25 @@ namespace RemoteWindowsAdministrator {
 			}
 
 			result.Add( ci );
+		}
+
+		public static void RebootComputer( string computerName ) {
+			var scope = string.Format( @"\\{0}\root\CIMV2", computerName );
+			const string query = @"Win32_OperatingSystem";
+			try {
+				using( var objSearch = new ManagementObjectSearcher( scope, query ) ) {
+					Debug.Assert( 1 == objSearch.Get( ).Count );
+					foreach( var osItem in objSearch.Get( ) ) {
+						Debug.Assert( osItem != null, @"Operating System item in WMI was null.  This is not allowed" );
+						var result = ((ManagementObject)osItem).InvokeMethod( @"Reboot", new object[] {} ) as uint?;
+						if( 0 != result ) {
+							MessageBox.Show( string.Format( @"Failed to reboot {0} with error {1}", computerName, result ) );	
+						}
+					}
+				}
+			} catch( UnauthorizedAccessException ) {
+				MessageBox.Show( string.Format( @"Failed to reboot {0}, permission denied", computerName ) );
+			}
 		}
 	}
 }

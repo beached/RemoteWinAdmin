@@ -176,6 +176,7 @@
 			this.dgvComputerInfo.Name = "dgvComputerInfo";
 			this.dgvComputerInfo.Size = new System.Drawing.Size(1144, 487);
 			this.dgvComputerInfo.TabIndex = 5;
+			this.dgvComputerInfo.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvComputerInfo_CellContentClick);
 			// 
 			// gbInfoComputerName
 			// 

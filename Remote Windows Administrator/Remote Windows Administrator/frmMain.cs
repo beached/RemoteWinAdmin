@@ -15,11 +15,12 @@ namespace RemoteWindowsAdministrator {
 		private SyncList<WmiWin32Product> _dsSoftware;
 		private SyncList<ComputerInfo> _dsComputerInfo;
 		private Int32 _dsComputerInfoThreadCount = 0;
+
 		public FrmMain( ) {
 			InitializeComponent( );
 			_dsComputerInfo = new SyncList<ComputerInfo>( dgvComputerInfo );
 			_dsSoftware = new SyncList<WmiWin32Product>( dgvSoftware );
-			setDGVDefaults( ref dgvSoftware );
+			SetDgvDefaults( dgvSoftware );
 			dgvSoftware.Columns.Add( DataGridViewHelpers.MakeColumn( @"Name" ) );
 			dgvSoftware.Columns.Add( DataGridViewHelpers.MakeColumn( @"Publisher" ) );
 			dgvSoftware.Columns.Add( DataGridViewHelpers.MakeColumn( @"Version" ) );
@@ -35,7 +36,7 @@ namespace RemoteWindowsAdministrator {
 			dgvSoftware.DataSource = _dsSoftware;
 
 
-			setDGVDefaults( ref dgvComputerInfo );
+			SetDgvDefaults( dgvComputerInfo );
 			dgvComputerInfo.Columns.Add( DataGridViewHelpers.MakeColumn( @"ComputerName", @"Computer Name" ) );
 			dgvComputerInfo.Columns.Add( DataGridViewHelpers.MakeColumn( @"Status" ) );
 			dgvComputerInfo.Columns.Add( DataGridViewHelpers.MakeDateColumn( @"LastBootTime", @"Boot Time", false, true, @"yyyy-MM-dd HH:mm" ) );
@@ -46,7 +47,14 @@ namespace RemoteWindowsAdministrator {
 			dgvComputerInfo.Columns.Add( DataGridViewHelpers.MakeDateColumn( @"HwReleaseDate", @"Hardware Date" ) );
 			dgvComputerInfo.Columns.Add( DataGridViewHelpers.MakeColumn( @"SerialNumber", @"Serial Number" ) );
 			dgvComputerInfo.Columns.Add( DataGridViewHelpers.MakeColumn( @"BiosVersion", @"BIOS Version" ) );
-
+			{
+				var colReboot = new DataGridViewButtonColumn( );
+				colReboot.Name = @"Reboot";
+				colReboot.HeaderText = string.Empty;
+				colReboot.Text = @"Reboot";
+				colReboot.UseColumnTextForButtonValue = true;
+				dgvComputerInfo.Columns.Add( colReboot );
+			}
 			dgvComputerInfo.DataSource = _dsComputerInfo;
 		}
 
@@ -75,18 +83,18 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public void OnEndInfoQueryInvoke( ) {
-			this.Invoke(  new Action( OnEndInfoQuery ) );
+			this.Invoke( new Action( OnEndInfoQuery ) );
 		}
 
 		private void ClearSofwareData( ) {
 			txtFilter.Text = string.Empty;
 			_dsSoftware.Clear( );
-			dgvSoftware.DataSource = _dsSoftware;			
+			dgvSoftware.DataSource = _dsSoftware;
 		}
 
 		private void QueryRemoteComputerSoftware( ) {
 			ClearSofwareData( );
-			OnStartSoftwareQuery(  );
+			OnStartSoftwareQuery( );
 			var computerName = txtComputerName.Text.Trim( );
 			bool showHidden = chkShowHidden.Checked;
 			if( WmiWin32Product.IsAlive( computerName ) ) {
@@ -95,7 +103,7 @@ namespace RemoteWindowsAdministrator {
 						WmiWin32Product.FromComputerName( computerName, ref _dsSoftware, showHidden );
 					} finally {
 						_dsSoftware.ResetBindings( );
-						OnEndSoftwareQueryInvoke( );						
+						OnEndSoftwareQueryInvoke( );
 					}
 				} ).Start( );
 			} else {
@@ -122,14 +130,14 @@ namespace RemoteWindowsAdministrator {
 		private static void OpenLink( string link ) {
 			if( !string.IsNullOrEmpty( link ) ) {
 				Process.Start( link );
-			}		
+			}
 		}
 
 		private static void OpenLink( DataGridViewCell cell ) {
 			if( null == cell ) {
 				return;
 			}
-			OpenLink( cell.Value.ToString(  ) );
+			OpenLink( cell.Value.ToString( ) );
 		}
 
 		private string GetCellString( int row, int column ) {
@@ -141,23 +149,23 @@ namespace RemoteWindowsAdministrator {
 			if( null == cell || null == cell.Value ) {
 				return result;
 			}
-			var strTmp = cell.Value.ToString(  );
+			var strTmp = cell.Value.ToString( );
 			if( !string.IsNullOrEmpty( strTmp ) ) {
 				result = strTmp;
 			}
 			return result;
 		}
 
-		private string GetCellString( int row, string columnName ) {			
+		private static string GetCellString( DataGridView dgv, int row, string columnName ) {
 			var result = string.Empty;
 			if( 0 > row ) {
 				return result;
 			}
-			var cell = dgvSoftware.Rows[row].Cells[columnName];
+			var cell = dgv.Rows[row].Cells[columnName];
 			if( null == cell || null == cell.Value ) {
 				return result;
 			}
-			var strTmp = cell.Value.ToString(  );
+			var strTmp = cell.Value.ToString( );
 			if( !string.IsNullOrEmpty( strTmp ) ) {
 				result = strTmp;
 			}
@@ -166,46 +174,46 @@ namespace RemoteWindowsAdministrator {
 
 
 		private string GetGuid( int row ) {
-			return GetCellString( row, @"Guid" );
+			return GetCellString( dgvSoftware, row, @"Guid" );
 		}
 
 		private string GetProgram( int row ) {
-			return GetCellString( row, @"Name" );
+			return GetCellString( dgvSoftware, row, @"Name" );
 		}
 
 		private string GetPublisher( int row ) {
-			return GetCellString( row, @"Publisher" );
+			return GetCellString( dgvSoftware, row, @"Publisher" );
 		}
 
-		private string GetColumnName( int column ) {
-			Debug.Assert( 0 <= column && dgvSoftware.Columns.Count > column, @"An invalid column number was specified" );
-			return dgvSoftware.Columns[column].Name;
+		private static string GetColumnName( DataGridView dgv, int column ) {
+			Debug.Assert( 0 <= column && dgv.Columns.Count > column, @"An invalid column number was specified" );
+			return dgv.Columns[column].Name;
 		}
-		
-		private void UnselectAll( ) {
-			foreach( DataGridViewRow row in dgvSoftware.Rows ) {
+
+		private static void UnselectAll( DataGridView dgv ) {
+			foreach( DataGridViewRow row in dgv.Rows ) {
 				row.Selected = false;
 			}
 		}
 
-// 		private void SelectRow( int row ) {
-// 			if( 0 > row ) {
-// 				return;
-// 			}
-// 			UnselectAll( );
-// 			dgvInstalledPrograms.Rows[row].Selected = true;
-// 			dgvInstalledPrograms.Update( );
-// 		}
+		// 		private void SelectRow( int row ) {
+		// 			if( 0 > row ) {
+		// 				return;
+		// 			}
+		// 			UnselectAll( );
+		// 			dgvInstalledPrograms.Rows[row].Selected = true;
+		// 			dgvInstalledPrograms.Update( );
+		// 		}
 
-		private void SelectCell( int row, int col ) {
+		private static void SelectCell( DataGridView dgv, int row, int col ) {
 			if( 0 > row || 0 > col ) {
 				return;
 			}
-			UnselectAll( );
-			dgvSoftware.Rows[row].Cells[col].Selected = true;
+			UnselectAll( dgv );
+			dgv.Rows[row].Cells[col].Selected = true;
 		}
 
-		private void SearchWeb( string query ) {
+		private static void SearchWeb( string query ) {
 			var strQuery = string.Format( @"https://www.google.ca/search?q={0}", System.Web.HttpUtility.UrlEncode( query ) );
 			OpenLink( strQuery );
 		}
@@ -214,20 +222,20 @@ namespace RemoteWindowsAdministrator {
 			if( 0 > e.RowIndex || 0 > e.ColumnIndex ) {
 				return;
 			}
-			SelectCell( e.RowIndex, e.ColumnIndex );
-			if( MouseButtons.Right != e.Button ) {				
+			SelectCell( dgvSoftware, e.RowIndex, e.ColumnIndex );
+			if( MouseButtons.Right != e.Button ) {
 				var curCell = dgvSoftware.Rows[e.RowIndex].Cells[e.ColumnIndex];
 				if( IsLink( curCell ) ) {
 					OpenLink( curCell );
 				}
 				return;
 			}
-			
+
 			var strGuid = GetGuid( e.RowIndex );
 			if( string.IsNullOrEmpty( strGuid ) ) {
 				return;
-			}			
-			
+			}
+
 			EventHandler uninstallHandler = ( Object, eventArgs ) => {
 				dgvSoftware.Enabled = false;
 				var oldCursor = Cursor;
@@ -238,7 +246,7 @@ namespace RemoteWindowsAdministrator {
 						return;
 					}
 					WmiWin32Product.UninstallGuidOnComputerName( txtComputerName.Text, strGuid );
-					QueryRemoteComputerSoftware( );					
+					QueryRemoteComputerSoftware( );
 				} finally {
 					dgvSoftware.Enabled = true;
 					Cursor = oldCursor;
@@ -247,10 +255,10 @@ namespace RemoteWindowsAdministrator {
 			};
 
 			EventHandler searchGuidHandler = ( Object, eventArgs ) => SearchWeb( strGuid );
- 			var m = new ContextMenu( );
+			var m = new ContextMenu( );
 			if( !String.IsNullOrEmpty( GetCellString( e.RowIndex, e.ColumnIndex ).Trim( ) ) ) {
 				EventHandler copyCellValueHandler = ( Object, eventArgs ) => Clipboard.SetText( dgvSoftware.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString( ) );
-				m.MenuItems.Add( new MenuItem( string.Format( @"Copy {0}", GetColumnName( e.ColumnIndex ) ), copyCellValueHandler ) );
+				m.MenuItems.Add( new MenuItem( string.Format( @"Copy {0}", GetColumnName( dgvSoftware, e.ColumnIndex ) ), copyCellValueHandler ) );
 			}
 			m.MenuItems.Add( new MenuItem( @"Uninstall", uninstallHandler ) );
 			var lookupMenu = new MenuItem( @"Lookup" );
@@ -273,7 +281,7 @@ namespace RemoteWindowsAdministrator {
 			m.Show( dgvSoftware, dgvSoftware.PointToClient( new Point( Cursor.Position.X, Cursor.Position.Y ) ) );
 		}
 
-		private static void setDGVDefaults( ref DataGridView dgv ) {
+		private static void SetDgvDefaults( DataGridView dgv ) {
 			dgv.AutoGenerateColumns = false;
 			dgv.RowHeadersVisible = true;
 			dgv.MultiSelect = true;
@@ -293,7 +301,7 @@ namespace RemoteWindowsAdministrator {
 
 			} catch( Exception ex ) {
 				new ToolTip( ).SetToolTip( txtFilter, ex.Message );
-			}			
+			}
 		}
 
 		private void txtFilter_TextChanged( object sender, EventArgs e ) {
@@ -305,7 +313,7 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private void ClearInfoData( ) {
-			_dsComputerInfo.Clear(  );
+			_dsComputerInfo.Clear( );
 			dgvComputerInfo.DataSource = _dsComputerInfo;
 		}
 
@@ -326,7 +334,7 @@ namespace RemoteWindowsAdministrator {
 
 		private void QueryRemoteComputerInfo( ) {
 			ClearInfoData( );
-			OnStartInfoQuery(  );
+			OnStartInfoQuery( );
 			var nameSource = txtInfoComputerName.Text.Trim( );
 			if( string.IsNullOrEmpty( nameSource ) ) {
 				return;
@@ -334,7 +342,7 @@ namespace RemoteWindowsAdministrator {
 			if( IsFile( nameSource ) ) {
 				nameSource = GetComputerNamesFromFile( nameSource );
 			}
-			var computerNames = nameSource.Split( new[] {@";", @",", @"	", @" ", "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries ).Distinct().Where( item => !string.IsNullOrEmpty( item ) ).ToArray(  );
+			var computerNames = nameSource.Split( new[] {@";", @",", @"	", @" ", "\r\n", "\n", "\r"}, StringSplitOptions.RemoveEmptyEntries ).Distinct( ).Where( item => !string.IsNullOrEmpty( item ) ).ToArray( );
 			_dsComputerInfoThreadCount = computerNames.Count( );
 
 			foreach( var computerName in computerNames ) {
@@ -358,8 +366,20 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private void btnInfoQuery_Click( object sender, EventArgs e ) {
-			QueryRemoteComputerInfo(  );
+			QueryRemoteComputerInfo( );
 		}
 
+		private void dgvComputerInfo_CellContentClick( object sender, DataGridViewCellEventArgs e ) {
+			var columnName = GetColumnName( dgvComputerInfo, e.ColumnIndex );
+			if( @"Reboot" != columnName ) {
+				return;
+			}
+			var computerName = dgvComputerInfo.Rows[e.RowIndex].Cells[@"Computer Name"].Value.ToString( );
+			Debug.Assert( null != computerName, @"ComputerName is null.  This should never happen" );
+
+			if( System.Windows.Forms.DialogResult.Yes == MessageBox.Show( string.Format( @"Reboot {0}?", computerName ), @"Question", MessageBoxButtons.YesNo ) ) {
+				ComputerInfo.RebootComputer( computerName );
+			}
+		}
 	}
 }
