@@ -46,7 +46,9 @@ namespace RemoteWindowsAdministrator {
 					ci.BiosVersion = WmiHelpers.GetString( obj, @"SMBIOSBIOSVersion" );
 				} );
 			} catch( UnauthorizedAccessException ) {
-				ci.Status = @"Access Denied";
+				ci.Status = @"Authorization Error";
+			} catch( Exception ) {
+				ci.Status = @"Error";
 			}
 			result.Add( ci );
 		}
@@ -61,6 +63,10 @@ namespace RemoteWindowsAdministrator {
 				Reboot = 2,
 				PowerOff = 8
 			};
+
+			public static ShutdownTypes ShutdownTypesFromShort( short shutdownType ) {
+				return (ShutdownTypes)Enum.ToObject( typeof( ShutdownTypes ), shutdownType );
+			}
 
 			internal short Flags {
 				get {

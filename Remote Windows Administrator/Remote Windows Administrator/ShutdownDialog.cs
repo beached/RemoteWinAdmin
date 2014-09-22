@@ -6,11 +6,6 @@ namespace RemoteWindowsAdministrator {
 	public partial class ConfirmShutdownDialog: Form {
 		private readonly ComputerInfo.ShutdownComputerParameters _shutdownParameters;
 
-// 		public ConfirmShutdownDialog( ) {
-// 			_shutdownParameters = new ConfirmShutdownParameters(  );
-// 			InitializeComponent( );
-// 		}
-
 		public ConfirmShutdownDialog( ComputerInfo.ShutdownComputerParameters shutdownParameters ) {
 			_shutdownParameters = shutdownParameters;
 			InitializeComponent( );
@@ -32,10 +27,10 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private void BindControlsToValues( ) {
-			cmbTypeOfShutdown.SelectedIndexChanged += ( o, args ) => { _shutdownParameters.ShutdownType = (ComputerInfo.ShutdownComputerParameters.ShutdownTypes)Enum.ToObject( typeof( ComputerInfo.ShutdownComputerParameters.ShutdownTypes ), cmbTypeOfShutdown.SelectedIndex ); };
-			chkForced.CheckedChanged += ( o, args ) => { _shutdownParameters.Forced = chkForced.Checked; };
-			numTimeout.ValueChanged += ( o, args ) => { _shutdownParameters.Timeout = Decimal.ToUInt32( numTimeout.Value ); };
-			txtMessage.TextChanged += ( o, args ) => { _shutdownParameters.Comment = txtMessage.Text.Trim( ); };			
+			cmbTypeOfShutdown.SelectedIndexChanged += ( o, args ) => ComputerInfo.ShutdownComputerParameters.ShutdownTypesFromShort( (short)cmbTypeOfShutdown.SelectedIndex );
+			chkForced.CheckedChanged += ( o, args ) => _shutdownParameters.Forced = chkForced.Checked;
+			numTimeout.ValueChanged += ( o, args ) => _shutdownParameters.Timeout = Decimal.ToUInt32( numTimeout.Value );
+			txtMessage.TextChanged += ( o, args ) => _shutdownParameters.Comment = txtMessage.Text.Trim( );
 		}
 
 		private void ConfirmShutdownDialog_Load( object sender, EventArgs e ) {

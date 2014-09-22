@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="currentusers.cs" />
     <Compile Include="IContainsString.cs" />
     <Compile Include="ShutdownDialog.cs">
       <SubType>Form</SubType>
@@ -54,7 +55,7 @@
       <DependentUpon>ShutdownDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="ValueIsIn.cs" />
-    <Compile Include="computer_info.cs" />
+    <Compile Include="computerinfo.cs" />
     <Compile Include="frmMain.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -64,7 +65,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="wmi_helpers.cs" />
-    <Compile Include="win32product.cs" />
+    <Compile Include="software.cs" />
     <EmbeddedResource Include="frmMain.resx">
       <DependentUpon>frmMain.cs</DependentUpon>
       <SubType>Designer</SubType>
