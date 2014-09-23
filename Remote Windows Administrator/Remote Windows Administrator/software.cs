@@ -34,41 +34,6 @@ namespace RemoteWindowsAdministrator {
 			return values.Any( currentValue => guid.Equals( currentValue.Guid, StringComparison.OrdinalIgnoreCase ) );
 		}
 
-		private static string GetString( RegistryKey rk, string value ) {
-			var obj = rk.GetValue( value );
-			if( null == obj ) {
-				return string.Empty;
-			}
-			var result = obj as string;
-			if( result == null ) {
-				return string.Empty;
-			}
-			result = result.Trim( );
-			return result;
-		}
-
-		private static DateTime? GetDateTime( RegistryKey rk, string value ) {
-			DateTime? result = null;
-			var strDteTime = GetString( rk, value );
-			if( string.IsNullOrEmpty( strDteTime ) ) {
-				return null;
-			}
-			string[] dteFormats = { @"yyyy-MM-dd", @"yyyyMMdd", @"MM-dd-yyyy" };
-			DateTime tmp;
-			if( DateTime.TryParseExact( strDteTime, dteFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out tmp ) ) {
-				result = tmp;
-			}
-			return result;
-		}
-
-		private static Int32? GetDword( RegistryKey rk, string value, Int32? defaultValue = null ) {
-			var result = rk.GetValue( value ) as Int32?;
-			if( null == result && null != defaultValue ) {
-				result = defaultValue;
-			}
-			return result;
-		}
-
 		public bool ShouldHide { get { return IsHidden( ); } }
 
 		private bool IsHidden( bool shown = false ) {
@@ -86,28 +51,28 @@ namespace RemoteWindowsAdministrator {
 						SyncList<Win32Product> list = result;
 						foreach( var curGuid in regKey.GetSubKeyNames( ).Where( currentGuid => currentGuid.StartsWith( @"{" ) && !HasGuid( list, currentGuid ) ) ) {
 							using( var curReg = regKey.OpenSubKey( curGuid, false ) ) {
-								if( null == curReg || !string.IsNullOrEmpty( GetString( curReg, @"ParentKeyName" ) ) ) {
+								if( null == curReg || !string.IsNullOrEmpty( RegistryHelpers.GetString( curReg, @"ParentKeyName" ) ) ) {
 									continue;
 								}
 								var currentProduct = new Win32Product {
 									Guid = curGuid,
-									Name = GetString( curReg, @"DisplayName" ),
-									Publisher = GetString( curReg, @"Publisher" ),
-									Version = GetString( curReg, @"DisplayVersion" ),
-									InstallDate = GetDateTime( curReg, @"InstallDate" ),
-									CanRemove = 0 == GetDword( curReg, @"NoRemove", 0 ),
-									SystemComponent = 1 == GetDword( curReg, @"SystemComponent", 0 )
+									Name = RegistryHelpers.GetString( curReg, @"DisplayName" ),
+									Publisher = RegistryHelpers.GetString( curReg, @"Publisher" ),
+									Version = RegistryHelpers.GetString( curReg, @"DisplayVersion" ),
+									InstallDate = RegistryHelpers.GetDateTime( curReg, @"InstallDate" ),
+									CanRemove = 0 == RegistryHelpers.GetDword( curReg, @"NoRemove", 0 ),
+									SystemComponent = 1 == RegistryHelpers.GetDword( curReg, @"SystemComponent", 0 )
 								};
 								{
-									var estSize = GetDword( curReg, @"EstimatedSize" );
+									var estSize = RegistryHelpers.GetDword( curReg, @"EstimatedSize" );
 									if( null != estSize ) {
 										currentProduct.Size = (float)Math.Round( (float)estSize / 1024.0, 2, MidpointRounding.AwayFromZero );
 									}
 								}
 
-								currentProduct.HelpLink = GetString( curReg, @"HelpLink" );
-								currentProduct.Comment = GetString( curReg, @"Comment" );
-								currentProduct.UrlInfoAbout = GetString( curReg, @"UrlInfoAbout" );
+								currentProduct.HelpLink = RegistryHelpers.GetString( curReg, @"HelpLink" );
+								currentProduct.Comment = RegistryHelpers.GetString( curReg, @"Comment" );
+								currentProduct.UrlInfoAbout = RegistryHelpers.GetString( curReg, @"UrlInfoAbout" );
 								if( currentProduct.Valid( ) && !currentProduct.IsHidden( showHidden ) ) {
 									list.Add( currentProduct );
 								}

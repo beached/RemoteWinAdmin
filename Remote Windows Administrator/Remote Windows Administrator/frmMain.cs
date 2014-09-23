@@ -1,4 +1,5 @@
-﻿using SyncList;
+﻿using System.Collections.Generic;
+using SyncList;
 using System;
 using System.Diagnostics;
 using System.Drawing;
@@ -21,51 +22,55 @@ namespace RemoteWindowsAdministrator {
 			_dsSoftware = new SyncList<Win32Product>( dgvSoftware );
 			_dsCurrentUsers = new SyncList<CurrentUsers>( dgvCurrentUsers );
 
+			// Setup software grid
 			SetDgvDefaults( dgvSoftware );
-			dgvSoftware.Columns.Add( DgvHelpers.MakeColumn( @"Name" ) );
-			dgvSoftware.Columns.Add( DgvHelpers.MakeColumn( @"Publisher" ) );
-			dgvSoftware.Columns.Add( DgvHelpers.MakeColumn( @"Version" ) );
-			dgvSoftware.Columns.Add( DgvHelpers.MakeDateColumn( @"InstallDate", @"Install Date" ) );
-			dgvSoftware.Columns.Add( DgvHelpers.MakeColumn( @"Size", @"Size(MB)" ) );
-			dgvSoftware.Columns.Add( DgvHelpers.MakeColumn( @"Guid", null, true ) );
-
-			dgvSoftware.Columns.Add( DgvHelpers.MakeLinkColumn( @"HelpLink", @"Help Link" ) );
-			dgvSoftware.Columns.Add( DgvHelpers.MakeLinkColumn( @"UrlInfoAbout", @"About Link" ) );
-			dgvSoftware.Columns.Add( DgvHelpers.MakeCheckedColumn( @"ShouldHide", @"Hidden" ) );
-			dgvSoftware.Columns.Add( DgvHelpers.MakeColumn( @"Comment" ) );
+			DgvHelpers.AddColumn( dgvSoftware, @"Name" );
+			DgvHelpers.AddColumn( dgvSoftware, @"Publisher" );
+			DgvHelpers.AddColumn( dgvSoftware, @"Version" );
+			DgvHelpers.AddDateColumn( dgvSoftware, @"InstallDate", @"Install Date" );
+			DgvHelpers.AddColumn( dgvSoftware, @"Size", @"Size(MB)" );
+			DgvHelpers.AddColumn( dgvSoftware, @"Guid", null, true );
+			DgvHelpers.AddLinkColumn( dgvSoftware, @"HelpLink", @"Help Link" );
+			DgvHelpers.AddLinkColumn( dgvSoftware, @"UrlInfoAbout", @"About Link" );
+			DgvHelpers.AddCheckedColumn( dgvSoftware, @"ShouldHide", @"Hidden" );
+			DgvHelpers.AddColumn( dgvSoftware, @"Comment" );
 
 			dgvSoftware.DataSource = _dsSoftware;
 
-
+			// Setup Computer Info grid
 			SetDgvDefaults( dgvComputerInfo );
-			dgvComputerInfo.Columns.Add( DgvHelpers.MakeColumn( @"ComputerName", @"Computer Name" ) );
-			dgvComputerInfo.Columns.Add( DgvHelpers.MakeColumn( @"Status" ) );
-			dgvComputerInfo.Columns.Add( DgvHelpers.MakeDateColumn( @"LastBootTime", @"Boot Time", false, true, @"yyyy-MM-dd HH:mm" ) );
-			dgvComputerInfo.Columns.Add( DgvHelpers.MakeColumn( @"Uptime" ) );
-			dgvComputerInfo.Columns.Add( DgvHelpers.MakeColumn( @"Version", @"Windows Version" ) );
-			dgvComputerInfo.Columns.Add( DgvHelpers.MakeColumn( @"Architecture" ) );
-			dgvComputerInfo.Columns.Add( DgvHelpers.MakeColumn( @"Manufacturer" ) );
-			dgvComputerInfo.Columns.Add( DgvHelpers.MakeDateColumn( @"HwReleaseDate", @"Hardware Date" ) );
-			dgvComputerInfo.Columns.Add( DgvHelpers.MakeColumn( @"SerialNumber", @"Serial Number" ) );
-			dgvComputerInfo.Columns.Add( DgvHelpers.MakeColumn( @"BiosVersion", @"BIOS Version" ) );
+			DgvHelpers.AddColumn( dgvComputerInfo, @"ComputerName", @"Computer Name" );
+			DgvHelpers.AddColumn( dgvComputerInfo, @"Status" );
+			DgvHelpers.AddDateColumn( dgvComputerInfo, @"LastBootTime", @"Boot Time", false, true, @"yyyy-MM-dd HH:mm" );
+			DgvHelpers.AddColumn( dgvComputerInfo, @"Uptime" );
+			DgvHelpers.AddColumn( dgvComputerInfo, @"Version", @"Windows Version" );
+			DgvHelpers.AddColumn( dgvComputerInfo, @"Architecture" );
+			DgvHelpers.AddColumn( dgvComputerInfo, @"Manufacturer" );
+			DgvHelpers.AddDateColumn( dgvComputerInfo, @"HwReleaseDate", @"Hardware Date" );
+			DgvHelpers.AddColumn( dgvComputerInfo, @"SerialNumber", @"Serial Number" );
+			DgvHelpers.AddColumn( dgvComputerInfo, @"BiosVersion", @"BIOS Version" );
 			{
 				var colShutdown = new DataGridViewButtonColumn {Name = @"Shutdown", HeaderText = string.Empty, Text = @"Shutdown", UseColumnTextForButtonValue = true};
 				dgvComputerInfo.Columns.Add( colShutdown );
 			}
 			dgvComputerInfo.DataSource = _dsComputerInfo;
 
+			// Setup Currently logged in users grid
 			SetDgvDefaults( dgvCurrentUsers );
-			dgvCurrentUsers.Columns.Add( DgvHelpers.MakeColumn( @"ComputerName", @"Computer Name" ) );
-			dgvCurrentUsers.Columns.Add( DgvHelpers.MakeColumn( @"ConnectionStatus", @"Connection Status" ) );
-			dgvCurrentUsers.Columns.Add( DgvHelpers.MakeColumn( @"AuthenticationPackage", @"Authentication Package" ) );
-			dgvCurrentUsers.Columns.Add( DgvHelpers.MakeColumn( @"LogonType", @"Login Type" ) );
-			dgvCurrentUsers.Columns.Add( DgvHelpers.MakeColumn( @"Domain" ) );
-			dgvCurrentUsers.Columns.Add( DgvHelpers.MakeColumn( @"Name" ) );
-			dgvCurrentUsers.Columns.Add( DgvHelpers.MakeDateColumn( @"StartTime", @"StartTime", false, true, @"yyyy-MM-dd HH:mm" ) );
-			dgvCurrentUsers.Columns.Add( DgvHelpers.MakeColumn( @"LogonId", @"Login ID" ) );
+			DgvHelpers.AddColumn( dgvCurrentUsers, @"ComputerName", @"Computer Name" );
+			DgvHelpers.AddColumn( dgvCurrentUsers, @"ConnectionStatus", @"Connection Status" );
+			DgvHelpers.AddColumn( dgvCurrentUsers, @"Domain" );
+			DgvHelpers.AddColumn( dgvCurrentUsers, @"UserName", @"UserName" );
+ 			DgvHelpers.AddDateColumn( dgvCurrentUsers, @"LastLogon", @"Last Logon", false, true, @"yyyy-MM-dd HH:mm" );
+			DgvHelpers.AddColumn( dgvCurrentUsers, @"LogonDuration", @"Logon Duration" );
+			DgvHelpers.AddColumn( dgvCurrentUsers, @"Sid", @"SID" );
+			DgvHelpers.AddColumn( dgvCurrentUsers, @"ProfileFolder", @"Profile" );
 
 			dgvCurrentUsers.DataSource = _dsCurrentUsers;
 
+
+			// Prepare busy indicators
+				
 		}
 
 		private void FrmMain_Shown( object sender, EventArgs e ) {
@@ -342,11 +347,11 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private void txtCurrentUsersComputer_Enter( object sender, EventArgs e ) {
-			AcceptButton = null;
+			AcceptButton = btnQueryCurrentUsers;
 		}
 
 		private void txtCurrentUsersComputer_Leave( object sender, EventArgs e ) {
-			AcceptButton = btnQueryCurrentUsers;
+			AcceptButton = null;
 		}
 
 		private void txtCurrentUsersComputer_TextChanged( object sender, EventArgs e ) {

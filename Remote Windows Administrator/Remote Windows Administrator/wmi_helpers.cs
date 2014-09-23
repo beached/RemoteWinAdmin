@@ -6,6 +6,12 @@ using System.Net.NetworkInformation;
 
 namespace RemoteWindowsAdministrator {
 	public sealed class WmiHelpers {
+		/// <summary>
+		/// Checks if the hostname is resolvable and pingable
+		/// </summary>
+		/// <param name="computerName">The test host system</param>
+		/// <param name="timeoutMs">How long to wait for a ping replay in ms</param>
+		/// <returns></returns>
 		public static bool IsAlive( string computerName, int timeoutMs = 3000 ) {
 			try {
 				using( var pingSender = new Ping( ) ) {
