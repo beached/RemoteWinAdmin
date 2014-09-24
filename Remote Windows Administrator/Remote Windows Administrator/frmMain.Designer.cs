@@ -132,7 +132,7 @@
 			this.gbComputer.Size = new System.Drawing.Size(1140, 47);
 			this.gbComputer.TabIndex = 3;
 			this.gbComputer.TabStop = false;
-			this.gbComputer.Text = "Computer";
+			this.gbComputer.Text = "Computer(s)";
 			// 
 			// chkSoftwareShowHidden
 			// 

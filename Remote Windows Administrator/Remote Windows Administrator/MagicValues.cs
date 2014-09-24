@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace RemoteWindowsAdministrator {
 	public static class MagicValues {
@@ -9,5 +11,21 @@ namespace RemoteWindowsAdministrator {
 		public const string ShortDateFormat = @"yyyy-MM-dd";
 		public const string TimeDateStringFormat = @"yyyy-MM-dd HH:mm";
 
+		public static List<string> DeleniateComputerList( string computerList ) {
+			return computerList.Split( new[] {
+				@";", @",", @"	", @" ", "\r\n", "\n", "\r"
+			}, StringSplitOptions.RemoveEmptyEntries ).Distinct( ).Where( item => !string.IsNullOrEmpty( item ) ).ToList(  );
+		}
+
+		public static string StripSurroundingDblQuotes( string value ) {
+			if( string.IsNullOrEmpty( value ) ) {
+				return string.Empty;
+			}
+			const string dblQuote = "\"";
+			if( value.StartsWith( dblQuote ) && value.EndsWith( dblQuote ) ) {
+				value = value.Substring( 1, value.Length - 2 );
+			}
+			return value;
+		}
 	}
 }

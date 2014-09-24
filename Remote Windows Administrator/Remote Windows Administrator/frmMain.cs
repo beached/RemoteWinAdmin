@@ -97,18 +97,26 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private void ClearComputerInfo( ) {
-			_dsComputerInfo.Clear( );
+			lock( _dsComputerInfo ) {
+				_dsComputerInfo.Clear( );
+			}
+			txtComputerInfoFilter.Clear(  );
 			dgvComputerInfo.DataSource = _dsComputerInfo;
 		}
 
-		private void ClearSoftware( ) {
-			txtSoftwareFilter.Text = string.Empty;
-			_dsSoftware.Clear( );
+		private void ClearSoftware( ) {			
+			lock( _dsSoftware ) {
+				_dsSoftware.Clear( );
+			}
+			txtSoftwareFilter.Clear( );
 			dgvSoftware.DataSource = _dsSoftware;
 		}
 
 		private void ClearCurrentUsers( ) {
-			_dsCurrentUsers.Clear( );
+			lock( _dsCurrentUsers ) {
+				_dsCurrentUsers.Clear( );
+			}
+			txtCurrentUsersFilter.Clear(  );
 			dgvCurrentUsers.DataSource = _dsCurrentUsers;
 		}
 
@@ -276,7 +284,9 @@ namespace RemoteWindowsAdministrator {
 						if( WmiHelpers.IsAlive( computerName ) ) {
 							ComputerSoftware.FromComputerName( computerName, ref _dsSoftware, showHidden );
 						} else {
-							_dsSoftware.Add( new ComputerSoftware( computerName, @"Connection Error" ) );
+							lock( _dsSoftware ) {
+								_dsSoftware.Add( new ComputerSoftware( computerName, @"Connection Error" ) );
+							}
 						}
 					} finally {
 						if( 0 >= Interlocked.Decrement( ref _dsSoftwareThreadCount ) ) {
@@ -303,10 +313,10 @@ namespace RemoteWindowsAdministrator {
 						if( WmiHelpers.IsAlive( currentName ) ) {
 							ComputerInfo.GetComputerInfo( currentName, ref _dsComputerInfo );
 						} else {
-							// TODO Better logging so that multiples can be done without interruption and threaded
-							_dsComputerInfo.Add( new ComputerInfo { LocalSystemDateTime = DateTime.Now, ComputerName = currentName, Status = @"Connection Error" } );
+							lock( _dsComputerInfo ) {
+								_dsComputerInfo.Add( new ComputerInfo {LocalSystemDateTime = DateTime.Now, ComputerName = currentName, Status = @"Connection Error"} );
+							}
 						}
-						_dsComputerInfo.ResetBindings( );
 					} finally {
 						if( 0 >= Interlocked.Decrement( ref _dsComputerInfoThreadCount ) ) {
 							OnEndQueryComputerInfoInvoke( );
@@ -332,10 +342,10 @@ namespace RemoteWindowsAdministrator {
 						if( WmiHelpers.IsAlive( currentName ) ) {
 							CurrentUsers.GetCurrentUsers( currentName, ref _dsCurrentUsers );
 						} else {
-							// TODO Better logging so that multiples can be done without interruption and threaded
-							_dsCurrentUsers.Add( new CurrentUsers( currentName, @"Connection Error" ) );
+							lock( _dsCurrentUsers ) {
+								_dsCurrentUsers.Add( new CurrentUsers( currentName, @"Connection Error" ) );
+							}
 						}
-						_dsCurrentUsers.ResetBindings( );
 					} finally {
 						if( 0 >= Interlocked.Decrement( ref _dsCurrentUsersThreadCount ) ) {
 							OnEndQueryCurrentUsersInvoke( );
@@ -403,30 +413,32 @@ namespace RemoteWindowsAdministrator {
 			}
 		}
 
-		private static string GetComputerNamesFromFile( string fileName ) {
-			if( fileName.StartsWith( "\"" ) && fileName.EndsWith( "\"" ) ) {
-				fileName = fileName.Substring( 1, fileName.Length - 2 );
-			}
-			Debug.Assert( File.Exists( fileName ), "File does not exist" );
-			return File.ReadAllText( fileName );
+		private static List<string> GetComputerNamesFromFile( string fileName ) {
+			fileName = MagicValues.StripSurroundingDblQuotes( fileName );
+			Debug.Assert( IsFile( fileName ), "File does not exist" );
+			return MagicValues.DeleniateComputerList( File.ReadAllText( fileName ) );
 		}
-
-		private static string[] GetComputerNamesFromString( string computerNameInfo ) {
+		 
+		private static List<string> GetComputerNamesFromString( string computerNameInfo ) {
 			computerNameInfo = computerNameInfo.Trim( );
 			if( string.IsNullOrEmpty( computerNameInfo ) ) {
-				return new string[] { };
+				return new List<string>();
+			}			
+			var computerNames = MagicValues.DeleniateComputerList( computerNameInfo );
+			var result = new List<string>( );
+			foreach( var computerName in computerNames ) {
+				if( IsFile( computerName ) ) {
+					result.AddRange( GetComputerNamesFromFile( computerName ) );
+				} else {
+					result.Add( computerName );
+				}
 			}
-			if( IsFile( computerNameInfo ) ) {
-				computerNameInfo = GetComputerNamesFromFile( computerNameInfo );
-			}
-			return computerNameInfo.Split( new[] { @";", @",", @"	", @" ", "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries ).Distinct( ).Where( item => !string.IsNullOrEmpty( item ) ).ToArray( );
+
+			return result.OrderBy( name => name ).Distinct( ).ToList( );
 		}
 
-		private static bool IsFile( string path ) {
-			if( string.IsNullOrEmpty( path ) ) {
-				return false;
-			}
-			return File.Exists( path ) || File.Exists( path.Substring( 1, path.Length - 2 ) );
+		private static bool IsFile( string path ) {			
+			return File.Exists( MagicValues.StripSurroundingDblQuotes( path ) );
 		}
 
 		private static bool IsLink( DataGridViewCell cell ) {

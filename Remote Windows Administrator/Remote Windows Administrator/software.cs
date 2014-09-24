@@ -53,7 +53,9 @@ namespace RemoteWindowsAdministrator {
 			Debug.Assert( !string.IsNullOrEmpty( computerName ), @"Computer name cannot be empty" );
 			var softwareList = new List<ComputerSoftware>();
 			try {
-				string[] regPaths = { @"SOFTWARE\Wow6432node\Microsoft\Windows\CurrentVersion\Uninstall", @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" };
+				string[] regPaths = {
+					@"SOFTWARE\Wow6432node\Microsoft\Windows\CurrentVersion\Uninstall", @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+				};
 				foreach( var currentPath in regPaths ) {
 					using( var regKey = RegistryKey.OpenRemoteBaseKey( RegistryHive.LocalMachine, computerName ).OpenSubKey( currentPath, false ) ) {
 						if( null == regKey ) {
@@ -64,14 +66,8 @@ namespace RemoteWindowsAdministrator {
 								if( null == curReg || !string.IsNullOrEmpty( RegistryHelpers.GetString( curReg, @"ParentKeyName" ) ) ) {
 									continue;
 								}
-								var currentProduct = new ComputerSoftware( computerName) {
-									Guid = currentGuid,
-									Name = RegistryHelpers.GetString( curReg, @"DisplayName" ),
-									Publisher = RegistryHelpers.GetString( curReg, @"Publisher" ),
-									Version = RegistryHelpers.GetString( curReg, @"DisplayVersion" ),
-									InstallDate = RegistryHelpers.GetDateTime( curReg, @"InstallDate" ),
-									CanRemove = 0 == RegistryHelpers.GetDword( curReg, @"NoRemove", 0 ),
-									SystemComponent = 1 == RegistryHelpers.GetDword( curReg, @"SystemComponent", 0 )
+								var currentProduct = new ComputerSoftware( computerName ) {
+									Guid = currentGuid, Name = RegistryHelpers.GetString( curReg, @"DisplayName" ), Publisher = RegistryHelpers.GetString( curReg, @"Publisher" ), Version = RegistryHelpers.GetString( curReg, @"DisplayVersion" ), InstallDate = RegistryHelpers.GetDateTime( curReg, @"InstallDate" ), CanRemove = 0 == RegistryHelpers.GetDword( curReg, @"NoRemove", 0 ), SystemComponent = 1 == RegistryHelpers.GetDword( curReg, @"SystemComponent", 0 )
 								};
 								{
 									var estSize = RegistryHelpers.GetDword( curReg, @"EstimatedSize" );
@@ -92,7 +88,7 @@ namespace RemoteWindowsAdministrator {
 				}
 			} catch( System.IO.IOException ) {
 				result.Add( new ComputerSoftware( computerName, @"Connection Error" ) );
-				softwareList.Clear(  );
+				softwareList.Clear( );
 			} catch( UnauthorizedAccessException ) {
 				result.Add( new ComputerSoftware( computerName, @"Authorization Error" ) );
 				softwareList.Clear( );
@@ -100,9 +96,7 @@ namespace RemoteWindowsAdministrator {
 				result.Add( new ComputerSoftware( computerName, @"Authorization Error" ) );
 				softwareList.Clear( );
 			}
-			foreach( var value in softwareList ) {
-				result.Add( value );
-			}
+			result.AddRange( softwareList );
 		}
 
 		public static void UninstallGuidOnComputerName( string computerName, string guid ) {			

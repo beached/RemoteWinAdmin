@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using System.Collections.Generic;
+using Microsoft.Win32;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -37,6 +38,7 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private static void GetLocallyLoggedOnUsers( string computerName, ref SyncList.SyncList<CurrentUsers> result ) {
+			var usersList = new List<CurrentUsers>( );
 			using( var regHku = RegistryKey.OpenRemoteBaseKey( RegistryHive.Users, string.Empty ) ) {
 				foreach( var currentSid in regHku.GetSubKeyNames( ).Where( IsSid ) ) {
 					var cu = new CurrentUsers( computerName ) { Sid = currentSid };
@@ -52,9 +54,10 @@ namespace RemoteWindowsAdministrator {
 					} catch {
 						cu = new CurrentUsers( computerName, @"Error" ) { Sid = currentSid };
 					}
-					result.Add( cu );
+					usersList.Add( cu );
 				}
 			}
+			result.AddRange( usersList );
 		}
 
 		private static Win32.Error GetNetworkUsers( string computerName, ref SyncList.SyncList<CurrentUsers> result ) {
@@ -63,6 +66,7 @@ namespace RemoteWindowsAdministrator {
 			var tr = 0;
 			var resume = 0;
 			var buffer = IntPtr.Zero;
+			var usersList = new List<CurrentUsers>( );
 			do {
 				try {
 					res = (Win32.Error)Win32.NetSessionEnum( computerName, null, null, 502, out buffer, -1, ref er, ref tr, ref resume );
@@ -73,7 +77,7 @@ namespace RemoteWindowsAdministrator {
 							var userInfo = new CurrentUsers( computerName ) {
 								UserName = sessionInfo.userName, LastLogon = DateTime.Now.AddSeconds( -sessionInfo.logonDuration )
 							};
-							result.Add( userInfo );
+							usersList.Add( userInfo );
 							bufferPtrInt += Marshal.SizeOf( typeof( Win32.SessionInfo502 ) );
 						}
 
@@ -133,6 +137,7 @@ namespace RemoteWindowsAdministrator {
 					}
 				}
 			} while( res == Win32.Error.ErrorMoreData );
+			result.AddRange( usersList );
 			return Win32.Error.Success;
 		}
 
