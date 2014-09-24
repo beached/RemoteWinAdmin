@@ -1,11 +1,9 @@
 ﻿using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Management;
 using System.Runtime.InteropServices;
-using System.Security.Principal;
 using System.Text;
 
 namespace RemoteWindowsAdministrator {
@@ -18,26 +16,20 @@ namespace RemoteWindowsAdministrator {
 		public string Sid { get; set; }
 		public string ProfileFolder { get; set; }
 
-		private DateTime? _dtTimeStamp;
-
 		public string LogonDuration {
 			get {
 				if( null == LastLogon ) {
 					return null;
 				}
-				if( null == _dtTimeStamp ) {
-					_dtTimeStamp = DateTime.Now;
-				}
-				var duration = _dtTimeStamp.Value - LastLogon.Value;
-				return string.Format( @"{0}day{1} {2}hrs {3}min", duration.Days, duration.Days != 1 ? @"s":@"", duration.Hours, duration.Minutes );
+				return MagicValues.TimeSpanToString( DateTime.Now - LastLogon.Value );
 			}
 		}
-					
+
 		public CurrentUsers( string computerName, string connectionStatus = @"OK" ) {
 			ComputerName = computerName;
 			ConnectionStatus = connectionStatus;
 		}
-		
+
 		/// <summary>
 		/// Does a string exist in all string representations of the fields
 		/// </summary>
@@ -49,40 +41,106 @@ namespace RemoteWindowsAdministrator {
 
 		private static void GetLocallyLoggedOnUsers( string computerName, ref SyncList.SyncList<CurrentUsers> result ) {
 			using( var regHku = RegistryKey.OpenRemoteBaseKey( RegistryHive.Users, string.Empty ) ) {
-				foreach( var sid in regHku.GetSubKeyNames( ).Where( IsSid ) ) {
-					var cu = new CurrentUsers( computerName ) {Sid = sid};
+				foreach( var currentSid in regHku.GetSubKeyNames( ).Where( IsSid ) ) {
+					var cu = new CurrentUsers( computerName ) { Sid = currentSid };
 					try {
-						if( WellKnownSids.ContainsKey( sid ) ) {
-							cu.Domain = computerName;
-							cu.UserName = WellKnownSids[sid];
+						if( Win32.WellKnownSids.ContainsKey( currentSid ) ) {
+							cu.Domain = computerName;	// Local account
+							cu.UserName = Win32.WellKnownSids[currentSid];
 						} else {
 							GetUserAccountFromSid( ref cu );
 						}
-						cu.ProfileFolder = RegistryHelpers.GetString( computerName, RegistryHive.LocalMachine, string.Format( @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\{0}", sid ), @"ProfileImagePath" );
+						cu.ProfileFolder = RegistryHelpers.GetString( computerName, RegistryHive.LocalMachine, string.Format( @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\{0}", currentSid ), @"ProfileImagePath" );
 						cu.LastLogon = GetUsersLogonTimestamp( cu );
 					} catch {
-						cu = new CurrentUsers( computerName, @"Error" ) {Sid = sid};
+						cu = new CurrentUsers( computerName, @"Error" ) { Sid = currentSid };
 					}
 					result.Add( cu );
 				}
 			}
 		}
 
-		public static void GetCurrentUsers( string computerName, ref SyncList.SyncList<CurrentUsers> result ) {
-			GetLocallyLoggedOnUsers( computerName, ref result );
-			//GetRemoteUsers( computerName, ref result );
+		private static Win32.Error GetNetworkUsers( string computerName, ref SyncList.SyncList<CurrentUsers> result ) {
+			Win32.Error res;
+			var er = 0;
+			var tr = 0;
+			var resume = 0;
+			var buffer = IntPtr.Zero;
+			do {
+				try {
+					res = (Win32.Error)Win32.NetSessionEnum( computerName, null, null, 502, out buffer, -1, ref er, ref tr, ref resume );
+					if( res == Win32.Error.ErrorMoreData || res == Win32.Error.Success ) {
+						var bufferPtrInt = buffer.ToInt32( );
+						for( var i = 0; i < er; i++ ) {
+							var sessionInfo = (Win32.SessionInfo502)Marshal.PtrToStructure( new IntPtr( bufferPtrInt ), typeof( Win32.SessionInfo502 ) );
+							var userInfo = new CurrentUsers( computerName ) {
+								UserName = sessionInfo.userName, LastLogon = DateTime.Now.AddSeconds( -sessionInfo.logonDuration )
+							};
+							result.Add( userInfo );
+							bufferPtrInt += Marshal.SizeOf( typeof( Win32.SessionInfo502 ) );
+						}
+
+					} else {
+						switch( res ) {
+						case Win32.Error.ErrorAccessDenied:
+							Debug.WriteLine( string.Format( @"GetNetworkUsers: Access Denied: {0}", computerName ) );
+							break;
+						case Win32.Error.ErrorNotEnoughMemory:
+							Debug.WriteLine( string.Format( @"GetNetworkUsers: Not Enough Memory: {0}", computerName ) );
+							break;
+						case Win32.Error.ErrorBadNetpath:
+							Debug.WriteLine( string.Format( @"GetNetworkUsers: Bad Network Path: {0}", computerName ) );
+							break;
+						case Win32.Error.ErrorNetworkBusy:
+							Debug.WriteLine( string.Format( @"GetNetworkUsers: Network Busy: {0}", computerName ) );
+							break;
+						case Win32.Error.ErrorInvalidParameter:
+							Debug.WriteLine( string.Format( @"GetNetworkUsers: Invalid Parameter: {0}", computerName ) );
+							break;
+						case Win32.Error.ErrorInsufficientBuffer:
+							Debug.WriteLine( string.Format( @"GetNetworkUsers: Insufficient Buff: {0}", computerName ) );
+							break;
+						case Win32.Error.ErrorInvalidLevel:
+							Debug.WriteLine( string.Format( @"GetNetworkUsers: Invalid Level: {0}", computerName ) );
+							break;
+						case Win32.Error.ErrorExtendedError:
+							Debug.WriteLine( string.Format( @"GetNetworkUsers: Exended Error: {0}", computerName ) );
+							break;
+						case Win32.Error.ErrorNoNetwork:
+							Debug.WriteLine( string.Format( @"GetNetworkUsers: No Network: {0}", computerName ) );
+							break;
+						case Win32.Error.ErrorInvalidHandleState:
+							Debug.WriteLine( string.Format( @"GetNetworkUsers: Invalid Handle State: {0}", computerName ) );
+							break;
+						case Win32.Error.NerrBase:
+							Debug.WriteLine( string.Format( @"GetNetworkUsers: NERR_BASE: {0}", computerName ) );
+							break;
+						case Win32.Error.NerrUnknownDevDir:
+							Debug.WriteLine( string.Format( @"GetNetworkUsers: Unknown Device Directory: {0}", computerName ) );
+							break;
+						case Win32.Error.NerrDuplicateShare:
+							Debug.WriteLine( string.Format( @"GetNetworkUsers: Duplicate Share: {0}", computerName ) );
+							break;
+						case Win32.Error.NerrBufTooSmall:
+							Debug.WriteLine( string.Format( @"GetNetworkUsers: Buffer too small: {0}", computerName ) );
+							break;
+						case Win32.Error.ErrorNoBrowserServersFound:
+							Debug.WriteLine( string.Format( @"GetNetworkUsers: No Browser Servers Found: {0}", computerName ) );
+							break;
+						}
+						return res;
+					}
+				} finally {
+					if( IntPtr.Zero != buffer ) {
+						Win32.NetApiBufferFree( buffer );
+					}
+				}
+			} while( res == Win32.Error.ErrorMoreData );
+			return Win32.Error.Success;
 		}
 
-		[DllImport( "advapi32.dll", CharSet = CharSet.Auto, SetLastError = true )]
-		// ReSharper disable once RedundantNameQualifier
-		private static extern bool LookupAccountSid( string lpSystemName, [MarshalAs( UnmanagedType.LPArray )] byte[] sid, System.Text.StringBuilder lpName, ref uint cchName, System.Text.StringBuilder referencedDomainName, ref uint cchReferencedDomainName, out SidNameUse peUse );
-
 		private static void GetUserAccountFromSid( ref CurrentUsers user ) {
-			const int errorNone = 0;
-			const int errorInsufficientBuffer = 122;
-
-
-			var binSid = StringToBinarySid( user.Sid );
+			var binSid = Win32.StringToBinarySid( user.Sid );
 			if( null == binSid ) {
 				user.ConnectionStatus = @"Error resolving SID";
 				return;
@@ -91,21 +149,21 @@ namespace RemoteWindowsAdministrator {
 			var cchName = (uint)name.Capacity;
 			var referencedDomainName = new StringBuilder( );
 			var cchReferencedDomainName = (uint)referencedDomainName.Capacity;
-			SidNameUse sidUse;
+			Win32.SidNameUse sidUse;
 
-			var err = errorNone;
-			if( !LookupAccountSid( null, binSid, name, ref cchName, referencedDomainName, ref cchReferencedDomainName, out sidUse ) ) {
-				err = Marshal.GetLastWin32Error( );
-				if( errorInsufficientBuffer == err ) {
+			var err = Win32.Error.Success;
+			if( !Win32.LookupAccountSid( null, binSid, name, ref cchName, referencedDomainName, ref cchReferencedDomainName, out sidUse ) ) {
+				err = (Win32.Error)Marshal.GetLastWin32Error( );
+				if( Win32.Error.ErrorInsufficientBuffer == err ) {
 					name.EnsureCapacity( (int)cchName );
 					referencedDomainName.EnsureCapacity( (int)cchReferencedDomainName );
-					err = errorNone;
-					if( !LookupAccountSid( null, binSid, name, ref cchName, referencedDomainName, ref cchReferencedDomainName, out sidUse ) ) {
-						err = Marshal.GetLastWin32Error( );
+					err = Win32.Error.Success;
+					if( !Win32.LookupAccountSid( null, binSid, name, ref cchName, referencedDomainName, ref cchReferencedDomainName, out sidUse ) ) {
+						err = (Win32.Error)Marshal.GetLastWin32Error( );
 					}
 				}
 			}
-			if( errorNone == err ) {
+			if( Win32.Error.Success == err ) {
 				user.UserName = name.ToString( );
 				user.Domain = referencedDomainName.ToString( );
 			} else {
@@ -113,13 +171,31 @@ namespace RemoteWindowsAdministrator {
 			}
 		}
 
+		public static void GetCurrentUsers( string computerName, ref SyncList.SyncList<CurrentUsers> result ) {
+			switch( GetNetworkUsers( computerName, ref result ) ) {
+			case Win32.Error.Success:
+				break;
+			case Win32.Error.ErrorMoreData:
+				break;
+			case Win32.Error.ErrorAccessDenied:
+				result.Add( new CurrentUsers( computerName, @"Access Denied" ) );
+				//return;
+				break;
+			default:
+				result.Add( new CurrentUsers( computerName, @"Error" ) );
+				//return;
+				break;
+			}
+			GetLocallyLoggedOnUsers( computerName, ref result );
+		}
+
 		private static DateTime? GetUsersLogonTimestamp( CurrentUsers user ) {
-			if( string.IsNullOrEmpty( user.UserName ) || string.IsNullOrEmpty( user.Domain ) || WellKnownSids.ContainsKey( user.Sid ) ) {
+			if( string.IsNullOrEmpty( user.UserName ) || string.IsNullOrEmpty( user.Domain ) || Win32.WellKnownSids.ContainsKey( user.Sid ) ) {
 				return null;
 			}
-			try {
-				WmiHelpers.ForEachWithScope( user.ComputerName, @"SELECT * FROM Win32_LogonSession", ( obj, scope ) => {
-					var roq = new RelatedObjectQuery( string.Format( @"associators of {{Win32_LogonSession.LogonId='{0}'}} WHERE AssocClass = Win32_LoggedOnUser", user.UserName ) );
+			WmiHelpers.ForEachWithScope( user.ComputerName, @"SELECT * FROM Win32_LogonSession", ( obj, scope ) => {
+				try {
+					var roq = new RelatedObjectQuery( string.Format( @"associators of {{Win32_LogonSession.LogonId='{0}'}} WHERE AssocClass = Win32_LoggedOnUser", WmiHelpers.GetString( obj, @"LogonId" ) ) );
 					using( var searcher = new ManagementObjectSearcher( scope, roq ) ) {
 						foreach( var mobObj in searcher.Get( ) ) {
 							Debug.Assert( null != mobObj, @"WMI Error, null value returned." );
@@ -128,28 +204,17 @@ namespace RemoteWindowsAdministrator {
 							var domain = WmiHelpers.GetString( mob, @"Domain" );
 							if( name.Equals( user.UserName ) && domain.Equals( user.Domain ) ) {
 								user.LastLogon = WmiHelpers.GetNullableDate( obj, @"StartTime" );
+								return false; // Found, stop loop
 							}
 						}
 					}
-				}, false, false );
-			} catch( Exception ex ) {
-				Debug.WriteLine( string.Format( @"Error finding last logon on {0} for {1}\{2}", user.ComputerName, user.Domain, user.UserName ) );
-				Debug.WriteLine( ex.Message );
-			}
+				} catch( System.Management.ManagementException ex ) {
+					Debug.WriteLine( string.Format( @"Error finding last logon on {0} for {1}\{2}", user.ComputerName, user.Domain, user.UserName ) );
+					Debug.WriteLine( ex.Message );
+				}
+				return true;
+			}, false, false );
 			return user.LastLogon;
-		}
-
-		private static byte[] StringToBinarySid( string sid ) {
-			SecurityIdentifier si;
-			try {
-				si = new SecurityIdentifier( sid );
-			} catch( ArgumentException ex ) {
-				Debug.WriteLine( string.Format( "Exception while looking up SID\n{0}", ex.Message ) );
-				return null;
-			}
-			var binSid = new byte[si.BinaryLength];
-			si.GetBinaryForm( binSid, 0 );
-			return binSid;
 		}
 
 		private static bool IsSid( string sid ) {
@@ -157,47 +222,5 @@ namespace RemoteWindowsAdministrator {
 			return sid.StartsWith( @"S-" ) && !sid.EndsWith( @"_Classes" );
 		}
 
-		public static readonly Dictionary<string, string> WellKnownSids = new Dictionary<string, string> {
-			{ @"S-1-0-0", @"NULL" }, 
-			{ @"S-1-1-0", @"EVERYONE" }, 
-			{ @"S-1-2-0", @"LOCAL" }, 
-			{ @"S-1-2-1", @"CONSOLE_LOGON" }, 			
-			{ @"S-1-3-0", @"CREATOR_OWNER" }, 
-			{ @"S-1-3-1", @"CREATOR_GROUP" }, 
-			{ @"S-1-3-2", @"OWNER_SERVER"  }, 
-			{ @"S-1-3-3", @"GROUP_SERVER" },
-			{ @"S-1-3-4", @"OWNER_RIGHTS" }, 
-			{ @"S-1-5", @"NT_AUTHORITY" }, 
-			{ @"S-1-5-1", @"DIALUP" }, 
-			{ @"S-1-5-2", @"NETWORK" }, 
-			{ @"S-1-5-3", @"BATCH" }, 
-			{ @"S-1-5-4", @"INTERACTIVE" }, 
-			{ @"S-1-5-6", @"SERVICE" }, 
-			{ @"S-1-5-7", @"ANONYMOUS" }, 
-			{ @"S-1-5-8", @"PROXY" }, 
-			{ @"S-1-5-9", @"ENTERPRISE_DOMAIN_CONTROLLERS" }, 
-			{ @"S-1-5-10", @"PRINCIPAL_SELF" }, 
-			{ @"S-1-5-11", @"AUTHENTICATED_USERS" }, 
-			{ @"S-1-5-12", @"RESTRICTED_CODE" }, 
-			{ @"S-1-5-13", @"TERMINAL_SERVER_USER" }, 
-			{ @"S-1-5-14", @"REMOTE_INTERACTIVE_LOGON" }, 
-			{ @"S-1-5-15", @"THIS_ORGANIZATION" }, 
-			{ @"S-1-5-17", @"IUSR" }, 
-			{ @"S-1-5-18", @"LOCAL_SYSTEM" }, 
-			{ @"S-1-5-19", @"LOCAL_SERVICE" }, 
-			{ @"S-1-5-20", @"NETWORK_SERVICE" }
-		};
-
-		private enum SidNameUse {
-			User = 1,
-			Group,
-			Domain,
-			Alias,
-			WellKnownGroup,
-			DeletedAccount,
-			Invalid,
-			Unknown,
-			Computer
-		}
 	}
 }

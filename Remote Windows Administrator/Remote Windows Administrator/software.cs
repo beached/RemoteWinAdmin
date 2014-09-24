@@ -97,7 +97,9 @@ namespace RemoteWindowsAdministrator {
 				var retVal = int.Parse( outParams[@"returnValue"].ToString( ) );
 				if( 0 != retVal ) {
 					MessageBox.Show( string.Format( @"Error uninstalling '{0}' from {1}. Returned a value of {2}", obj.Properties["Name"].Value, computerName, retVal ), @"Error", MessageBoxButtons.OK );
+					return false;	// Stop all on error.  This might be wrong
 				}
+				return true;
 			} );
 		}
 	}

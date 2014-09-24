@@ -41,7 +41,7 @@ namespace RemoteWindowsAdministrator {
 			SetDgvDefaults( dgvComputerInfo );
 			DgvHelpers.AddColumn( dgvComputerInfo, @"ComputerName", @"Computer Name" );
 			DgvHelpers.AddColumn( dgvComputerInfo, @"Status" );
-			DgvHelpers.AddDateColumn( dgvComputerInfo, @"LastBootTime", @"Boot Time", false, true, @"yyyy-MM-dd HH:mm" );
+			DgvHelpers.AddDateColumn( dgvComputerInfo, @"LastBootTime", @"Boot Time", false, true, MagicValues.TimeDateStringFormat );
 			DgvHelpers.AddColumn( dgvComputerInfo, @"Uptime" );
 			DgvHelpers.AddColumn( dgvComputerInfo, @"Version", @"Windows Version" );
 			DgvHelpers.AddColumn( dgvComputerInfo, @"Architecture" );
@@ -61,7 +61,7 @@ namespace RemoteWindowsAdministrator {
 			DgvHelpers.AddColumn( dgvCurrentUsers, @"ConnectionStatus", @"Connection Status" );
 			DgvHelpers.AddColumn( dgvCurrentUsers, @"Domain" );
 			DgvHelpers.AddColumn( dgvCurrentUsers, @"UserName", @"UserName" );
- 			DgvHelpers.AddDateColumn( dgvCurrentUsers, @"LastLogon", @"Last Logon", false, true, @"yyyy-MM-dd HH:mm" );
+			DgvHelpers.AddDateColumn( dgvCurrentUsers, @"LastLogon", @"Last Logon", false, true, MagicValues.TimeDateStringFormat );
 			DgvHelpers.AddColumn( dgvCurrentUsers, @"LogonDuration", @"Logon Duration" );
 			DgvHelpers.AddColumn( dgvCurrentUsers, @"Sid", @"SID" );
 			DgvHelpers.AddColumn( dgvCurrentUsers, @"ProfileFolder", @"Profile" );

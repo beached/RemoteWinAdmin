@@ -28,7 +28,7 @@ namespace RemoteWindowsAdministrator {
 			}
 		}
 
-		public static void ForEach( string computerName, string queryString, Action<ManagementObject> action, bool needPrivileges = false, bool expectOne = true ) {
+		public static void ForEach( string computerName, string queryString, Func<ManagementObject,bool> func, bool needPrivileges = false, bool expectOne = true ) {
 			var conOpt = new ConnectionOptions { Impersonation = ImpersonationLevel.Impersonate, EnablePrivileges = needPrivileges };
 			var scope = new ManagementScope( string.Format( @"\\{0}\root\CIMV2", computerName ), conOpt );
 			var query = new ObjectQuery( queryString );
@@ -36,12 +36,14 @@ namespace RemoteWindowsAdministrator {
 				Debug.Assert( !expectOne || 1 == objSearch.Get( ).Count, string.Format( @"Only expecting one result, {0} found", objSearch.Get( ).Count ) );
 				foreach( var obj in objSearch.Get( ) ) {
 					Debug.Assert( null != obj, @"WMI Error, null value returned." );
-					action( (ManagementObject)obj );
+					if( !func( (ManagementObject)obj ) ) {
+						break;
+					}
 				}
 			}
 		}
 
-		public static void ForEachWithScope( string computerName, string queryString, Action<ManagementObject, ManagementScope> action, bool needPrivileges = false, bool expectOne = true ) {
+		public static void ForEachWithScope( string computerName, string queryString, Func<ManagementObject, ManagementScope, bool> func, bool needPrivileges = false, bool expectOne = true ) {
 			var conOpt = new ConnectionOptions { Impersonation = ImpersonationLevel.Impersonate, EnablePrivileges = needPrivileges };
 			var scope = new ManagementScope( string.Format( @"\\{0}\root\CIMV2", computerName ), conOpt );
 			var query = new ObjectQuery( queryString );
@@ -49,7 +51,9 @@ namespace RemoteWindowsAdministrator {
 				Debug.Assert( !expectOne || 1 == objSearch.Get( ).Count, string.Format( @"Only expecting one result, {0} found", objSearch.Get( ).Count ) );
 				foreach( var obj in objSearch.Get( ) ) {
 					Debug.Assert( null != obj, @"WMI Error, null value returned." );
-					action( (ManagementObject)obj, scope );
+					if( !func( (ManagementObject)obj, scope ) ) {
+						break;
+					}
 				}
 			}
 		}
@@ -77,14 +81,21 @@ namespace RemoteWindowsAdministrator {
 			return (uint)mo[fieldName];
 		}
 
-
-		public static DateTime GetDate( ManagementObject mo, string fieldName ) {
-			var strItem = GetString( mo, fieldName );
-			var tz = Int32.Parse( strItem.Substring( 21 ) );
-			strItem = strItem.Substring( 0, 21 );
-			var result = DateTime.ParseExact( strItem, @"yyyyMMddHHmmss.ffffff", CultureInfo.InvariantCulture );
+		/// <summary>
+		/// Converts a date/time string in the format yyyyMMddHHmmss.ffffff tttt where
+		/// tttt is a signed integer representing the timezone offset in minutes to a
+		/// DateTime object
+		/// </summary>
+		public static DateTime DateTimeFromMsDateTimeString( string value ) {
+			var tz = Int32.Parse( value.Substring( 21 ) );
+			value = value.Substring( 0, 21 );
+			var result = DateTime.ParseExact( value, @"yyyyMMddHHmmss.ffffff", CultureInfo.InvariantCulture );
 			result = result.AddMinutes( tz );
 			return result;
+		}
+
+		public static DateTime GetDate( ManagementObject mo, string fieldName ) {
+			return DateTimeFromMsDateTimeString( GetString( mo, fieldName ) );
 		}
 
 		public static DateTime? GetNullableDate( ManagementObject mo, string fieldName ) {
@@ -92,11 +103,7 @@ namespace RemoteWindowsAdministrator {
 			if( string.IsNullOrEmpty( strItem ) ) {
 				return null;
 			}
-			var tz = Int32.Parse( strItem.Substring( 21 ) );
-			strItem = strItem.Substring( 0, 21 );
-			var result = DateTime.ParseExact( strItem, @"yyyyMMddHHmmss.ffffff", CultureInfo.InvariantCulture );
-			result = result.AddMinutes( tz );
-			return result;
+			return DateTimeFromMsDateTimeString( strItem );
 		}
 
 

@@ -37,6 +37,7 @@ namespace RemoteWindowsAdministrator {
 					ci.SystemTime = WmiHelpers.GetDate( obj, @"LocalDateTime" );
 					ci.Version = WmiHelpers.GetString( obj, @"Caption" );
 					ci.Architecture = WmiHelpers.GetString( obj, @"OSArchitecture" );
+					return true;
 				} );
 
 				WmiHelpers.ForEach( computerName, @"SELECT * FROM Win32_BIOS", obj => {
@@ -44,6 +45,7 @@ namespace RemoteWindowsAdministrator {
 					ci.HwReleaseDate = WmiHelpers.GetDate( obj, @"ReleaseDate" );
 					ci.SerialNumber = WmiHelpers.GetString( obj, @"SerialNumber" );
 					ci.BiosVersion = WmiHelpers.GetString( obj, @"SMBIOSBIOSVersion" );
+					return true;
 				} );
 			} catch( UnauthorizedAccessException ) {
 				ci.Status = @"Authorization Error";
@@ -108,6 +110,7 @@ namespace RemoteWindowsAdministrator {
 					if( null == result || 0 != result ) {
 						MessageBox.Show( string.Format( @"Failed to reboot {0} with error {1}", parameters.ComputerName, result ) );
 					}
+					return true;
 				}, true );
 			} catch( UnauthorizedAccessException ) {
 				MessageBox.Show( string.Format( @"Failed to reboot {0}, permission denied", parameters.ComputerName ) );

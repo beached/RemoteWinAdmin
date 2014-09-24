@@ -23,7 +23,7 @@ namespace RemoteWindowsAdministrator {
 			return this;
 		}
 
-		public ValueIsIn Test( DateTime? value, string format = @"yyyy-MM-dd" ) {
+		public ValueIsIn Test( DateTime? value, string format = MagicValues.ShortDateFormat ) {
 			return !IsContained && null != value ? Test( value.Value.ToString( format, CultureInfo.InvariantCulture ) ) : this;
 		}
 

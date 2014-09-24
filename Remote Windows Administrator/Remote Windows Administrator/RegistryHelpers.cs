@@ -39,6 +39,7 @@ namespace RemoteWindowsAdministrator {
 				return null;
 			}
 			if( null == dateFormats ) {
+				// There doesn't seem to be a standard.  I maybe ignorant of this though
 				dateFormats = new string[] { @"yyyy-MM-dd", @"yyyyMMdd", @"MM-dd-yyyy" };
 			}
 			DateTime tmp;
