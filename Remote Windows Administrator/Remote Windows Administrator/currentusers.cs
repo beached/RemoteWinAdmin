@@ -18,10 +18,7 @@ namespace RemoteWindowsAdministrator {
 
 		public string LogonDuration {
 			get {
-				if( null == LastLogon ) {
-					return null;
-				}
-				return MagicValues.TimeSpanToString( DateTime.Now - LastLogon.Value );
+				return null != LastLogon ? MagicValues.TimeSpanToString( DateTime.Now - LastLogon.Value ) : null;
 			}
 		}
 

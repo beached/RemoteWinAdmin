@@ -12,18 +12,21 @@ namespace RemoteWindowsAdministrator {
 	public partial class FrmMain: Form {
 		private SyncList<ComputerInfo> _dsComputerInfo;
 		private Int32 _dsComputerInfoThreadCount;
-		private SyncList<Win32Product> _dsSoftware;
+		private SyncList<ComputerSoftware> _dsSoftware;
+		private Int32 _dsSoftwareThreadCount;
 		private SyncList<CurrentUsers> _dsCurrentUsers;
 		private Int32 _dsCurrentUsersThreadCount;
 
 		public FrmMain( ) {
 			InitializeComponent( );
 			_dsComputerInfo = new SyncList<ComputerInfo>( dgvComputerInfo );
-			_dsSoftware = new SyncList<Win32Product>( dgvSoftware );
+			_dsSoftware = new SyncList<ComputerSoftware>( dgvSoftware );
 			_dsCurrentUsers = new SyncList<CurrentUsers>( dgvCurrentUsers );
 
 			// Setup software grid
 			SetDgvDefaults( dgvSoftware );
+			DgvHelpers.AddColumn( dgvSoftware, @"ComputerName", @"Computer Name" );
+			DgvHelpers.AddColumn( dgvSoftware, @"ConnectionStatus", @"Connection Status" );
 			DgvHelpers.AddColumn( dgvSoftware, @"Name" );
 			DgvHelpers.AddColumn( dgvSoftware, @"Publisher" );
 			DgvHelpers.AddColumn( dgvSoftware, @"Version" );
@@ -50,7 +53,7 @@ namespace RemoteWindowsAdministrator {
 			DgvHelpers.AddColumn( dgvComputerInfo, @"SerialNumber", @"Serial Number" );
 			DgvHelpers.AddColumn( dgvComputerInfo, @"BiosVersion", @"BIOS Version" );
 			{
-				var colShutdown = new DataGridViewButtonColumn {Name = @"Shutdown", HeaderText = string.Empty, Text = @"Shutdown", UseColumnTextForButtonValue = true};
+				var colShutdown = new DataGridViewButtonColumn { Name = @"Shutdown", HeaderText = string.Empty, Text = @"Shutdown", UseColumnTextForButtonValue = true };
 				dgvComputerInfo.Columns.Add( colShutdown );
 			}
 			dgvComputerInfo.DataSource = _dsComputerInfo;
@@ -70,13 +73,13 @@ namespace RemoteWindowsAdministrator {
 
 
 			// Prepare busy indicators
-				
+
 		}
 
 		private void FrmMain_Shown( object sender, EventArgs e ) {
 			txtSoftwareComputerName.Focus( );
 		}
-		
+
 		private void btnQueryComputerInfo_Click( object sender, EventArgs e ) {
 			QueryComputerInfo( );
 		}
@@ -97,7 +100,7 @@ namespace RemoteWindowsAdministrator {
 			_dsComputerInfo.Clear( );
 			dgvComputerInfo.DataSource = _dsComputerInfo;
 		}
-		
+
 		private void ClearSoftware( ) {
 			txtSoftwareFilter.Text = string.Empty;
 			_dsSoftware.Clear( );
@@ -105,7 +108,7 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private void ClearCurrentUsers( ) {
-			_dsCurrentUsers.Clear(  );
+			_dsCurrentUsers.Clear( );
 			dgvCurrentUsers.DataSource = _dsCurrentUsers;
 		}
 
@@ -142,7 +145,7 @@ namespace RemoteWindowsAdministrator {
 					if( DialogResult.Yes != MessageBox.Show( @"Are you sure?", @"Alert", MessageBoxButtons.YesNo ) ) {
 						return;
 					}
-					Win32Product.UninstallGuidOnComputerName( txtSoftwareComputerName.Text, strGuid );
+					ComputerSoftware.UninstallGuidOnComputerName( txtSoftwareComputerName.Text, strGuid );
 					QuerySoftware( );
 				} finally {
 					dgvSoftware.Enabled = true;
@@ -221,7 +224,7 @@ namespace RemoteWindowsAdministrator {
 			gbCurrentUsersComputer.Enabled = false;
 			txtCurrentUsersFilter.Enabled = false;
 		}
-	
+
 		private void OnStartQuerySoftware( ) {
 			gbComputer.Enabled = false;
 			txtSoftwareFilter.Enabled = false;
@@ -260,19 +263,27 @@ namespace RemoteWindowsAdministrator {
 		private void QuerySoftware( ) {
 			ClearSoftware( );
 			OnStartQuerySoftware( );
-			var computerName = txtSoftwareComputerName.Text.Trim( );
+			var computerNames = GetComputerNamesFromString( txtSoftwareComputerName.Text );
+			if( null == computerNames || !computerNames.Any( ) ) {
+				return;
+			}
+			_dsSoftwareThreadCount = computerNames.Count( );
 			var showHidden = chkSoftwareShowHidden.Checked;
-			if( WmiHelpers.IsAlive( computerName ) ) {
+			foreach( var value in computerNames ) {
+				var computerName = value;
 				new Thread( ( ) => {
 					try {
-						Win32Product.FromComputerName( computerName, ref _dsSoftware, showHidden );
+						if( WmiHelpers.IsAlive( computerName ) ) {
+							ComputerSoftware.FromComputerName( computerName, ref _dsSoftware, showHidden );
+						} else {
+							_dsSoftware.Add( new ComputerSoftware( computerName, @"Connection Error" ) );
+						}
 					} finally {
-						_dsSoftware.ResetBindings( );
-						OnEndQuerySoftwareInvoke( );
+						if( 0 >= Interlocked.Decrement( ref _dsSoftwareThreadCount ) ) {
+							OnEndQuerySoftwareInvoke( );
+						}						
 					}
 				} ).Start( );
-			} else {
-				MessageBox.Show( @"Could not connect to other computer", @"Alert", MessageBoxButtons.OK );
 			}
 		}
 
@@ -280,7 +291,9 @@ namespace RemoteWindowsAdministrator {
 			ClearComputerInfo( );
 			OnStartQueryComputerInfo( );
 			var computerNames = GetComputerNamesFromString( txtComputerInfoComputer.Text );
-			
+			if( null == computerNames || !computerNames.Any( ) ) {
+				return;
+			}
 			_dsComputerInfoThreadCount = computerNames.Count( );
 
 			foreach( var computerName in computerNames ) {
@@ -307,7 +320,9 @@ namespace RemoteWindowsAdministrator {
 			ClearCurrentUsers( );
 			OnStartQueryCurrentUsers( );
 			var computerNames = GetComputerNamesFromString( txtCurrentUsersComputer.Text );
-
+			if( null == computerNames || !computerNames.Any( ) ) {
+				return;
+			}
 			_dsCurrentUsersThreadCount = computerNames.Count( );
 
 			foreach( var computerName in computerNames ) {
@@ -320,10 +335,10 @@ namespace RemoteWindowsAdministrator {
 							// TODO Better logging so that multiples can be done without interruption and threaded
 							_dsCurrentUsers.Add( new CurrentUsers( currentName, @"Connection Error" ) );
 						}
-						_dsCurrentUsers.ResetBindings(  );
+						_dsCurrentUsers.ResetBindings( );
 					} finally {
 						if( 0 >= Interlocked.Decrement( ref _dsCurrentUsersThreadCount ) ) {
-							OnEndQueryCurrentUsersInvoke(  );
+							OnEndQueryCurrentUsersInvoke( );
 						}
 					}
 				} ).Start( );
@@ -399,7 +414,7 @@ namespace RemoteWindowsAdministrator {
 		private static string[] GetComputerNamesFromString( string computerNameInfo ) {
 			computerNameInfo = computerNameInfo.Trim( );
 			if( string.IsNullOrEmpty( computerNameInfo ) ) {
-				return new string[]{};
+				return new string[] { };
 			}
 			if( IsFile( computerNameInfo ) ) {
 				computerNameInfo = GetComputerNamesFromFile( computerNameInfo );

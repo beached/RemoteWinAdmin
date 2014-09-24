@@ -9,7 +9,9 @@ using System.Windows.Forms;
 
 namespace RemoteWindowsAdministrator {
 
-	public class Win32Product: IContainsString {
+	public class ComputerSoftware: IContainsString {
+		public string ComputerName { get; set; }
+		public string ConnectionStatus { get; set; }
 		public string Name { get; set; }
 		public string Publisher { get; set; }
 		public string Version { get; set; }
@@ -22,6 +24,12 @@ namespace RemoteWindowsAdministrator {
 		public string Comment { get; set; }
 		public string UrlInfoAbout { get; set; }
 
+
+		public ComputerSoftware( string computerName, string connectionStatus = @"OK" ) {
+			ComputerName = computerName;
+			ConnectionStatus = connectionStatus;
+		}
+
 		public bool ContainsString( string value ) {
 			return (new ValueIsIn( value )).Test( Name ).Test( Publisher ).Test( Version ).Test( InstallDate ).Test( Size ).Test( Guid ).Test( IsHidden( ) ).Test( HelpLink ).Test( UrlInfoAbout ).IsContained;
 		}
@@ -30,7 +38,7 @@ namespace RemoteWindowsAdministrator {
 			return !string.IsNullOrEmpty( Name ) && !string.IsNullOrEmpty( Guid );
 		}
 
-		private static bool HasGuid( IEnumerable<Win32Product> values, string guid ) {
+		private static bool HasGuid( IEnumerable<ComputerSoftware> values, string guid ) {
 			return values.Any( currentValue => guid.Equals( currentValue.Guid, StringComparison.OrdinalIgnoreCase ) );
 		}
 
@@ -40,7 +48,10 @@ namespace RemoteWindowsAdministrator {
 			return !shown && SystemComponent;
 		}
 
-		public static void FromComputerName( string computerName, ref SyncList<Win32Product> result, bool showHidden = false ) {
+		public static void FromComputerName( string computerName, ref SyncList<ComputerSoftware> result, bool showHidden = false ) {
+			Debug.Assert( null != result, @"result SyncList cannot be null" );
+			Debug.Assert( !string.IsNullOrEmpty( computerName ), @"Computer name cannot be empty" );
+			var softwareList = new List<ComputerSoftware>();
 			try {
 				string[] regPaths = { @"SOFTWARE\Wow6432node\Microsoft\Windows\CurrentVersion\Uninstall", @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" };
 				foreach( var currentPath in regPaths ) {
@@ -48,14 +59,13 @@ namespace RemoteWindowsAdministrator {
 						if( null == regKey ) {
 							continue;
 						}
-						SyncList<Win32Product> list = result;
-						foreach( var curGuid in regKey.GetSubKeyNames( ).Where( currentGuid => currentGuid.StartsWith( @"{" ) && !HasGuid( list, currentGuid ) ) ) {
-							using( var curReg = regKey.OpenSubKey( curGuid, false ) ) {
+						foreach( var currentGuid in regKey.GetSubKeyNames( ).Where( currentValue => currentValue.StartsWith( @"{" ) ).Where( currentGuid => !HasGuid( softwareList, currentGuid ) ) ) {
+							using( var curReg = regKey.OpenSubKey( currentGuid, false ) ) {
 								if( null == curReg || !string.IsNullOrEmpty( RegistryHelpers.GetString( curReg, @"ParentKeyName" ) ) ) {
 									continue;
 								}
-								var currentProduct = new Win32Product {
-									Guid = curGuid,
+								var currentProduct = new ComputerSoftware( computerName) {
+									Guid = currentGuid,
 									Name = RegistryHelpers.GetString( curReg, @"DisplayName" ),
 									Publisher = RegistryHelpers.GetString( curReg, @"Publisher" ),
 									Version = RegistryHelpers.GetString( curReg, @"DisplayVersion" ),
@@ -74,18 +84,24 @@ namespace RemoteWindowsAdministrator {
 								currentProduct.Comment = RegistryHelpers.GetString( curReg, @"Comment" );
 								currentProduct.UrlInfoAbout = RegistryHelpers.GetString( curReg, @"UrlInfoAbout" );
 								if( currentProduct.Valid( ) && !currentProduct.IsHidden( showHidden ) ) {
-									list.Add( currentProduct );
+									softwareList.Add( currentProduct );
 								}
 							}
 						}
 					}
 				}
 			} catch( System.IO.IOException ) {
-				MessageBox.Show( @"Error connecting to computer or another IO Error", @"Error", MessageBoxButtons.OK );
+				result.Add( new ComputerSoftware( computerName, @"Connection Error" ) );
+				softwareList.Clear(  );
 			} catch( UnauthorizedAccessException ) {
-				MessageBox.Show( @"You do not have permission to open this computer", @"Error", MessageBoxButtons.OK );
+				result.Add( new ComputerSoftware( computerName, @"Authorization Error" ) );
+				softwareList.Clear( );
 			} catch( System.Security.SecurityException ) {
-				MessageBox.Show( @"Security error while connecting", @"Error", MessageBoxButtons.OK );
+				result.Add( new ComputerSoftware( computerName, @"Authorization Error" ) );
+				softwareList.Clear( );
+			}
+			foreach( var value in softwareList ) {
+				result.Add( value );
 			}
 		}
 
