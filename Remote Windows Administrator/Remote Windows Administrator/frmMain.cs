@@ -22,28 +22,9 @@ namespace RemoteWindowsAdministrator {
 
 		public FrmMain( ) {
 			InitializeComponent( );
-			_dsComputerInfo = new SyncList<ComputerInfo>( dgvComputerInfo );
-			_dsCurrentUsers = new SyncList<CurrentUsers>( dgvCurrentUsers );
-			_dsSoftware = new SyncList<ComputerSoftware>( dgvSoftware );
-			_dsNetworkInfo = new SyncList<NetworkInfo>( dgvNetworkInfo );
-
-			// Setup software grid
-			SetDgvDefaults( dgvSoftware );
-			DgvHelpers.AddColumn( dgvSoftware, @"ComputerName", @"Computer Name" );
-			DgvHelpers.AddColumn( dgvSoftware, @"ConnectionStatus", @"Connection Status" );
-			DgvHelpers.AddColumn( dgvSoftware, @"Name" );
-			DgvHelpers.AddColumn( dgvSoftware, @"Publisher" );
-			DgvHelpers.AddColumn( dgvSoftware, @"Version" );
-			DgvHelpers.AddDateColumn( dgvSoftware, @"InstallDate", @"Install Date" );
-			DgvHelpers.AddColumn( dgvSoftware, @"Size", @"Size(MB)" );
-			DgvHelpers.AddButtonColumn( dgvSoftware, @"Uninstall" );
-			DgvHelpers.AddLinkColumn( dgvSoftware, @"HelpLink", @"Help Link" );
-			DgvHelpers.AddLinkColumn( dgvSoftware, @"UrlInfoAbout", @"About Link" );
-			DgvHelpers.AddColumn( dgvSoftware, @"Guid" );
-
-			dgvSoftware.DataSource = _dsSoftware;
-
+			
 			// Setup Computer Info grid
+			_dsComputerInfo = new SyncList<ComputerInfo>( dgvComputerInfo );
 			SetDgvDefaults( dgvComputerInfo );
 			DgvHelpers.AddColumn( dgvComputerInfo, @"ComputerName", @"Computer Name" );
 			DgvHelpers.AddColumn( dgvComputerInfo, @"ConnectionStatus", @"Connection Status" );
@@ -61,6 +42,7 @@ namespace RemoteWindowsAdministrator {
 			dgvComputerInfo.DataSource = _dsComputerInfo;
 
 			// Setup Currently logged in users grid
+			_dsCurrentUsers = new SyncList<CurrentUsers>( dgvCurrentUsers );
 			SetDgvDefaults( dgvCurrentUsers );
 			DgvHelpers.AddColumn( dgvCurrentUsers, @"ComputerName", @"Computer Name" );
 			DgvHelpers.AddColumn( dgvCurrentUsers, @"ConnectionStatus", @"Connection Status" );
@@ -73,16 +55,30 @@ namespace RemoteWindowsAdministrator {
 
 			dgvCurrentUsers.DataSource = _dsCurrentUsers;
 
-
 			// Setup Network Info
+			_dsNetworkInfo = new SyncList<NetworkInfo>( dgvNetworkInfo );
 			SetDgvDefaults( dgvNetworkInfo );
 			DgvHelpers.AddColumn( dgvNetworkInfo, @"ComputerName", @"Computer Name" );
 			DgvHelpers.AddColumn( dgvNetworkInfo, @"ConnectionStatus", @"Connection Status" );
 
 			dgvNetworkInfo.DataSource = _dsNetworkInfo;
 
-			// Prepare busy indicators
+			// Setup software grid
+			_dsSoftware = new SyncList<ComputerSoftware>( dgvSoftware );
+			SetDgvDefaults( dgvSoftware );
+			DgvHelpers.AddColumn( dgvSoftware, @"ComputerName", @"Computer Name" );
+			DgvHelpers.AddColumn( dgvSoftware, @"ConnectionStatus", @"Connection Status" );
+			DgvHelpers.AddColumn( dgvSoftware, @"Name" );
+			DgvHelpers.AddColumn( dgvSoftware, @"Publisher" );
+			DgvHelpers.AddColumn( dgvSoftware, @"Version" );
+			DgvHelpers.AddDateColumn( dgvSoftware, @"InstallDate", @"Install Date" );
+			DgvHelpers.AddColumn( dgvSoftware, @"Size", @"Size(MB)" );
+			DgvHelpers.AddButtonColumn( dgvSoftware, @"Uninstall" );
+			DgvHelpers.AddLinkColumn( dgvSoftware, @"HelpLink", @"Help Link" );
+			DgvHelpers.AddLinkColumn( dgvSoftware, @"UrlInfoAbout", @"About Link" );
+			DgvHelpers.AddColumn( dgvSoftware, @"Guid" );
 
+			dgvSoftware.DataSource = _dsSoftware;
 		}
 
 		private void FrmMain_Shown( object sender, EventArgs e ) {
