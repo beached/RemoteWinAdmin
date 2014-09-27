@@ -47,8 +47,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Helpers.cs" />
     <Compile Include="currentusers.cs" />
     <Compile Include="IContainsString.cs" />
+    <Compile Include="NetworkInfo.cs" />
     <Compile Include="Win32.cs" />
     <Compile Include="RegistryHelpers.cs" />
     <Compile Include="ShutdownDialog.cs">

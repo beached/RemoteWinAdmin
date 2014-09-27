@@ -5,6 +5,7 @@ using System.Windows.Forms;
 namespace RemoteWindowsAdministrator {
 	public class ComputerInfo: IContainsString {
 		public string ComputerName { get; set; }
+		public string ConnectionStatus { get; set; }
 		public DateTime? LocalSystemDateTime { get; set; }
 		public DateTime? LastBootTime { get; set; }
 		public DateTime? SystemTime { get; set; }
@@ -15,7 +16,6 @@ namespace RemoteWindowsAdministrator {
 		public DateTime? HwReleaseDate { get; set; }
 		public string SerialNumber { get; set; }
 		public string BiosVersion { get; set; }
-		public string Status { get; set; }
 		public string Uptime {
 			get {
 				if( null == SystemTime || null == LastBootTime ) {
@@ -27,11 +27,11 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public bool ContainsString( string value ) {
-			return (new ValueIsIn( value )).Test( ComputerName ).Test( LocalSystemDateTime ).Test( LastBootTime ).Test( SystemTime ).Test( InstallDate ).Test( Version ).Test( Architecture ).Test( Manufacturer ).Test( HwReleaseDate ).Test( SerialNumber ).Test( BiosVersion ).Test( Status ).Test( Uptime ).IsContained;
+			return (new ValueIsIn( value )).Test( ComputerName ).Test( LocalSystemDateTime ).Test( LastBootTime ).Test( SystemTime ).Test( InstallDate ).Test( Version ).Test( Architecture ).Test( Manufacturer ).Test( HwReleaseDate ).Test( SerialNumber ).Test( BiosVersion ).Test( ConnectionStatus ).Test( Uptime ).IsContained;
 		}
 
 		public static void GetComputerInfo( string computerName, ref SyncList.SyncList<ComputerInfo> result ) {
-			var ci = new ComputerInfo { LocalSystemDateTime = DateTime.Now, ComputerName = computerName, Status = @"OK" };
+			var ci = new ComputerInfo { LocalSystemDateTime = DateTime.Now, ComputerName = computerName, ConnectionStatus = @"OK" };
 			try {
 				WmiHelpers.ForEach( computerName, @"SELECT * FROM Win32_OperatingSystem WHERE Primary=TRUE", obj => {
 					ci.LastBootTime = WmiHelpers.GetDate( obj, @"LastBootUpTime" );
@@ -50,9 +50,9 @@ namespace RemoteWindowsAdministrator {
 					return true;
 				} );
 			} catch( UnauthorizedAccessException ) {
-				ci.Status = @"Authorization Error";
+				ci.ConnectionStatus = @"Authorization Error";
 			} catch( Exception ) {
-				ci.Status = @"Error";
+				ci.ConnectionStatus = @"Error";
 			}
 			result.Add( ci );
 		}
