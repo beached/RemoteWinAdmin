@@ -27,5 +27,9 @@ namespace RemoteWindowsAdministrator {
 			}
 			return value;
 		}
+
+		public static readonly List<string> FieldsToNotLoopup = new List<string>( ) {
+			@"Computer Name", @"Connection Status", @"SID"
+		};
 	}
 }

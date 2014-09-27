@@ -293,6 +293,7 @@
 			this.dgvCurrentUsers.Name = "dgvCurrentUsers";
 			this.dgvCurrentUsers.Size = new System.Drawing.Size(1144, 455);
 			this.dgvCurrentUsers.TabIndex = 10;
+			this.dgvCurrentUsers.CellMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvCurrentUsers_CellMouseClick);
 			// 
 			// gbCurrentUsersComputer
 			// 

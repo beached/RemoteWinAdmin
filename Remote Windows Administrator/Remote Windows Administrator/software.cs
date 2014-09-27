@@ -21,7 +21,6 @@ namespace RemoteWindowsAdministrator {
 		public bool SystemComponent { get; set; }
 		public string Guid { get; set; }
 		public string HelpLink { get; set; }
-		public string Comment { get; set; }
 		public string UrlInfoAbout { get; set; }
 
 
@@ -48,7 +47,7 @@ namespace RemoteWindowsAdministrator {
 			return !shown && SystemComponent;
 		}
 
-		public static void FromComputerName( string computerName, ref SyncList<ComputerSoftware> result, bool showHidden = false ) {
+		public static void FromComputerName( string computerName, ref SyncList<ComputerSoftware> result ) {
 			Debug.Assert( null != result, @"result SyncList cannot be null" );
 			Debug.Assert( !string.IsNullOrEmpty( computerName ), @"Computer name cannot be empty" );
 			var softwareList = new List<ComputerSoftware>();
@@ -77,9 +76,8 @@ namespace RemoteWindowsAdministrator {
 								}
 
 								currentProduct.HelpLink = RegistryHelpers.GetString( curReg, @"HelpLink" );
-								currentProduct.Comment = RegistryHelpers.GetString( curReg, @"Comment" );
 								currentProduct.UrlInfoAbout = RegistryHelpers.GetString( curReg, @"UrlInfoAbout" );
-								if( currentProduct.Valid( ) && !currentProduct.IsHidden( showHidden ) ) {
+								if( currentProduct.Valid( ) ) {
 									softwareList.Add( currentProduct );
 								}
 							}

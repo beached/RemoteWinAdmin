@@ -1,4 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Data;
+using System.Globalization;
+using System.Web.UI.WebControls;
 using SyncList;
 using System;
 using System.Diagnostics;
@@ -7,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
+using MenuItem = System.Windows.Forms.MenuItem;
 
 namespace RemoteWindowsAdministrator {
 	public partial class FrmMain: Form {
@@ -32,30 +36,28 @@ namespace RemoteWindowsAdministrator {
 			DgvHelpers.AddColumn( dgvSoftware, @"Version" );
 			DgvHelpers.AddDateColumn( dgvSoftware, @"InstallDate", @"Install Date" );
 			DgvHelpers.AddColumn( dgvSoftware, @"Size", @"Size(MB)" );
-			DgvHelpers.AddColumn( dgvSoftware, @"Guid", null, true );
+			DgvHelpers.AddButtonColumn( dgvSoftware, @"Uninstall" );
 			DgvHelpers.AddLinkColumn( dgvSoftware, @"HelpLink", @"Help Link" );
 			DgvHelpers.AddLinkColumn( dgvSoftware, @"UrlInfoAbout", @"About Link" );
-			DgvHelpers.AddCheckedColumn( dgvSoftware, @"ShouldHide", @"Hidden" );
-			DgvHelpers.AddColumn( dgvSoftware, @"Comment" );
+			DgvHelpers.AddColumn( dgvSoftware, @"Guid" );
 
 			dgvSoftware.DataSource = _dsSoftware;
 
 			// Setup Computer Info grid
 			SetDgvDefaults( dgvComputerInfo );
 			DgvHelpers.AddColumn( dgvComputerInfo, @"ComputerName", @"Computer Name" );
-			DgvHelpers.AddColumn( dgvComputerInfo, @"Status" );
+			DgvHelpers.AddColumn( dgvComputerInfo, @"Status", @"Connection Status" );
 			DgvHelpers.AddDateColumn( dgvComputerInfo, @"LastBootTime", @"Boot Time", false, true, MagicValues.TimeDateStringFormat );
 			DgvHelpers.AddColumn( dgvComputerInfo, @"Uptime" );
 			DgvHelpers.AddColumn( dgvComputerInfo, @"Version", @"Windows Version" );
 			DgvHelpers.AddColumn( dgvComputerInfo, @"Architecture" );
+			DgvHelpers.AddDateColumn( dgvComputerInfo, @"InstallDate", "Windows\nInstall Date" );
 			DgvHelpers.AddColumn( dgvComputerInfo, @"Manufacturer" );
 			DgvHelpers.AddDateColumn( dgvComputerInfo, @"HwReleaseDate", @"Hardware Date" );
 			DgvHelpers.AddColumn( dgvComputerInfo, @"SerialNumber", @"Serial Number" );
 			DgvHelpers.AddColumn( dgvComputerInfo, @"BiosVersion", @"BIOS Version" );
-			{
-				var colShutdown = new DataGridViewButtonColumn { Name = @"Shutdown", HeaderText = string.Empty, Text = @"Shutdown", UseColumnTextForButtonValue = true };
-				dgvComputerInfo.Columns.Add( colShutdown );
-			}
+			DgvHelpers.AddButtonColumn( dgvComputerInfo, @"Shutdown" );
+
 			dgvComputerInfo.DataSource = _dsComputerInfo;
 
 			// Setup Currently logged in users grid
@@ -100,11 +102,11 @@ namespace RemoteWindowsAdministrator {
 			lock( _dsComputerInfo ) {
 				_dsComputerInfo.Clear( );
 			}
-			txtComputerInfoFilter.Clear(  );
+			txtComputerInfoFilter.Clear( );
 			dgvComputerInfo.DataSource = _dsComputerInfo;
 		}
 
-		private void ClearSoftware( ) {			
+		private void ClearSoftware( ) {
 			lock( _dsSoftware ) {
 				_dsSoftware.Clear( );
 			}
@@ -116,111 +118,149 @@ namespace RemoteWindowsAdministrator {
 			lock( _dsCurrentUsers ) {
 				_dsCurrentUsers.Clear( );
 			}
-			txtCurrentUsersFilter.Clear(  );
+			txtCurrentUsersFilter.Clear( );
 			dgvCurrentUsers.DataSource = _dsCurrentUsers;
 		}
 
 		private void dgvSoftware_CellMouseClick( object sender, DataGridViewCellMouseEventArgs e ) {
-			if( 0 > e.RowIndex || 0 > e.ColumnIndex ) {
+			if( !ValidateAndSelect( dgvCurrentUsers, e ) ) {
 				return;
 			}
-			DgvHelpers.SelectCell( dgvSoftware, e.RowIndex, e.ColumnIndex );
-			if( MouseButtons.Right != e.Button ) {
-				var curCell = dgvSoftware.Rows[e.RowIndex].Cells[e.ColumnIndex];
-				if( IsLink( curCell ) ) {
-					OpenLink( curCell );
-				}
-				return;
-			}
+			var curCell = dgvSoftware.Rows[e.RowIndex].Cells[e.ColumnIndex];
+			var colUninstallIndex = DgvHelpers.GetColumnIndex( dgvSoftware, @"Uninstall" );
 
-			var strGuid = GetGuid( e.RowIndex );
-			if( string.IsNullOrEmpty( strGuid ) ) {
-				return;
-			}
-
-			var m = new ContextMenu( );
-			if( !String.IsNullOrEmpty( DgvHelpers.GetCellString( dgvSoftware, e.RowIndex, e.ColumnIndex ).Trim( ) ) ) {
-				m.MenuItems.Add( new MenuItem( string.Format( @"Copy {0}", DgvHelpers.GetColumnName( dgvSoftware, e.ColumnIndex ) ), delegate {
-					Clipboard.SetText( dgvSoftware.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString( ) );
-				} ) );
-			}
-			m.MenuItems.Add( new MenuItem( @"Uninstall", delegate {
-				dgvSoftware.Enabled = false;
-				var oldCursor = Cursor;
-				Cursor = Cursors.WaitCursor;
-				dgvSoftware.Update( );
-				try {
-					if( DialogResult.Yes != MessageBox.Show( @"Are you sure?", @"Alert", MessageBoxButtons.YesNo ) ) {
-						return;
-					}
-					ComputerSoftware.UninstallGuidOnComputerName( txtSoftwareComputerName.Text, strGuid );
-					QuerySoftware( );
-				} finally {
-					dgvSoftware.Enabled = true;
-					Cursor = oldCursor;
-					dgvSoftware.Update( );
-				}
-			} ) );
-
-			var lookupMenu = new MenuItem( @"Lookup" );
-			lookupMenu.MenuItems.Add( new MenuItem( @"GUID", delegate { SearchWeb( strGuid ); } ) );
-			{
-				var programName = GetProgram( e.RowIndex );
-				if( !string.IsNullOrEmpty( programName ) ) {
-					lookupMenu.MenuItems.Add( new MenuItem( @"Program Name", delegate { SearchWeb( programName ); } ) );
-				}
-			}
-			{
-				var publisherName = GetPublisher( e.RowIndex );
-				if( !string.IsNullOrEmpty( publisherName ) ) {
-					lookupMenu.MenuItems.Add( new MenuItem( @"Publisher", delegate { SearchWeb( publisherName ); } ) );
-				}
-			}
-			m.MenuItems.Add( lookupMenu );
-			m.Show( dgvSoftware, dgvSoftware.PointToClient( new Point( Cursor.Position.X, Cursor.Position.Y ) ) );
-		}
-
-		private void dgvComputerInfo_CellMouseClick( object sender, DataGridViewCellMouseEventArgs e ) {
-			if( 0 > e.RowIndex || 0 > e.ColumnIndex ) {
-				return;
-			}
-			DgvHelpers.SelectCell( dgvComputerInfo, e.RowIndex, e.ColumnIndex );
-			var shutdownIndex = DgvHelpers.GetColumnIndex( dgvComputerInfo, @"Shutdown" );
 			switch( e.Button ) {
 			case MouseButtons.Left: {
-					if( e.ColumnIndex == shutdownIndex ) {
-						var computerName = dgvComputerInfo.Rows[e.RowIndex].Cells[@"Computer Name"].Value.ToString( );
-						Debug.Assert( null != computerName, @"ComputerName is null.  This should never happen" );
-						using( var csd = new ConfirmShutdownDialog( new ComputerInfo.ShutdownComputerParameters( computerName ) ) ) {
-							csd.ShowDialog( );
+					if( colUninstallIndex == e.ColumnIndex ) {
+						dgvSoftware.Enabled = false;
+						var oldCursor = Cursor;
+						Cursor = Cursors.WaitCursor;
+						dgvSoftware.Update( );
+						try {
+							if( DialogResult.Yes != MessageBox.Show( @"Are you sure?", @"Alert", MessageBoxButtons.YesNo ) ) {
+								return;
+							}
+							var strGuid = GetGuid( e.RowIndex );
+							if( string.IsNullOrEmpty( strGuid ) ) {
+								throw new Exception( @"No GUID for selected row. All rows must have a GUID" );
+							}
+							ComputerSoftware.UninstallGuidOnComputerName( txtSoftwareComputerName.Text, strGuid );
+							QuerySoftware( );
+						} finally {
+							dgvSoftware.Enabled = true;
+							Cursor = oldCursor;
+							dgvSoftware.Update( );
 						}
+					} else if( IsLink( curCell ) ) {
+						OpenLink( curCell );
+						return;
 					}
 					break;
 				}
 			case MouseButtons.Right: {
-					if( e.ColumnIndex == shutdownIndex ) {
-						return;
-					}
-					var m = new ContextMenu( );
-					DgvHelpers.AddCopyColumnMenuItem( dgvComputerInfo, ref m, e.RowIndex, e.ColumnIndex );
-					if( 0 < m.MenuItems.Count ) {
-						m.Show( dgvComputerInfo, dgvComputerInfo.PointToClient( new Point( Cursor.Position.X, Cursor.Position.Y ) ) );
-					}
-					break;
+				var ctxMnu = MakeCopyLookupMenus( dgvSoftware, e.RowIndex, e.ColumnIndex, new List<int> {
+					colUninstallIndex
+				} );
+				if( null != ctxMnu && 0 < ctxMnu.MenuItems.Count ) {
+					ctxMnu.Show( dgvSoftware, dgvSoftware.PointToClient( new Point( Cursor.Position.X, Cursor.Position.Y ) ) );
 				}
+				break;
 			}
+			default:
+				throw new ArgumentOutOfRangeException( );
+			}
+
+
+		}
+
+		private void dgvComputerInfo_CellMouseClick( object sender, DataGridViewCellMouseEventArgs e ) {
+			if( !ValidateAndSelect( dgvCurrentUsers, e ) ) {
+				return;
+			} 
+			
+			var colShutdownIndex = DgvHelpers.GetColumnIndex( dgvComputerInfo, @"Shutdown" );
+			switch( e.Button ) {
+			case MouseButtons.Left: {
+				if( e.ColumnIndex == colShutdownIndex ) {
+					var computerName = dgvComputerInfo.Rows[e.RowIndex].Cells[@"Computer Name"].Value.ToString( );
+					Debug.Assert( null != computerName, @"ComputerName is null.  This should never happen" );
+					using( var csd = new ConfirmShutdownDialog( new ComputerInfo.ShutdownComputerParameters( computerName ) ) ) {
+						csd.ShowDialog( );
+					}
+				}
+				break;
+			}
+			case MouseButtons.Right: {
+				var ctxMnu = MakeCopyLookupMenus( dgvComputerInfo, e.RowIndex, e.ColumnIndex, new List<int> {
+					colShutdownIndex
+				} );
+				if( null != ctxMnu && 0 < ctxMnu.MenuItems.Count ) {
+					ctxMnu.Show( dgvComputerInfo, dgvComputerInfo.PointToClient( new Point( Cursor.Position.X, Cursor.Position.Y ) ) );
+				}
+				break;
+			}
+			}
+		}
+
+		private void dgvCurrentUsers_CellMouseClick( object sender, DataGridViewCellMouseEventArgs e ) {
+			if( !ValidateAndSelect( dgvCurrentUsers, e ) ) {
+				return;
+			}
+			switch( e.Button ) {
+			case MouseButtons.Right: {
+				if( !String.IsNullOrEmpty( DgvHelpers.GetCellString( dgvCurrentUsers, e.RowIndex, e.ColumnIndex ).Trim( ) ) ) {
+					var ctxMnu = new ContextMenu( );
+					ctxMnu.MenuItems.Add( new MenuItem( string.Format( @"Copy {0}", DgvHelpers.GetColumnName( dgvCurrentUsers, e.ColumnIndex ) ), delegate { Clipboard.SetText( dgvCurrentUsers.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString( ) ); } ) );
+					ctxMnu.Show( dgvCurrentUsers, dgvCurrentUsers.PointToClient( new Point( Cursor.Position.X, Cursor.Position.Y ) ) );
+				}
+				break;
+			}
+			}
+		}
+
+		private static bool ValidateAndSelect( DataGridView dgv, DataGridViewCellMouseEventArgs e ) {
+			if( null == e || 0 > e.RowIndex || 0 > e.ColumnIndex ) {
+				return false;
+			}
+			DgvHelpers.SelectCell( dgv, e.RowIndex, e.ColumnIndex );
+			return true;
+		}
+
+		private static ContextMenu MakeCopyLookupMenus( DataGridView dgv, int rowIndex, int columnIndex, IEnumerable<int> excludedColumns ) {
+			if( excludedColumns.Contains( columnIndex ) ) {
+				return null;
+			}
+
+			var menu = new ContextMenu( );
+			if( !String.IsNullOrEmpty( DgvHelpers.GetCellString( dgv, rowIndex, columnIndex ).Trim( ) ) ) {
+				menu.MenuItems.Add( new MenuItem( string.Format( @"Copy {0}", DgvHelpers.GetColumnName( dgv, columnIndex ) ), delegate { Clipboard.SetText( dgv.Rows[rowIndex].Cells[columnIndex].Value.ToString( ) ); } ) );
+			}
+
+			var lookupMenu = new MenuItem( @"Lookup" );
+
+			var clickedColumnName = dgv.Columns[columnIndex].Name;
+			foreach( DataGridViewColumn column in dgv.Columns ) {
+				if( MagicValues.FieldsToNotLoopup.Contains( column.Name ) ) {
+					continue;
+				}
+				if( 0 != (@"CanSearch").CompareTo( column.Tag ) ) {
+					continue;
+				}
+				if( string.IsNullOrEmpty( dgv.Rows[rowIndex].Cells[column.Index].Value as string ) ) {
+					continue;
+				}
+				var curCellValue = DgvHelpers.GetCellString( dgv, rowIndex, column.Index );
+				var menuName = (clickedColumnName == column.Name && !string.IsNullOrEmpty( curCellValue ) ? @"*" : string.Empty) + column.Name;
+				lookupMenu.MenuItems.Add( new MenuItem( menuName, delegate { SearchWeb( curCellValue ); } ) );
+			}
+			if( 0 < lookupMenu.MenuItems.Count ) {
+				menu.MenuItems.Add( lookupMenu );
+			}
+			return menu;
 		}
 
 		private string GetGuid( int row ) {
 			return DgvHelpers.GetCellString( dgvSoftware, row, @"Guid" );
-		}
-
-		private string GetProgram( int row ) {
-			return DgvHelpers.GetCellString( dgvSoftware, row, @"Name" );
-		}
-
-		private string GetPublisher( int row ) {
-			return DgvHelpers.GetCellString( dgvSoftware, row, @"Publisher" );
 		}
 
 		private void OnStartQueryComputerInfo( ) {
@@ -276,13 +316,12 @@ namespace RemoteWindowsAdministrator {
 				return;
 			}
 			_dsSoftwareThreadCount = computerNames.Count( );
-			var showHidden = chkSoftwareShowHidden.Checked;
 			foreach( var value in computerNames ) {
 				var computerName = value;
 				new Thread( ( ) => {
 					try {
 						if( WmiHelpers.IsAlive( computerName ) ) {
-							ComputerSoftware.FromComputerName( computerName, ref _dsSoftware, showHidden );
+							ComputerSoftware.FromComputerName( computerName, ref _dsSoftware );
 						} else {
 							lock( _dsSoftware ) {
 								_dsSoftware.Add( new ComputerSoftware( computerName, @"Connection Error" ) );
@@ -291,7 +330,7 @@ namespace RemoteWindowsAdministrator {
 					} finally {
 						if( 0 >= Interlocked.Decrement( ref _dsSoftwareThreadCount ) ) {
 							OnEndQuerySoftwareInvoke( );
-						}						
+						}
 					}
 				} ).Start( );
 			}
@@ -314,7 +353,7 @@ namespace RemoteWindowsAdministrator {
 							ComputerInfo.GetComputerInfo( currentName, ref _dsComputerInfo );
 						} else {
 							lock( _dsComputerInfo ) {
-								_dsComputerInfo.Add( new ComputerInfo {LocalSystemDateTime = DateTime.Now, ComputerName = currentName, Status = @"Connection Error"} );
+								_dsComputerInfo.Add( new ComputerInfo { LocalSystemDateTime = DateTime.Now, ComputerName = currentName, Status = @"Connection Error" } );
 							}
 						}
 					} finally {
@@ -413,17 +452,17 @@ namespace RemoteWindowsAdministrator {
 			}
 		}
 
-		private static List<string> GetComputerNamesFromFile( string fileName ) {
+		private static IEnumerable<string> GetComputerNamesFromFile( string fileName ) {
 			fileName = MagicValues.StripSurroundingDblQuotes( fileName );
 			Debug.Assert( IsFile( fileName ), "File does not exist" );
 			return MagicValues.DeleniateComputerList( File.ReadAllText( fileName ) );
 		}
-		 
+
 		private static List<string> GetComputerNamesFromString( string computerNameInfo ) {
 			computerNameInfo = computerNameInfo.Trim( );
 			if( string.IsNullOrEmpty( computerNameInfo ) ) {
-				return new List<string>();
-			}			
+				return new List<string>( );
+			}
 			var computerNames = MagicValues.DeleniateComputerList( computerNameInfo );
 			var result = new List<string>( );
 			foreach( var computerName in computerNames ) {
@@ -437,7 +476,7 @@ namespace RemoteWindowsAdministrator {
 			return result.OrderBy( name => name ).Distinct( ).ToList( );
 		}
 
-		private static bool IsFile( string path ) {			
+		private static bool IsFile( string path ) {
 			return File.Exists( MagicValues.StripSurroundingDblQuotes( path ) );
 		}
 

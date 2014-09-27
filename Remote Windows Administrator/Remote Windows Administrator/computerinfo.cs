@@ -8,6 +8,7 @@ namespace RemoteWindowsAdministrator {
 		public DateTime? LocalSystemDateTime { get; set; }
 		public DateTime? LastBootTime { get; set; }
 		public DateTime? SystemTime { get; set; }
+		public DateTime? InstallDate { get; set; }
 		public string Version { get; set; }
 		public string Architecture { get; set; }
 		public string Manufacturer { get; set; }
@@ -26,7 +27,7 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public bool ContainsString( string value ) {
-			return (new ValueIsIn( value )).Test( ComputerName ).Test( LocalSystemDateTime ).Test( LastBootTime ).Test( SystemTime ).Test( Version ).Test( Architecture ).Test( Manufacturer ).Test( HwReleaseDate ).Test( SerialNumber ).Test( BiosVersion ).Test( Status ).Test( Uptime ).IsContained;
+			return (new ValueIsIn( value )).Test( ComputerName ).Test( LocalSystemDateTime ).Test( LastBootTime ).Test( SystemTime ).Test( InstallDate ).Test( Version ).Test( Architecture ).Test( Manufacturer ).Test( HwReleaseDate ).Test( SerialNumber ).Test( BiosVersion ).Test( Status ).Test( Uptime ).IsContained;
 		}
 
 		public static void GetComputerInfo( string computerName, ref SyncList.SyncList<ComputerInfo> result ) {
@@ -37,6 +38,7 @@ namespace RemoteWindowsAdministrator {
 					ci.SystemTime = WmiHelpers.GetDate( obj, @"LocalDateTime" );
 					ci.Version = WmiHelpers.GetString( obj, @"Caption" );
 					ci.Architecture = WmiHelpers.GetString( obj, @"OSArchitecture" );
+					ci.InstallDate = WmiHelpers.GetDate( obj, @"InstallDate" );
 					return true;
 				} );
 
