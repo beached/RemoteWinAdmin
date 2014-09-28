@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace daw {
 	public class Helpers {
-		public static void Assert( bool condition, string message ) {
+		public static void Assert( bool condition, string message = "" ) {
 			if( condition ) {
 				return;
 			}

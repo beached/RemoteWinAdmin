@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 
 namespace RemoteWindowsAdministrator {
-	public class NetworkInfo: IContainsString {
+	public class NetworkInfo: IDataPageRow {
 		public string ComputerName { get; set; }
 		public string ConnectionStatus { get; set; }
 		public DateTime? DhcpLeaseExpires { get; set; }

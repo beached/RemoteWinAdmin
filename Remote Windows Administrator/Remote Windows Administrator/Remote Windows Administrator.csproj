@@ -47,9 +47,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataPageControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="DataPageControl.Designer.cs">
+      <DependentUpon>DataPageControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Helpers.cs" />
     <Compile Include="currentusers.cs" />
-    <Compile Include="IContainsString.cs" />
+    <Compile Include="IDataPageRow.cs" />
     <Compile Include="NetworkInfo.cs" />
     <Compile Include="Win32.cs" />
     <Compile Include="RegistryHelpers.cs" />
@@ -71,6 +77,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="wmi_helpers.cs" />
     <Compile Include="software.cs" />
+    <EmbeddedResource Include="DataPageControl.resx">
+      <DependentUpon>DataPageControl.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="frmMain.resx">
       <DependentUpon>frmMain.cs</DependentUpon>
       <SubType>Designer</SubType>

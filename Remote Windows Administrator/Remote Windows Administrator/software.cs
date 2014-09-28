@@ -9,7 +9,7 @@ using System.Windows.Forms;
 
 namespace RemoteWindowsAdministrator {
 
-	public class ComputerSoftware: IContainsString {
+	public class ComputerSoftware: IDataPageRow {
 		public string ComputerName { get; set; }
 		public string ConnectionStatus { get; set; }
 		public string Name { get; set; }

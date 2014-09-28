@@ -1,4 +1,5 @@
-﻿using SyncList;
+﻿using daw;
+using SyncList;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -21,7 +22,7 @@ namespace RemoteWindowsAdministrator {
 		private Int32 _dsSoftwareThreadCount;
 
 		public FrmMain( ) {
-			InitializeComponent( );
+			InitializeComponent( );			
 			
 			// Setup Computer Info grid
 			_dsComputerInfo = new SyncList<ComputerInfo>( dgvComputerInfo );
@@ -104,6 +105,46 @@ namespace RemoteWindowsAdministrator {
 			DgvHelpers.AddColumn( dgvSoftware, @"Guid" );
 
 			dgvSoftware.DataSource = _dsSoftware;
+			
+			var d = new DataPageControl<ComputerInfo>( this, new SyncList<ComputerInfo>( p ) ) {
+				CompletionMessage = @"Completed Test Query", GenerateLookupMenu = true, QueryDataCb = ComputerInfo.GetComputerInfo2, SetupColumnsCb = delegate( DataGridView dgv ) {
+					DgvHelpers.AddColumn( dgv, @"ComputerName", @"Computer Name" );
+					DgvHelpers.AddColumn( dgv, @"ConnectionStatus", @"Connection Status" );
+					DgvHelpers.AddDateColumn( dgv, @"LastBootTime", @"Boot Time", false, true, MagicValues.TimeDateStringFormat );
+					DgvHelpers.AddColumn( dgv, @"Uptime" );
+					DgvHelpers.AddColumn( dgv, @"Version", @"Windows Version" );
+					DgvHelpers.AddColumn( dgv, @"Architecture" );
+					DgvHelpers.AddDateColumn( dgv, @"InstallDate", "Windows\nInstall Date" );
+					DgvHelpers.AddColumn( dgv, @"Manufacturer" );
+					DgvHelpers.AddDateColumn( dgv, @"HwReleaseDate", @"Hardware Date" );
+					DgvHelpers.AddColumn( dgv, @"SerialNumber", @"Serial Number" );
+					DgvHelpers.AddColumn( dgv, @"BiosVersion", @"BIOS Version" );
+					DgvHelpers.AddButtonColumn( dgv, @"Shutdown" );
+				},
+				OnCellButtonClick = delegate( DataGridView dgv, int rowIndex, int columnIndex ) {
+					Helpers.Assert( null != dgv && 0 <= rowIndex && rowIndex < dgv.RowCount && 0 <= columnIndex && columnIndex < dgv.ColumnCount );
+					var cell = dgv.Rows[rowIndex].Cells[columnIndex];
+					var cellValue = cell.Value as string;
+					if( string.IsNullOrEmpty( cellValue ) || 0 != string.Compare( cellValue, @"Shutdown", StringComparison.Ordinal ) ) {
+						return;
+					}
+					var computerName = dgv.Rows[rowIndex].Cells[@"Computer Name"].Value.ToString( );
+					Helpers.Assert( !string.IsNullOrEmpty( computerName ), @"ComputerName is null or empty.  This should never happen" );
+					using( var csd = new ConfirmShutdownDialog( new ComputerInfo.ShutdownComputerParameters( computerName ) ) ) {
+						csd.ShowDialog( );
+					}
+				}				
+			};
+
+			p.Controls.Add( d );
+			tcMain.TabPages.Add( p );
+		}
+
+		private static void AddDataPageToTabControl<T>( string name, TabControl tabControl, DataPageControl<T> dataPageControl ) {
+			var page = new TabPage( name );
+			dataPageControl.Dock = DockStyle.Fill;
+			page.Controls.Add( dataPageControl );
+			tabControl.TabPages.Add( page );
 		}
 
 		private void FrmMain_Shown( object sender, EventArgs e ) {
@@ -365,7 +406,7 @@ namespace RemoteWindowsAdministrator {
 
 		private static void FilterText<T>( DataGridView dgv, ref SyncList<T> values, string filter ) {
 			if( !string.IsNullOrEmpty( filter ) ) {
-				var newList = values.AsEnumerable( ).Where( item => ((IContainsString)item).ContainsString( filter ) ).ToList( );
+				var newList = values.AsEnumerable( ).Where( item => ((IDataPageRow)item).ContainsString( filter ) ).ToList( );
 				dgv.DataSource = newList;
 			} else {
 				dgv.DataSource = values;
@@ -500,14 +541,13 @@ namespace RemoteWindowsAdministrator {
 			if( !ValidateAndSelect( ref dgvNetworkInfo, e ) ) {
 				return;
 			}
-			var curCell = dgvNetworkInfo.Rows[e.RowIndex].Cells[e.ColumnIndex];
 
 			switch( e.Button ) {
 			case MouseButtons.Left: {					
 					break;
 				}
 			case MouseButtons.Right: {
-					var ctxMnu = MakeCopyLookupMenus( dgvNetworkInfo, e.RowIndex, e.ColumnIndex, new List<int> { } );
+					var ctxMnu = MakeCopyLookupMenus( dgvNetworkInfo, e.RowIndex, e.ColumnIndex, new List<int>( ) );
 					if( null != ctxMnu && 0 < ctxMnu.MenuItems.Count ) {
 						ctxMnu.Show( dgvNetworkInfo, dgvNetworkInfo.PointToClient( new Point( Cursor.Position.X, Cursor.Position.Y ) ) );
 					}

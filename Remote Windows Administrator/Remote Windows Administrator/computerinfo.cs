@@ -4,7 +4,7 @@ using System.Windows.Forms;
 using daw;
 
 namespace RemoteWindowsAdministrator {
-	public class ComputerInfo: IContainsString {
+	public class ComputerInfo: IDataPageRow {
 		public string ComputerName { get; set; }
 		public string ConnectionStatus { get; set; }
 		public DateTime? LocalSystemDateTime { get; set; }
@@ -29,6 +29,10 @@ namespace RemoteWindowsAdministrator {
 
 		public bool ContainsString( string value ) {
 			return (new ValueIsIn( value )).Add( ComputerName ).Add( LocalSystemDateTime ).Add( LastBootTime ).Add( SystemTime ).Add( InstallDate ).Add( Version ).Add( Architecture ).Add( Manufacturer ).Add( HwReleaseDate ).Add( SerialNumber ).Add( BiosVersion ).Add( ConnectionStatus ).Add( Uptime ).IsContained;
+		}
+
+		public static void GetComputerInfo2( string computerName, SyncList.SyncList<ComputerInfo> result ) {
+			GetComputerInfo( computerName, ref result );
 		}
 
 		public static void GetComputerInfo( string computerName, ref SyncList.SyncList<ComputerInfo> result ) {

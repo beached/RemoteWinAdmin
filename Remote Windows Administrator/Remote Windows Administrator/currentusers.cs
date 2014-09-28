@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 
 namespace RemoteWindowsAdministrator {
-	public class CurrentUsers: IContainsString {
+	public class CurrentUsers: IDataPageRow {
 		public string ComputerName { get; set; }
 		public string ConnectionStatus { get; set; }
 		public string Domain { get; set; }
