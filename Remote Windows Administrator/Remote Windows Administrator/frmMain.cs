@@ -8,6 +8,7 @@ namespace RemoteWindowsAdministrator {
 
 		public FrmMain( ) {
 			InitializeComponent( );
+
 			SetupSoftwareTab( );
 			SetupComputerInfoTab( );
 			SetupCurrentUsersTab( );
@@ -15,7 +16,7 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private void SetupSoftwareTab( ) {
-			AddDataPageToTabControl( @"Software", tcMain, new DataPageControl<ComputerSoftware>( this, new SyncList<ComputerSoftware>( this ) ) {
+			AddDataPageToTabControl( @"Software", tcMain, new DataPageControl<ComputerSoftware>( this ) {
 				CompletionMessage = @"Computer Software Query Complete", GenerateLookupMenu = true,
 				QueryDataCb = ComputerSoftware.GetComputerSoftware, SetupColumnsCb = delegate( DataGridView dgv ) {
 					DgvHelpers.AddColumn( dgv, @"ComputerName", @"Computer Name" );
@@ -51,7 +52,7 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private void SetupComputerInfoTab( ) {
-			AddDataPageToTabControl( "Computer Info", tcMain, new DataPageControl<ComputerInfo>( this, new SyncList<ComputerInfo>( this ) ) {
+			AddDataPageToTabControl( "Computer Info", tcMain, new DataPageControl<ComputerInfo>( this ) {
 				CompletionMessage = @"Computer Info Query Complete", GenerateLookupMenu = true,
 				QueryDataCb = ComputerInfo.GetComputerInfo, SetupColumnsCb = delegate( DataGridView dgv ) {
 					DgvHelpers.AddColumn( dgv, @"ComputerName", @"Computer Name" );
@@ -86,7 +87,7 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private void SetupCurrentUsersTab( ) {
-			AddDataPageToTabControl( "Current Users", tcMain, new DataPageControl<CurrentUsers>( this, new SyncList<CurrentUsers>( this ) ) {
+			AddDataPageToTabControl( "Current Users", tcMain, new DataPageControl<CurrentUsers>( this ) {
 				CompletionMessage = @"Current User Query Complete", GenerateLookupMenu = false,
 				QueryDataCb = CurrentUsers.GetCurrentUsers, SetupColumnsCb = delegate( DataGridView dgv ) {
 					DgvHelpers.AddColumn( dgv, @"ComputerName", @"Computer Name" );
@@ -102,7 +103,7 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private void SetupNetworkInfoTab( ) {
-			AddDataPageToTabControl( "Network Info", tcMain, new DataPageControl<NetworkInfo>( this, new SyncList<NetworkInfo>( this ) ) {
+			AddDataPageToTabControl( "Network Info", tcMain, new DataPageControl<NetworkInfo>( this ) {
 				CompletionMessage = @"Network Info Query Complete", GenerateLookupMenu = true,
 				QueryDataCb = NetworkInfo.GetNetworkInfo, SetupColumnsCb = delegate( DataGridView dgv ) {
 					DgvHelpers.AddColumn( dgv, @"ComputerName", @"Computer Name" );

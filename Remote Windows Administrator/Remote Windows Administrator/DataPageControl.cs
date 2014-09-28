@@ -37,9 +37,9 @@ namespace RemoteWindowsAdministrator {
 		/// </summary>
 		public bool GenerateLookupMenu { get; set; }
 		 
-		public DataPageControl( Form parent, SyncList<T> dataSource ) {
+		public DataPageControl( Form parent ) {
 			_parent = parent;
-			_ds = dataSource;
+			_ds = new SyncList<T>( parent );
 			InitializeComponent( );
 			SetDgvDefaults( dgv );
 		}

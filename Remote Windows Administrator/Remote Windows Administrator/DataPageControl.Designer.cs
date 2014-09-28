@@ -57,6 +57,7 @@
 			this.dgv.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+			this.dgv.BackgroundColor = System.Drawing.SystemColors.Window;
 			this.dgv.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			this.dgv.Location = new System.Drawing.Point(3, 56);
 			this.dgv.Name = "dgv";
@@ -104,6 +105,7 @@
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.BackColor = System.Drawing.SystemColors.Window;
 			this.Controls.Add(this.txtFilter);
 			this.Controls.Add(this.lblFilter);
 			this.Controls.Add(this.dgv);
