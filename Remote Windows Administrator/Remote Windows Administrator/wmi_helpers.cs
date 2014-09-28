@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Management;
 using System.Net.NetworkInformation;
+using daw;
 
 namespace RemoteWindowsAdministrator {
 	public sealed class WmiHelpers {
@@ -63,13 +64,20 @@ namespace RemoteWindowsAdministrator {
 			return null == item ? string.Empty : item.ToString( );
 		}
 
+		public static string[] GetStringArray( ManagementBaseObject mo, string fieldName ) {
+			var item = mo[fieldName];
+			return null == item ? new string[] { } : item as string[];
+		}
+
 		public static int? GetNullableInt( ManagementBaseObject mo, string fieldName ) {
 			var item = mo[fieldName];
 			return item as int?;
 		}
 
 		public static int GetInt( ManagementBaseObject mo, string fieldName ) {
-			return (int)mo[fieldName];
+			var item = mo[fieldName];
+			Helpers.Assert( null != item, @"GetInt cannot retrieve null values" );
+			return (int)item;
 		}
 
 		public static uint? GetNullableUInt( ManagementBaseObject mo, string fieldName ) {
@@ -78,32 +86,62 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public static uint GetUInt( ManagementBaseObject mo, string fieldName ) {
-			return (uint)mo[fieldName];
+			var item = mo[fieldName];
+			Helpers.Assert( null != item, @"GetUInt cannot retrieve null values" );
+			return (uint)item;
 		}
+
+		public static ushort GetUShort( ManagementBaseObject mo, string fieldName ) {
+			var item = mo[fieldName];
+			Helpers.Assert( null != item, @"GetUShort cannot retrieve null values" );
+			return (ushort)item;
+		}
+
+		public static ushort? GetNullableUShort( ManagementBaseObject mo, string fieldName ) {
+			var item = mo[fieldName];
+			return item as ushort?;
+		}
+
+		public static bool GetBoolean( ManagementBaseObject mo, string fieldName ) {
+			var item = mo[fieldName];
+			Helpers.Assert( null != item, @"GetBoolean cannot retrieve null values" );
+			return (bool)item;
+
+		}
+
+		public static bool? GetNullableBoolean( ManagementBaseObject mo, string fieldName ) {
+			var item = mo[fieldName];
+			return item as bool?;
+		}
+
 
 		/// <summary>
 		/// Converts a date/time string in the format yyyyMMddHHmmss.ffffff tttt where
 		/// tttt is a signed integer representing the timezone offset in minutes to a
 		/// DateTime object
 		/// </summary>
-		public static DateTime DateTimeFromMsDateTimeString( string value ) {
+		public static DateTime DateTimeFromMsDateTimeString( string value, bool isLocalTime = false ) {
 			var tz = Int32.Parse( value.Substring( 21 ) );
 			value = value.Substring( 0, 21 );
 			var result = DateTime.ParseExact( value, @"yyyyMMddHHmmss.ffffff", CultureInfo.InvariantCulture );
-			result = result.AddMinutes( tz );
+			if( !isLocalTime ) {
+				result = result.AddMinutes( tz );
+			}
 			return result;
 		}
 
-		public static DateTime GetDate( ManagementObject mo, string fieldName ) {
-			return DateTimeFromMsDateTimeString( GetString( mo, fieldName ) );
+		public static DateTime GetDate( ManagementObject mo, string fieldName, bool isLocalTime = false ) {
+			var item = mo[fieldName];
+			Helpers.Assert( null == item, @"GetDate cannot retrieve null items. Use GetNullableDate" );
+			return DateTimeFromMsDateTimeString( item as string, isLocalTime );
 		}
 
-		public static DateTime? GetNullableDate( ManagementObject mo, string fieldName ) {
-			var strItem = GetString( mo, fieldName );
-			if( string.IsNullOrEmpty( strItem ) ) {
+		public static DateTime? GetNullableDate( ManagementObject mo, string fieldName, bool isLocalTime = false ) {
+			var item = mo[fieldName];
+			if( null == item ) {
 				return null;
 			}
-			return DateTimeFromMsDateTimeString( strItem );
+			return DateTimeFromMsDateTimeString( item as string, isLocalTime );
 		}
 
 

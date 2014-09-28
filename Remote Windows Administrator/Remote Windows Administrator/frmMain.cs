@@ -48,8 +48,8 @@ namespace RemoteWindowsAdministrator {
 			DgvHelpers.AddColumn( dgvCurrentUsers, @"ConnectionStatus", @"Connection Status" );
 			DgvHelpers.AddColumn( dgvCurrentUsers, @"Domain" );
 			DgvHelpers.AddColumn( dgvCurrentUsers, @"UserName", @"UserName" );
-			DgvHelpers.AddDateColumn( dgvCurrentUsers, @"LastLogon", @"Last Logon", false, true, MagicValues.TimeDateStringFormat );
-			DgvHelpers.AddColumn( dgvCurrentUsers, @"LogonDuration", @"Logon Duration" );
+			DgvHelpers.AddDateColumn( dgvCurrentUsers, @"LastLogon", @"Last Login", false, true, MagicValues.TimeDateStringFormat );
+			DgvHelpers.AddColumn( dgvCurrentUsers, @"LogonDuration", @"Login Duration" );
 			DgvHelpers.AddColumn( dgvCurrentUsers, @"Sid", @"SID" );
 			DgvHelpers.AddColumn( dgvCurrentUsers, @"ProfileFolder", @"Profile" );
 
@@ -60,6 +60,31 @@ namespace RemoteWindowsAdministrator {
 			SetDgvDefaults( dgvNetworkInfo );
 			DgvHelpers.AddColumn( dgvNetworkInfo, @"ComputerName", @"Computer Name" );
 			DgvHelpers.AddColumn( dgvNetworkInfo, @"ConnectionStatus", @"Connection Status" );
+			DgvHelpers.AddColumn( dgvNetworkInfo, @"Caption" );
+			DgvHelpers.AddColumn( dgvNetworkInfo, @"Description" );
+			DgvHelpers.AddCheckedColumn( dgvNetworkInfo, @"DhcpEnabled", "DHCP\nEnabled" );
+			DgvHelpers.AddDateColumn( dgvNetworkInfo, @"DhcpLeaseObtained", "DHCP\nLease Obtained", false, true, MagicValues.TimeDateStringFormat );
+			DgvHelpers.AddDateColumn( dgvNetworkInfo, @"DhcpLeaseExpires", "DHCP\nLease Expires", false, true, MagicValues.TimeDateStringFormat );
+			DgvHelpers.AddColumn( dgvNetworkInfo, @"DhcpLeaseTimeLeft", "DHCP\nLease Time Left" );
+			DgvHelpers.AddColumn( dgvNetworkInfo, @"DhcpServer", "DHCP\nServer" );
+			DgvHelpers.AddColumn( dgvNetworkInfo, @"DnsDomain", @"DNS Domain" );
+			DgvHelpers.AddMultilineColumn( dgvNetworkInfo, @"DnsDomainSuffixSearchOrders", "DNS Domain\nSearch Order" );
+			DgvHelpers.AddCheckedColumn( dgvNetworkInfo, @"DnsEnabledForWinsResolution", "DNS Enabled For\nWINS Resolution" );
+			DgvHelpers.AddColumn( dgvNetworkInfo, @"DnsHostName", @"DNS Host Name" );
+			DgvHelpers.AddMultilineColumn( dgvNetworkInfo, @"DnsServerSearchOrders", "DNS Server\nSearch Order" );
+			DgvHelpers.AddCheckedColumn( dgvNetworkInfo, @"DomainDnsRegistrationEnabled", "Domain DNS\nRegistration Enabled" );
+			DgvHelpers.AddColumn( dgvNetworkInfo, @"DefaultIpGateways", @"Default IP Gateways" );
+			DgvHelpers.AddCheckedColumn( dgvNetworkInfo, @"FullDnsRegistrationEnabled", "Full DNS\nRegistration Enabled" );
+			DgvHelpers.AddColumn( dgvNetworkInfo, @"MacAddress", @"MAC Address" );
+			DgvHelpers.AddColumn( dgvNetworkInfo, @"Index" );
+			DgvHelpers.AddColumn( dgvNetworkInfo, @"InterfaceIndex", @"Interface Index" );
+			DgvHelpers.AddMultilineColumn( dgvNetworkInfo, @"IpAddresses", @"IP Addresses" );
+			DgvHelpers.AddColumn( dgvNetworkInfo, @"IpConnectionMetric", "IP Connection\nMetric" );
+			DgvHelpers.AddCheckedColumn( dgvNetworkInfo, @"IpEnabled", @"IP Enabled" );
+			DgvHelpers.AddCheckedColumn( dgvNetworkInfo, @"WinsEnableLmHostsLookup", "WINS Enable\nLM Hosts Lookup" );
+			DgvHelpers.AddColumn( dgvNetworkInfo, @"WinsHostLookupFile", "WINS Host\nLookup File" );
+			DgvHelpers.AddMultilineColumn( dgvNetworkInfo, @"WinsServers", @"WINS Servers" );
+			DgvHelpers.AddColumn( dgvNetworkInfo, @"WinsScopeId", "WINS\nScope ID" );
 
 			dgvNetworkInfo.DataSource = _dsNetworkInfo;
 
@@ -116,7 +141,6 @@ namespace RemoteWindowsAdministrator {
 			txtFilterSoftware.Clear( );
 			dgvSoftware.DataSource = _dsSoftware;
 		}
-
 
 		private string GetGuid( int row ) {
 			return DgvHelpers.GetCellString( dgvSoftware, row, @"Guid" );
@@ -405,6 +429,9 @@ namespace RemoteWindowsAdministrator {
 			dgv.AllowUserToAddRows = false;
 			dgv.AllowUserToDeleteRows = false;
 			dgv.ReadOnly = true;
+			dgv.AutoResizeColumnHeadersHeight( );
+			dgv.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCells;
+			dgv.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells;
 		}
 
 		// Events

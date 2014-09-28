@@ -30,7 +30,7 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public bool ContainsString( string value ) {
-			return (new ValueIsIn( value )).Test(ComputerName).Test( ConnectionStatus).Test( Name ).Test( Publisher ).Test( Version ).Test( InstallDate ).Test( Size ).Test( Guid ).Test( IsHidden( ) ).Test( HelpLink ).Test( UrlInfoAbout ).IsContained;
+			return (new ValueIsIn( value )).Add(ComputerName).Add( ConnectionStatus).Add( Name ).Add( Publisher ).Add( Version ).Add( InstallDate ).Add( Size ).Add( Guid ).Add( IsHidden( ) ).Add( HelpLink ).Add( UrlInfoAbout ).IsContained;
 		}
 
 		public bool Valid( ) {

@@ -16,43 +16,56 @@ namespace RemoteWindowsAdministrator {
 			_valueToCheck = value.ToUpperInvariant( );
 		}
 	
-		public ValueIsIn Test( string value ) {
+		public ValueIsIn Add( string value ) {
 			if( !IsContained && !string.IsNullOrEmpty( value ) ) {
 				IsContained |= value.ToUpperInvariant( ).Contains( _valueToCheck );
 			}
 			return this;
 		}
 
-		public ValueIsIn Test( DateTime? value, string format = MagicValues.ShortDateFormat ) {
-			return !IsContained && null != value ? Test( value.Value.ToString( format, CultureInfo.InvariantCulture ) ) : this;
-		}
-
-		public ValueIsIn Test( double? value ) {
-			return !IsContained && null != value ? Test( value.Value.ToString( CultureInfo.InvariantCulture ) ) : this;
-		}
-
-		public ValueIsIn Test( float? value ) {
-			return !IsContained && null != value ? Test( value.Value.ToString( CultureInfo.InvariantCulture ) ) : this;
-		}
-
-		public ValueIsIn Test( bool? value ) {
-			return !IsContained && null != value ? Test( value.Value.ToString( CultureInfo.InvariantCulture ) ) : this;
-		}
-
-		public ValueIsIn Test( long? value ) {
-			return !IsContained && null != value ? Test( value.Value.ToString( CultureInfo.InvariantCulture ) ) : this;
-		}
-
-		public ValueIsIn Test( int? value ) {
-			return !IsContained && null != value ? Test( value.Value.ToString( CultureInfo.InvariantCulture ) ) : this;
-		}
-
-		public ValueIsIn Test( ) {
+		public ValueIsIn Add( IEnumerable<string> values ) {
+			if( IsContained ) {
+				return this;
+			}
+			foreach( var value in values ) {
+				Add( value );
+				if( IsContained ) {
+					break;
+				}
+			}
 			return this;
 		}
 
-		public ValueIsIn Test( object value ) {
-			return !IsContained && null != value ? Test( value.ToString( ) ) : this;
+		public ValueIsIn Add( DateTime? value, string format = MagicValues.ShortDateFormat ) {
+			return !IsContained && null != value ? Add( value.Value.ToString( format, CultureInfo.InvariantCulture ) ) : this;
+		}
+
+		public ValueIsIn Add( double? value ) {
+			return !IsContained && null != value ? Add( value.Value.ToString( CultureInfo.InvariantCulture ) ) : this;
+		}
+
+		public ValueIsIn Add( float? value ) {
+			return !IsContained && null != value ? Add( value.Value.ToString( CultureInfo.InvariantCulture ) ) : this;
+		}
+
+		public ValueIsIn Add( bool? value ) {
+			return !IsContained && null != value ? Add( value.Value.ToString( CultureInfo.InvariantCulture ) ) : this;
+		}
+
+		public ValueIsIn Add( long? value ) {
+			return !IsContained && null != value ? Add( value.Value.ToString( CultureInfo.InvariantCulture ) ) : this;
+		}
+
+		public ValueIsIn Add( int? value ) {
+			return !IsContained && null != value ? Add( value.Value.ToString( CultureInfo.InvariantCulture ) ) : this;
+		}
+
+		public ValueIsIn Add( ) {
+			return this;
+		}
+
+		public ValueIsIn Add( object value ) {
+			return !IsContained && null != value ? Add( value.ToString( ) ) : this;
 		}
 
 		public void Reset( ) {

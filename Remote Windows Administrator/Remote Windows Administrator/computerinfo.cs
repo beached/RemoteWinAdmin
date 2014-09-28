@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Management;
 using System.Windows.Forms;
+using daw;
 
 namespace RemoteWindowsAdministrator {
 	public class ComputerInfo: IContainsString {
@@ -22,29 +23,31 @@ namespace RemoteWindowsAdministrator {
 					return null;
 				}
 				var span = SystemTime.Value - LastBootTime.Value;
-				return string.Format( @"{0} days {1}:{2}hrs", span.Days, span.Hours, span.Minutes );
+				return MagicValues.TimeSpanToString( span );
 			}
 		}
 
 		public bool ContainsString( string value ) {
-			return (new ValueIsIn( value )).Test( ComputerName ).Test( LocalSystemDateTime ).Test( LastBootTime ).Test( SystemTime ).Test( InstallDate ).Test( Version ).Test( Architecture ).Test( Manufacturer ).Test( HwReleaseDate ).Test( SerialNumber ).Test( BiosVersion ).Test( ConnectionStatus ).Test( Uptime ).IsContained;
+			return (new ValueIsIn( value )).Add( ComputerName ).Add( LocalSystemDateTime ).Add( LastBootTime ).Add( SystemTime ).Add( InstallDate ).Add( Version ).Add( Architecture ).Add( Manufacturer ).Add( HwReleaseDate ).Add( SerialNumber ).Add( BiosVersion ).Add( ConnectionStatus ).Add( Uptime ).IsContained;
 		}
 
 		public static void GetComputerInfo( string computerName, ref SyncList.SyncList<ComputerInfo> result ) {
+			Helpers.Assert( null != result, @"result SyncList cannot be null" );
+			Helpers.Assert( !string.IsNullOrEmpty( computerName ), @"Computer name cannot be empty" );
 			var ci = new ComputerInfo { LocalSystemDateTime = DateTime.Now, ComputerName = computerName, ConnectionStatus = @"OK" };
 			try {
 				WmiHelpers.ForEach( computerName, @"SELECT * FROM Win32_OperatingSystem WHERE Primary=TRUE", obj => {
-					ci.LastBootTime = WmiHelpers.GetDate( obj, @"LastBootUpTime" );
-					ci.SystemTime = WmiHelpers.GetDate( obj, @"LocalDateTime" );
+					ci.LastBootTime = WmiHelpers.GetNullableDate( obj, @"LastBootUpTime" );
+					ci.SystemTime = WmiHelpers.GetNullableDate( obj, @"LocalDateTime" );
 					ci.Version = WmiHelpers.GetString( obj, @"Caption" );
 					ci.Architecture = WmiHelpers.GetString( obj, @"OSArchitecture" );
-					ci.InstallDate = WmiHelpers.GetDate( obj, @"InstallDate" );
+					ci.InstallDate = WmiHelpers.GetNullableDate( obj, @"InstallDate" );
 					return true;
 				} );
 
 				WmiHelpers.ForEach( computerName, @"SELECT * FROM Win32_BIOS", obj => {
 					ci.Manufacturer = WmiHelpers.GetString( obj, @"Manufacturer" );
-					ci.HwReleaseDate = WmiHelpers.GetDate( obj, @"ReleaseDate" );
+					ci.HwReleaseDate = WmiHelpers.GetNullableDate( obj, @"ReleaseDate" );
 					ci.SerialNumber = WmiHelpers.GetString( obj, @"SerialNumber" );
 					ci.BiosVersion = WmiHelpers.GetString( obj, @"SMBIOSBIOSVersion" );
 					return true;

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using daw;
 using Microsoft.Win32;
 using System;
 using System.Diagnostics;
@@ -34,7 +35,7 @@ namespace RemoteWindowsAdministrator {
 		/// <param name="value">Value to search for</param>
 		/// <returns>True if any field contains value, false otherwise</returns>
 		public bool ContainsString( string value ) {
-			return (new ValueIsIn( value )).Test( ComputerName ).Test( ConnectionStatus ).Test( Domain ).Test( UserName ).Test( LastLogon ).Test( Sid ).Test( ProfileFolder ).Test( LogonDuration ).IsContained;
+			return (new ValueIsIn( value )).Add( ComputerName ).Add( ConnectionStatus ).Add( Domain ).Add( UserName ).Add( LastLogon ).Add( Sid ).Add( ProfileFolder ).Add( LogonDuration ).IsContained;
 		}
 
 		private static void GetLocallyLoggedOnUsers( string computerName, ref SyncList.SyncList<CurrentUsers> result ) {
@@ -174,6 +175,9 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public static void GetCurrentUsers( string computerName, ref SyncList.SyncList<CurrentUsers> result ) {
+			Helpers.Assert( null != result, @"result SyncList cannot be null" );
+			Helpers.Assert( !string.IsNullOrEmpty( computerName ), @"Computer name cannot be empty" );
+
 			switch( GetNetworkUsers( computerName, ref result ) ) {
 			case Win32.Error.Success:
 				break;
