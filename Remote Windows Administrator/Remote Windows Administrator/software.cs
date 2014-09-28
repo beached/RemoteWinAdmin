@@ -23,10 +23,13 @@ namespace RemoteWindowsAdministrator {
 		public string HelpLink { get; set; }
 		public string UrlInfoAbout { get; set; }
 
-
-		public ComputerSoftware( string computerName, string connectionStatus = @"OK" ) {
+		public ComputerSoftware( string computerName = @"", string connectionStatus = @"OK" ) {
 			ComputerName = computerName;
 			ConnectionStatus = connectionStatus;
+		}
+
+		public ComputerSoftware( ) {
+			ConnectionStatus = @"OK";
 		}
 
 		public bool ContainsString( string value ) {
@@ -34,7 +37,7 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public bool Valid( ) {
-			return !string.IsNullOrEmpty( Name ) && !string.IsNullOrEmpty( Guid );
+			return !string.IsNullOrEmpty( Name ) && !string.IsNullOrEmpty( Guid ) && !string.IsNullOrEmpty( ComputerName ) && !string.IsNullOrEmpty( ConnectionStatus );
 		}
 
 		private static bool HasGuid( IEnumerable<ComputerSoftware> values, string guid ) {
@@ -47,7 +50,7 @@ namespace RemoteWindowsAdministrator {
 			return !shown && SystemComponent;
 		}
 
-		public static void FromComputerName( string computerName, ref SyncList<ComputerSoftware> result ) {
+		public static void GetComputerSoftware( string computerName, SyncList<ComputerSoftware> result ) {
 			Debug.Assert( null != result, @"result SyncList cannot be null" );
 			Debug.Assert( !string.IsNullOrEmpty( computerName ), @"Computer name cannot be empty" );
 			var softwareList = new List<ComputerSoftware>();
@@ -65,8 +68,8 @@ namespace RemoteWindowsAdministrator {
 								if( null == curReg || !string.IsNullOrEmpty( RegistryHelpers.GetString( curReg, @"ParentKeyName" ) ) ) {
 									continue;
 								}
-								var currentProduct = new ComputerSoftware( computerName ) {
-									Guid = currentGuid, Name = RegistryHelpers.GetString( curReg, @"DisplayName" ), Publisher = RegistryHelpers.GetString( curReg, @"Publisher" ), Version = RegistryHelpers.GetString( curReg, @"DisplayVersion" ), InstallDate = RegistryHelpers.GetDateTime( curReg, @"InstallDate" ), CanRemove = 0 == RegistryHelpers.GetDword( curReg, @"NoRemove", 0 ), SystemComponent = 1 == RegistryHelpers.GetDword( curReg, @"SystemComponent", 0 )
+								var currentProduct = new ComputerSoftware( ) {
+									ComputerName = computerName, Guid = currentGuid, Name = RegistryHelpers.GetString( curReg, @"DisplayName" ), Publisher = RegistryHelpers.GetString( curReg, @"Publisher" ), Version = RegistryHelpers.GetString( curReg, @"DisplayVersion" ), InstallDate = RegistryHelpers.GetDateTime( curReg, @"InstallDate" ), CanRemove = 0 == RegistryHelpers.GetDword( curReg, @"NoRemove", 0 ), SystemComponent = 1 == RegistryHelpers.GetDword( curReg, @"SystemComponent", 0 )
 								};
 								{
 									var estSize = RegistryHelpers.GetDword( curReg, @"EstimatedSize" );

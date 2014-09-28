@@ -24,6 +24,10 @@ namespace RemoteWindowsAdministrator {
 			}
 		}
 
+		public CurrentUsers( ) {
+			ConnectionStatus = @"OK";
+		}
+
 		public CurrentUsers( string computerName, string connectionStatus = @"OK" ) {
 			ComputerName = computerName;
 			ConnectionStatus = connectionStatus;
@@ -38,7 +42,11 @@ namespace RemoteWindowsAdministrator {
 			return (new ValueIsIn( value )).Add( ComputerName ).Add( ConnectionStatus ).Add( Domain ).Add( UserName ).Add( LastLogon ).Add( Sid ).Add( ProfileFolder ).Add( LogonDuration ).IsContained;
 		}
 
-		private static void GetLocallyLoggedOnUsers( string computerName, ref SyncList.SyncList<CurrentUsers> result ) {
+		public bool Valid( ) {
+			return !string.IsNullOrEmpty( ComputerName ) && !string.IsNullOrEmpty( ConnectionStatus );
+		}
+
+		private static void GetLocallyLoggedOnUsers( string computerName, SyncList.SyncList<CurrentUsers> result ) {
 			var usersList = new List<CurrentUsers>( );
 			using( var regHku = RegistryKey.OpenRemoteBaseKey( RegistryHive.Users, string.Empty ) ) {
 				foreach( var currentSid in regHku.GetSubKeyNames( ).Where( IsSid ) ) {
@@ -174,7 +182,7 @@ namespace RemoteWindowsAdministrator {
 			}
 		}
 
-		public static void GetCurrentUsers( string computerName, ref SyncList.SyncList<CurrentUsers> result ) {
+		public static void GetCurrentUsers( string computerName, SyncList.SyncList<CurrentUsers> result ) {
 			Helpers.Assert( null != result, @"result SyncList cannot be null" );
 			Helpers.Assert( !string.IsNullOrEmpty( computerName ), @"Computer name cannot be empty" );
 
@@ -192,7 +200,7 @@ namespace RemoteWindowsAdministrator {
 				//return;
 				break;
 			}
-			GetLocallyLoggedOnUsers( computerName, ref result );
+			GetLocallyLoggedOnUsers( computerName, result );
 		}
 
 		private static DateTime? GetUsersLogonTimestamp( CurrentUsers user ) {

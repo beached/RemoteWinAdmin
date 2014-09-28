@@ -27,7 +27,7 @@ namespace RemoteWindowsAdministrator {
 			}
 		}
 		public Action<string, SyncList<T>> QueryDataCb { get; set; }
-		public Action<DataGridView, int, int> OnCellButtonClick { get; set; }
+		public Func<DataGridView, int, int, bool> OnCellButtonClick { get; set; }
 
 		public DataGridViewColumnCollection Columns { get { return dgv.Columns; } }
 		public DataGridViewRowCollection Rows { get { return dgv.Rows; } }

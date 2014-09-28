@@ -55,6 +55,10 @@ namespace RemoteWindowsAdministrator {
 			}
 		}
 
+		public NetworkInfo( ) {
+			ConnectionStatus = @"OK";
+		}
+
 		public NetworkInfo( string computerName, string connectionStatus = @"OK" ) {
 			ComputerName = computerName;
 			ConnectionStatus = connectionStatus;
@@ -62,6 +66,10 @@ namespace RemoteWindowsAdministrator {
 
 		public bool ContainsString( string value ) {
 			return (new ValueIsIn( value )).Add( ComputerName ).Add( ConnectionStatus ).Add( Caption ).Add( DefaultIpGateway ).Add( Description ).Add( DhcpEnabled ).Add( DhcpLeaseExpires ).Add( DhcpLeaseObtained ).Add( DhcpServer ).Add( DnsDomain ).Add( DnsDomainSuffixSearchOrder ).Add( DnsEnabledForWinsResolution ).Add( DnsHostName ).Add( DnsServerSearchOrder ).Add( DomainDnsRegistrationEnabled ).Add( FullDnsRegistrationEnabled ).Add( Index ).Add( InterfaceIndex ).Add( IpAddress ).Add( IpConnectionMetric ).Add( IpEnabled ).Add( MacAddress ).Add( WinsEnableLmHostsLookup ).Add( WinsHostLookupFile ).Add( WinsPrimaryServer ).Add( WinsSecondaryServer ).Add( WinsScopeId ).IsContained;
+		}
+
+		public bool Valid( ) {
+			return !string.IsNullOrEmpty( ComputerName ) && !string.IsNullOrEmpty( ConnectionStatus );
 		}
 
 		private static string StraToStr( IEnumerable<string> stringArray ) {
@@ -78,7 +86,7 @@ namespace RemoteWindowsAdministrator {
 			return result;			
 		}
 
-		public static void GetNetworkInfo( string computerName, ref SyncList<NetworkInfo> result ) {
+		public static void GetNetworkInfo( string computerName, SyncList<NetworkInfo> result ) {
 			Helpers.Assert( null != result, @"result SyncList cannot be null" );
 			Helpers.Assert( !string.IsNullOrEmpty( computerName ), @"Computer name cannot be empty" );
 			var networkInfoList = new List<NetworkInfo>( );
@@ -114,10 +122,10 @@ namespace RemoteWindowsAdministrator {
 					networkInfoList.Add( ci );
 					return true;
 				}, true, false );
-			} catch( UnauthorizedAccessException uae ) {
+			} catch( UnauthorizedAccessException ) {
 				result.Add( new NetworkInfo( computerName, @"Authorization Error" ) );
 				return;
-			} catch( Exception ex ) {
+			} catch( Exception ) {
 				result.Add( new NetworkInfo( computerName, @"Error" ) );
 				return;
 			}
