@@ -4,19 +4,19 @@ using System.Windows.Forms;
 using daw;
 
 namespace RemoteWindowsAdministrator {
-	public class ComputerInfo: IDataPageRow {
+	public sealed class PtComputerInfo: IDataPageRow {
+		public DateTime? HwReleaseDate { get; set; }
+		public DateTime? InstallDate { get; set; }
+		public DateTime? LastBootTime { get; set; }
+		public DateTime? LocalSystemDateTime { get; set; }
+		public DateTime? SystemTime { get; set; }
+		public string Architecture { get; set; }
+		public string BiosVersion { get; set; }
 		public string ComputerName { get; set; }
 		public string ConnectionStatus { get; set; }
-		public DateTime? LocalSystemDateTime { get; set; }
-		public DateTime? LastBootTime { get; set; }
-		public DateTime? SystemTime { get; set; }
-		public DateTime? InstallDate { get; set; }
-		public string Version { get; set; }
-		public string Architecture { get; set; }
 		public string Manufacturer { get; set; }
-		public DateTime? HwReleaseDate { get; set; }
 		public string SerialNumber { get; set; }
-		public string BiosVersion { get; set; }
+		public string Version { get; set; }
 		public string Uptime {
 			get {
 				if( null == SystemTime || null == LastBootTime ) {
@@ -35,10 +35,10 @@ namespace RemoteWindowsAdministrator {
 			return !string.IsNullOrEmpty( ComputerName ) && !string.IsNullOrEmpty( ConnectionStatus );
 		}
 
-		public static void GetComputerInfo( string computerName, SyncList.SyncList<ComputerInfo> result ) {
+		public static void Generate( string computerName, SyncList.SyncList<PtComputerInfo> result ) {
 			Helpers.Assert( null != result, @"result SyncList cannot be null" );
 			Helpers.Assert( !string.IsNullOrEmpty( computerName ), @"Computer name cannot be empty" );
-			var ci = new ComputerInfo { LocalSystemDateTime = DateTime.Now, ComputerName = computerName, ConnectionStatus = @"OK" };
+			var ci = new PtComputerInfo { LocalSystemDateTime = DateTime.Now, ComputerName = computerName, ConnectionStatus = @"OK" };
 			try {
 				WmiHelpers.ForEach( computerName, @"SELECT * FROM Win32_OperatingSystem WHERE Primary=TRUE", obj => {
 					ci.LastBootTime = WmiHelpers.GetNullableDate( obj, @"LastBootUpTime" );

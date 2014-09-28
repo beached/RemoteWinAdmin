@@ -126,14 +126,15 @@ namespace RemoteWindowsAdministrator {
 				if( MagicValues.FieldsToNotLoopup.Contains( column.Name ) ) {
 					continue;
 				}
-				if( 0 != (@"CanSearch").CompareTo( column.Tag ) ) {
-					continue;
-				}
-				if( string.IsNullOrEmpty( dataGridView.Rows[rowIndex].Cells[column.Index].Value as string ) ) {
+				if( !DgvHelpers.CanSearch( column )) {
 					continue;
 				}
 				var curCellValue = DgvHelpers.GetCellString( dataGridView, rowIndex, column.Index );
-				var menuName = (clickedColumnName == column.Name && !string.IsNullOrEmpty( curCellValue ) ? @"*" : string.Empty) + column.Name;
+				var menuName = column.HeaderText;
+				Helpers.Assert( menuName != null, @"All columns must have a header defined" );
+				if( 0 == string.Compare( clickedColumnName, column.Name, StringComparison.InvariantCulture ) ) {
+					menuName = "*" + menuName;
+				}
 				lookupMenu.MenuItems.Add( new MenuItem( menuName, delegate { SearchWeb( curCellValue ); } ) );
 			}
 			if( 0 < lookupMenu.MenuItems.Count ) {
@@ -161,7 +162,7 @@ namespace RemoteWindowsAdministrator {
 			return File.Exists( MagicValues.StripSurroundingDblQuotes( path ) );
 		}
 
-		private static bool IsLink( DataGridViewCell cell ) {
+		public static bool IsLink( DataGridViewCell cell ) {
 			return cell != null && cell.GetType( ) == typeof( DataGridViewLinkCell );
 		}
 

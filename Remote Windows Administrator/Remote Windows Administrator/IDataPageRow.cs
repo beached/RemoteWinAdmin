@@ -8,6 +8,6 @@ namespace RemoteWindowsAdministrator {
 		string ComputerName { get; set; }
 		string ConnectionStatus { get; set; }
 		bool ContainsString( string value );
-		bool Valid( );
+		bool Valid( );		
 	}
 }

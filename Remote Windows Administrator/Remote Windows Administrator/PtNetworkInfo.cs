@@ -4,14 +4,14 @@ using System;
 using System.Collections.Generic;
 
 namespace RemoteWindowsAdministrator {
-	public class NetworkInfo: IDataPageRow {
+	public sealed class PtNetworkInfo: IDataPageRow {
 		public string ComputerName { get; set; }
 		public string ConnectionStatus { get; set; }
 		public DateTime? DhcpLeaseExpires { get; set; }
 		public DateTime? DhcpLeaseObtained { get; set; }
-		public UInt32 Index { get; set; }
-		public UInt32 InterfaceIndex { get; set; }		
-		public UInt32? IpConnectionMetric { get; set; }
+		public uint Index { get; set; }
+		public uint InterfaceIndex { get; set; }		
+		public uint? IpConnectionMetric { get; set; }
 		public bool DhcpEnabled { get; set; }
 		public bool? DnsEnabledForWinsResolution { get; set; }
 		public bool? DomainDnsRegistrationEnabled { get; set; }
@@ -33,15 +33,15 @@ namespace RemoteWindowsAdministrator {
 		public string[] DnsServerSearchOrder { get; set; }
 		public string[] IpAddress { get; set; }
 
-		public string DefaultIpGatewayString { get { return StraToStr( DefaultIpGateway ); } }
+		public string DefaultIpGateways { get { return Helpers.StraToStr( DefaultIpGateway ); } }
 		public string DhcpLeaseTimeLeft {
 			get {
 				return null == DhcpLeaseExpires ? null : MagicValues.TimeSpanToString( DhcpLeaseExpires.Value - DateTime.Now );
 			}
 		}
-		public string DnsDomainSuffixSearchOrders { get { return StraToStr( DnsDomainSuffixSearchOrder ); } }
-		public string DnsServerSearchOrders { get { return StraToStr( DnsServerSearchOrder ); } }
-		public string IpAddresses { get { return StraToStr( IpAddress ); } }
+		public string DnsDomainSuffixSearchOrders { get { return Helpers.StraToStr( DnsDomainSuffixSearchOrder ); } }
+		public string DnsServerSearchOrders { get { return Helpers.StraToStr( DnsServerSearchOrder ); } }
+		public string IpAddresses { get { return Helpers.StraToStr( IpAddress ); } }
 		public string WinsServers {
 			get {
 				var result = new List<string>();
@@ -51,15 +51,15 @@ namespace RemoteWindowsAdministrator {
 				if( !string.IsNullOrEmpty( WinsSecondaryServer ) ) {
 					result.Add( WinsSecondaryServer );
 				}
-				return StraToStr( result );
+				return Helpers.StraToStr( result );
 			}
 		}
 
-		public NetworkInfo( ) {
+		public PtNetworkInfo( ) {
 			ConnectionStatus = @"OK";
 		}
 
-		public NetworkInfo( string computerName, string connectionStatus = @"OK" ) {
+		public PtNetworkInfo( string computerName, string connectionStatus = @"OK" ) {
 			ComputerName = computerName;
 			ConnectionStatus = connectionStatus;
 		}
@@ -72,27 +72,13 @@ namespace RemoteWindowsAdministrator {
 			return !string.IsNullOrEmpty( ComputerName ) && !string.IsNullOrEmpty( ConnectionStatus );
 		}
 
-		private static string StraToStr( IEnumerable<string> stringArray ) {
-			var result = string.Empty;
-			var isFirst = true;
-			foreach( var currentString in stringArray ) {
-				if( !isFirst ) {
-					result += "\n";
-				} else {
-					isFirst = false;
-				}
-				result += currentString;
-			}
-			return result;			
-		}
-
-		public static void GetNetworkInfo( string computerName, SyncList<NetworkInfo> result ) {
+		public static void Generate( string computerName, SyncList<PtNetworkInfo> result ) {
 			Helpers.Assert( null != result, @"result SyncList cannot be null" );
 			Helpers.Assert( !string.IsNullOrEmpty( computerName ), @"Computer name cannot be empty" );
-			var networkInfoList = new List<NetworkInfo>( );
+			var networkInfoList = new List<PtNetworkInfo>( );
 			try {
 				WmiHelpers.ForEach( computerName, @"SELECT * FROM Win32_NetworkAdapterConfiguration", obj => {
-					var ci = new NetworkInfo( computerName );
+					var ci = new PtNetworkInfo( computerName );
 					ci.Caption = WmiHelpers.GetString( obj, @"Caption" );
 					ci.DefaultIpGateway = WmiHelpers.GetStringArray( obj, @"DefaultIPGateway" );
 					ci.Description = WmiHelpers.GetString( obj, @"Description" );
@@ -123,10 +109,10 @@ namespace RemoteWindowsAdministrator {
 					return true;
 				}, true, false );
 			} catch( UnauthorizedAccessException ) {
-				result.Add( new NetworkInfo( computerName, @"Authorization Error" ) );
+				result.Add( new PtNetworkInfo( computerName, @"Authorization Error" ) );
 				return;
 			} catch( Exception ) {
-				result.Add( new NetworkInfo( computerName, @"Error" ) );
+				result.Add( new PtNetworkInfo( computerName, @"Error" ) );
 				return;
 			}
 			result.AddRange( networkInfoList );

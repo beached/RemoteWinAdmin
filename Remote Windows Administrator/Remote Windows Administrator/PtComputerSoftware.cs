@@ -9,26 +9,26 @@ using System.Windows.Forms;
 
 namespace RemoteWindowsAdministrator {
 
-	public class ComputerSoftware: IDataPageRow {
-		public string ComputerName { get; set; }
-		public string ConnectionStatus { get; set; }
-		public string Name { get; set; }
-		public string Publisher { get; set; }
-		public string Version { get; set; }
+	public sealed class PtComputerSoftware: IDataPageRow {
 		public DateTime? InstallDate { get; set; }
-		public float? Size { get; set; }
 		public bool CanRemove { get; set; }
 		public bool SystemComponent { get; set; }
+		public float? Size { get; set; }
+		public string ComputerName { get; set; }
+		public string ConnectionStatus { get; set; }
 		public string Guid { get; set; }
 		public string HelpLink { get; set; }
+		public string Name { get; set; }
+		public string Publisher { get; set; }
 		public string UrlInfoAbout { get; set; }
+		public string Version { get; set; }
 
-		public ComputerSoftware( string computerName = @"", string connectionStatus = @"OK" ) {
+		public PtComputerSoftware( string computerName = @"", string connectionStatus = @"OK" ) {
 			ComputerName = computerName;
 			ConnectionStatus = connectionStatus;
 		}
 
-		public ComputerSoftware( ) {
+		public PtComputerSoftware( ) {
 			ConnectionStatus = @"OK";
 		}
 
@@ -40,7 +40,7 @@ namespace RemoteWindowsAdministrator {
 			return !string.IsNullOrEmpty( Name ) && !string.IsNullOrEmpty( Guid ) && !string.IsNullOrEmpty( ComputerName ) && !string.IsNullOrEmpty( ConnectionStatus );
 		}
 
-		private static bool HasGuid( IEnumerable<ComputerSoftware> values, string guid ) {
+		private static bool HasGuid( IEnumerable<PtComputerSoftware> values, string guid ) {
 			return values.Any( currentValue => guid.Equals( currentValue.Guid, StringComparison.OrdinalIgnoreCase ) );
 		}
 
@@ -50,10 +50,10 @@ namespace RemoteWindowsAdministrator {
 			return !shown && SystemComponent;
 		}
 
-		public static void GetComputerSoftware( string computerName, SyncList<ComputerSoftware> result ) {
+		public static void Generate( string computerName, SyncList<PtComputerSoftware> result ) {
 			Debug.Assert( null != result, @"result SyncList cannot be null" );
 			Debug.Assert( !string.IsNullOrEmpty( computerName ), @"Computer name cannot be empty" );
-			var softwareList = new List<ComputerSoftware>();
+			var softwareList = new List<PtComputerSoftware>();
 			try {
 				string[] regPaths = {
 					@"SOFTWARE\Wow6432node\Microsoft\Windows\CurrentVersion\Uninstall", @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
@@ -68,7 +68,7 @@ namespace RemoteWindowsAdministrator {
 								if( null == curReg || !string.IsNullOrEmpty( RegistryHelpers.GetString( curReg, @"ParentKeyName" ) ) ) {
 									continue;
 								}
-								var currentProduct = new ComputerSoftware( ) {
+								var currentProduct = new PtComputerSoftware( ) {
 									ComputerName = computerName, Guid = currentGuid, Name = RegistryHelpers.GetString( curReg, @"DisplayName" ), Publisher = RegistryHelpers.GetString( curReg, @"Publisher" ), Version = RegistryHelpers.GetString( curReg, @"DisplayVersion" ), InstallDate = RegistryHelpers.GetDateTime( curReg, @"InstallDate" ), CanRemove = 0 == RegistryHelpers.GetDword( curReg, @"NoRemove", 0 ), SystemComponent = 1 == RegistryHelpers.GetDword( curReg, @"SystemComponent", 0 )
 								};
 								{
@@ -88,13 +88,13 @@ namespace RemoteWindowsAdministrator {
 					}
 				}
 			} catch( System.IO.IOException ) {
-				result.Add( new ComputerSoftware( computerName, @"Connection Error" ) );
+				result.Add( new PtComputerSoftware( computerName, @"Connection Error" ) );
 				softwareList.Clear( );
 			} catch( UnauthorizedAccessException ) {
-				result.Add( new ComputerSoftware( computerName, @"Authorization Error" ) );
+				result.Add( new PtComputerSoftware( computerName, @"Authorization Error" ) );
 				softwareList.Clear( );
 			} catch( System.Security.SecurityException ) {
-				result.Add( new ComputerSoftware( computerName, @"Authorization Error" ) );
+				result.Add( new PtComputerSoftware( computerName, @"Authorization Error" ) );
 				softwareList.Clear( );
 			}
 			result.AddRange( softwareList );

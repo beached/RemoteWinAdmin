@@ -1,4 +1,5 @@
-﻿using daw;
+﻿using System.Collections.Generic;
+using daw;
 using SyncList;
 using System;
 using System.Windows.Forms;
@@ -8,7 +9,6 @@ namespace RemoteWindowsAdministrator {
 
 		public FrmMain( ) {
 			InitializeComponent( );
-
 			SetupSoftwareTab( );
 			SetupComputerInfoTab( );
 			SetupCurrentUsersTab( );
@@ -16,20 +16,16 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private void SetupSoftwareTab( ) {
-			AddDataPageToTabControl( @"Software", tcMain, new DataPageControl<ComputerSoftware>( this ) {
+			AddDataPageToTabControl( @"Software", tcMain, new DataPageControl<PtComputerSoftware>( this ) {
 				CompletionMessage = @"Computer Software Query Complete", GenerateLookupMenu = true,
-				QueryDataCb = ComputerSoftware.GetComputerSoftware, SetupColumnsCb = delegate( DataGridView dgv ) {
-					DgvHelpers.AddColumn( dgv, @"ComputerName", @"Computer Name" );
-					DgvHelpers.AddColumn( dgv, @"ConnectionStatus", @"Connection Status" );
-					DgvHelpers.AddColumn( dgv, @"Name" );
-					DgvHelpers.AddColumn( dgv, @"Publisher" );
-					DgvHelpers.AddColumn( dgv, @"Version" );
-					DgvHelpers.AddDateColumn( dgv, @"InstallDate", @"Install Date" );
-					DgvHelpers.AddColumn( dgv, @"Size", @"Size(MB)" );
+				QueryDataCb = PtComputerSoftware.Generate, SetupColumnsCb = delegate( DataGridView dgv ) {
+					DgvHelpers.GenerateColumns( dgv, typeof( PtComputerSoftware ), new List<string>( ) {
+						@"ComputerName", @"ConnectionStatus", @"Name", @"Publisher", @"Version", @"InstallDate", @"Size", @"HelpLink", @"UrlInfoAbout", @"Guid"
+					} );
+					DgvHelpers.ConvertToLinkColumn( DgvHelpers.GetColumn( dgv,@"HelpLink" ) );
+					DgvHelpers.ConvertToLinkColumn( DgvHelpers.GetColumn( dgv, @"UrlInfoAbout" ) );
+					DgvHelpers.SetColumnHeader( DgvHelpers.GetColumn( dgv, @"Guid" ), @"GUID" );
 					DgvHelpers.AddButtonColumn( dgv, @"Uninstall" );
-					DgvHelpers.AddLinkColumn( dgv, @"HelpLink", @"Help Link" );
-					DgvHelpers.AddLinkColumn( dgv, @"UrlInfoAbout", @"About Link" );
-					DgvHelpers.AddColumn( dgv, @"Guid", @"GUID" );
 				},
 				OnCellButtonClick = delegate( DataGridView dgv, int rowIndex, int columnIndex ) {
 					Helpers.Assert( null != dgv && 0 <= rowIndex && rowIndex < dgv.RowCount && 0 <= columnIndex && columnIndex < dgv.ColumnCount );
@@ -38,34 +34,27 @@ namespace RemoteWindowsAdministrator {
 					if( string.IsNullOrEmpty( cellValue ) || 0 != string.Compare( cellValue, @"Uninstall", StringComparison.Ordinal ) ) {
 						return false;
 					}
-					var guid = DgvHelpers.GetCellString( dgv, rowIndex, @"GUID" );
+					var guid = DgvHelpers.GetCellString( dgv, rowIndex, @"Guid" );
 					Helpers.Assert( !string.IsNullOrEmpty( guid ), @"No GUID for selected row.  This should never happen" );
 					if( DialogResult.Yes != MessageBox.Show( @"Are you sure?", @"Alert", MessageBoxButtons.YesNo ) ) {
 						return false;
 					}
 					var computerName = DgvHelpers.GetCellString( dgv, rowIndex, @"Computer Name" );
 					Helpers.Assert( !string.IsNullOrEmpty( guid ), @"No Computer Name for selected row.  This should never happen" );
-					ComputerSoftware.UninstallGuidOnComputerName( computerName, guid );
+					PtComputerSoftware.UninstallGuidOnComputerName( computerName, guid );
 					return true;
 				}
 			} );
 		}
 
 		private void SetupComputerInfoTab( ) {
-			AddDataPageToTabControl( "Computer Info", tcMain, new DataPageControl<ComputerInfo>( this ) {
+			AddDataPageToTabControl( "Computer Info", tcMain, new DataPageControl<PtComputerInfo>( this ) {
 				CompletionMessage = @"Computer Info Query Complete", GenerateLookupMenu = true,
-				QueryDataCb = ComputerInfo.GetComputerInfo, SetupColumnsCb = delegate( DataGridView dgv ) {
-					DgvHelpers.AddColumn( dgv, @"ComputerName", @"Computer Name" );
-					DgvHelpers.AddColumn( dgv, @"ConnectionStatus", @"Connection Status" );
-					DgvHelpers.AddDateColumn( dgv, @"LastBootTime", @"Boot Time", false, true, MagicValues.TimeDateStringFormat );
-					DgvHelpers.AddColumn( dgv, @"Uptime" );
-					DgvHelpers.AddColumn( dgv, @"Version", @"Windows Version" );
-					DgvHelpers.AddColumn( dgv, @"Architecture" );
-					DgvHelpers.AddDateColumn( dgv, @"InstallDate", "Windows\nInstall Date" );
-					DgvHelpers.AddColumn( dgv, @"Manufacturer" );
-					DgvHelpers.AddDateColumn( dgv, @"HwReleaseDate", @"Hardware Date" );
-					DgvHelpers.AddColumn( dgv, @"SerialNumber", @"Serial Number" );
-					DgvHelpers.AddColumn( dgv, @"BiosVersion", @"BIOS Version" );
+				QueryDataCb = PtComputerInfo.Generate, SetupColumnsCb = delegate( DataGridView dgv ) {
+					DgvHelpers.GenerateColumns( dgv, typeof( PtComputerInfo ), new List<string>( ) {
+						@"ComputerName", @"ConnectionStatus", @"LastBootTime", @"Uptime", @"Version", @"Architecture",
+						@"InstallDate", @"Manufacturer", @"HwReleaseDate", @"SerialNumber", @"BiosVersion"
+					} );
 					DgvHelpers.AddButtonColumn( dgv, @"Shutdown" );
 				},
 				OnCellButtonClick = delegate( DataGridView dgv, int rowIndex, int columnIndex ) {
@@ -78,7 +67,7 @@ namespace RemoteWindowsAdministrator {
 
 					var computerName = DgvHelpers.GetCellString( dgv, rowIndex, @"Computer Name" );
 					Helpers.Assert( !string.IsNullOrEmpty( computerName ), @"Computer Name is null or empty.  This should never happen" );
-					using( var csd = new ConfirmShutdownDialog( new ComputerInfo.ShutdownComputerParameters( computerName ) ) ) {
+					using( var csd = new ConfirmShutdownDialog( new PtComputerInfo.ShutdownComputerParameters( computerName ) ) ) {
 						csd.ShowDialog( );
 					}
 					return false;
@@ -87,52 +76,25 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private void SetupCurrentUsersTab( ) {
-			AddDataPageToTabControl( "Current Users", tcMain, new DataPageControl<CurrentUsers>( this ) {
+			AddDataPageToTabControl( "Current Users", tcMain, new DataPageControl<PtCurrentUsers>( this ) {
 				CompletionMessage = @"Current User Query Complete", GenerateLookupMenu = false,
-				QueryDataCb = CurrentUsers.GetCurrentUsers, SetupColumnsCb = delegate( DataGridView dgv ) {
-					DgvHelpers.AddColumn( dgv, @"ComputerName", @"Computer Name" );
-					DgvHelpers.AddColumn( dgv, @"ConnectionStatus", @"Connection Status" );
-					DgvHelpers.AddColumn( dgv, @"Domain" );
-					DgvHelpers.AddColumn( dgv, @"UserName", @"UserName" );
-					DgvHelpers.AddDateColumn( dgv, @"LastLogon", @"Last Login", false, true, MagicValues.TimeDateStringFormat );
-					DgvHelpers.AddColumn( dgv, @"LogonDuration", @"Login Duration" );
-					DgvHelpers.AddColumn( dgv, @"Sid", @"SID" );
-					DgvHelpers.AddColumn( dgv, @"ProfileFolder", @"Profile" );
-				}
+				QueryDataCb = PtCurrentUsers.Generate, SetupColumnsCb = dgv => DgvHelpers.GenerateColumns( dgv, typeof( PtCurrentUsers ), new List<string>( ) {
+					@"ComputerName", @"ConnectionStatus", @"Domain", @"UserName", @"LastLogon", @"Sid", @"ProfileFolder"
+				} )
 			} );
 		}
 
 		private void SetupNetworkInfoTab( ) {
-			AddDataPageToTabControl( "Network Info", tcMain, new DataPageControl<NetworkInfo>( this ) {
+			AddDataPageToTabControl( "Network Info", tcMain, new DataPageControl<PtNetworkInfo>( this ) {
 				CompletionMessage = @"Network Info Query Complete", GenerateLookupMenu = true,
-				QueryDataCb = NetworkInfo.GetNetworkInfo, SetupColumnsCb = delegate( DataGridView dgv ) {
-					DgvHelpers.AddColumn( dgv, @"ComputerName", @"Computer Name" );
-					DgvHelpers.AddColumn( dgv, @"ConnectionStatus", @"Connection Status" );
-					DgvHelpers.AddColumn( dgv, @"Caption" );
-					DgvHelpers.AddColumn( dgv, @"Description" );
-					DgvHelpers.AddCheckedColumn( dgv, @"DhcpEnabled", "DHCP\nEnabled" );
-					DgvHelpers.AddDateColumn( dgv, @"DhcpLeaseObtained", "DHCP\nLease Obtained", false, true, MagicValues.TimeDateStringFormat );
-					DgvHelpers.AddDateColumn( dgv, @"DhcpLeaseExpires", "DHCP\nLease Expires", false, true, MagicValues.TimeDateStringFormat );
-					DgvHelpers.AddColumn( dgv, @"DhcpLeaseTimeLeft", "DHCP\nLease Time Left" );
-					DgvHelpers.AddColumn( dgv, @"DhcpServer", "DHCP\nServer" );
-					DgvHelpers.AddColumn( dgv, @"DnsDomain", @"DNS Domain" );
-					DgvHelpers.AddMultilineColumn( dgv, @"DnsDomainSuffixSearchOrders", "DNS Domain\nSearch Order" );
-					DgvHelpers.AddCheckedColumn( dgv, @"DnsEnabledForWinsResolution", "DNS Enabled For\nWINS Resolution" );
-					DgvHelpers.AddColumn( dgv, @"DnsHostName", @"DNS Host Name" );
-					DgvHelpers.AddMultilineColumn( dgv, @"DnsServerSearchOrders", "DNS Server\nSearch Order" );
-					DgvHelpers.AddCheckedColumn( dgv, @"DomainDnsRegistrationEnabled", "Domain DNS\nRegistration Enabled" );
-					DgvHelpers.AddColumn( dgv, @"DefaultIpGateways", @"Default IP Gateways" );
-					DgvHelpers.AddCheckedColumn( dgv, @"FullDnsRegistrationEnabled", "Full DNS\nRegistration Enabled" );
-					DgvHelpers.AddColumn( dgv, @"MacAddress", @"MAC Address" );
-					DgvHelpers.AddColumn( dgv, @"Index" );
-					DgvHelpers.AddColumn( dgv, @"InterfaceIndex", @"Interface Index" );
-					DgvHelpers.AddMultilineColumn( dgv, @"IpAddresses", @"IP Addresses" );
-					DgvHelpers.AddColumn( dgv, @"IpConnectionMetric", "IP Connection\nMetric" );
-					DgvHelpers.AddCheckedColumn( dgv, @"IpEnabled", @"IP Enabled" );
-					DgvHelpers.AddCheckedColumn( dgv, @"WinsEnableLmHostsLookup", "WINS Enable\nLM Hosts Lookup" );
-					DgvHelpers.AddColumn( dgv, @"WinsHostLookupFile", "WINS Host\nLookup File" );
-					DgvHelpers.AddMultilineColumn( dgv, @"WinsServers", @"WINS Servers" );
-					DgvHelpers.AddColumn( dgv, @"WinsScopeId", "WINS\nScope ID" );
+				QueryDataCb = PtNetworkInfo.Generate, SetupColumnsCb = delegate( DataGridView dgv ) {
+					DgvHelpers.GenerateColumns( dgv, typeof( PtNetworkInfo ), new List<string>( ) {
+						@"ComputerName", @"ConnectionStatus", @"Caption", @"Description", @"DhcpEnabled", @"DhcpLeaseObtained", @"DhcpLeaseExpires", @"DhcpLeaseTimeLeft", @"DhcpServer", @"DnsDomain", @"DnsDomainSuffixSearchOrders", @"DnsEnabledForWinsResolution", @"DnsHostName", @"DnsServerSearchOrders", @"DomainDnsRegistrationEnabled", @"DefaultIpGateways", @"FullDnsRegistrationEnabled", @"MacAddress", @"Index", @"InterfaceIndex", @"IpAddresses", @"IpConnectionMetric", @"IpEnabled", @"WinsEnableLmHostsLookup", @"WinsHostLookupFile", @"WinsServers", @"WinsScopeId"
+					} );
+					DgvHelpers.ConvertToMultilineColumn( DgvHelpers.GetColumn( dgv, @"DnsServerSearchOrders" ) );
+					DgvHelpers.ConvertToMultilineColumn( DgvHelpers.GetColumn( dgv, @"DefaultIpGateways" ) );
+					DgvHelpers.ConvertToMultilineColumn( DgvHelpers.GetColumn( dgv, @"IpAddresses" ) );
+					DgvHelpers.ConvertToMultilineColumn( DgvHelpers.GetColumn( dgv, @"WinsServers" ) );
 				}
 			} );			
 		}
