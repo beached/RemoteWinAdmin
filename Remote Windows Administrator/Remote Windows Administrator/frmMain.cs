@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using SyncList;
-using System;
 using System.Windows.Forms;
 
 namespace RemoteWindowsAdministrator {
@@ -61,13 +59,15 @@ namespace RemoteWindowsAdministrator {
 		private void SetupNetworkInfoTab( ) {
 			AddDataPageToTabControl( "Network Info", tcMain, new DataPageControl<DprNetworkInfo>( this ) {
 				QueryDataCb = DprNetworkInfo.Generate, SetupColumnsCb = delegate( DataGridView dgv ) {
-					DgvHelpers.GenerateAllColumns( dgv, typeof( DprNetworkInfo ), new List<string>( ) {@"DefaultIpGateway", @"DnsDomainSuffixSearchOrder", @"DnsServerSearchOrder", @"IpAddress"} );
+					DgvHelpers.GenerateAllColumns( dgv, typeof( DprNetworkInfo ), new List<string> {@"DefaultIpGateway", @"DnsDomainSuffixSearchOrder", @"DnsServerSearchOrder", @"IpAddress"} );
 					MoveStatusColumnsFirst( dgv );
 					DgvHelpers.ConvertToMultilineColumn( DgvHelpers.GetColumn( dgv, @"DnsServerSearchOrders" ) );
 					DgvHelpers.ConvertToMultilineColumn( DgvHelpers.GetColumn( dgv, @"DefaultIpGateways" ) );
 					DgvHelpers.ConvertToMultilineColumn( DgvHelpers.GetColumn( dgv, @"IpAddresses" ) );
 					DgvHelpers.ConvertToMultilineColumn( DgvHelpers.GetColumn( dgv, @"WinsServers" ) );
 					DgvHelpers.MoveColumnToIndex( DgvHelpers.GetColumn( dgv, @"Description" ), 2 );
+					DgvHelpers.SetVisible( DgvHelpers.GetColumn( dgv, @"InterfaceIndex" ), false );
+					DgvHelpers.SetVisible( DgvHelpers.GetColumn( dgv, @"SettingId" ), false );
 					foreach( var actionName in DprNetworkInfo.SetupActions( ).Keys ) {
 						DgvHelpers.AddButtonColumn( dgv, actionName );
 					}

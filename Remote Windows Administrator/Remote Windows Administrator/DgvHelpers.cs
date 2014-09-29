@@ -220,5 +220,9 @@ namespace RemoteWindowsAdministrator {
 		public static void MoveColumnToIndex( DataGridViewColumn column, int index ) {
 			column.DisplayIndex = index;
 		}
+
+		public static void SetVisible( DataGridViewColumn column, bool isVisible ) {
+			column.Visible = isVisible;
+		}
 	}
 }
