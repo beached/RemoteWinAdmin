@@ -152,7 +152,6 @@ namespace RemoteWindowsAdministrator {
 			}
 		}
 
-
 		public static void ShutdownComputer( ShutdownComputerParameters parameters ) {
 			try {
 				const string query = @"SELECT * FROM Win32_OperatingSystem WHERE Primary=TRUE";
