@@ -1,7 +1,6 @@
-﻿using System.Collections.Generic;
-using daw;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Management;
@@ -10,9 +9,25 @@ using System.Text;
 
 namespace RemoteWindowsAdministrator {
 	public sealed class PtCurrentUsers: IDataPageRow {
+		private string _computerName;
+		public string ComputerName {
+			get { return _computerName; }
+			set {
+				Helpers.Assert( !string.IsNullOrEmpty( value ), @"Attempt to set ComputerName to a null or empty value" );
+				_computerName = value;
+			}
+		}
+
+		private string _connectionStatus;
+		public string ConnectionStatus {
+			get { return _connectionStatus; }
+			set {
+				Helpers.Assert( !string.IsNullOrEmpty( value ), @"Attempt to set ComputerName to a null or empty value" );
+				_connectionStatus = value;
+			}
+		}
+
 		public DateTime? LastLogon { get; set; }
-		public string ComputerName { get; set; }
-		public string ConnectionStatus { get; set; }
 		public string Domain { get; set; }
 		public string ProfileFolder { get; set; }
 		public string Sid { get; set; }
@@ -23,15 +38,32 @@ namespace RemoteWindowsAdministrator {
 				return null != LastLogon ? MagicValues.TimeSpanToString( DateTime.Now - LastLogon.Value ) : null;
 			}
 		}
+		public Guid RowGuid {
+			get;
+			private set;
+		}
+		public IDictionary<string, Func<IDataPageRow, bool>> GetActions( ) {
+			return SetupActions( );
+		}
 
 		public PtCurrentUsers( ) {
+			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
 			ConnectionStatus = @"OK";
+			RowGuid = new Guid( );
 		}
 
-		public PtCurrentUsers( string computerName, string connectionStatus = @"OK" ) {
+		public PtCurrentUsers( string computerName, string connectionStatus = @"OK" ) {			
 			ComputerName = computerName;
 			ConnectionStatus = connectionStatus;
+			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
+			Helpers.Assert( !string.IsNullOrEmpty( ConnectionStatus ), @"ConnectionStatus is required" );
+			RowGuid = new Guid( );
 		}
+
+		public static IDictionary<string, Func<IDataPageRow, bool>> SetupActions( ) {
+			return new Dictionary<string, Func<IDataPageRow, bool>>( );
+		}
+
 
 		/// <summary>
 		/// Does a string exist in all string representations of the fields

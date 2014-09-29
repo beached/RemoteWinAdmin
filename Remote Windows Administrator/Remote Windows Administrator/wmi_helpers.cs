@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Management;
 using System.Net.NetworkInformation;
-using daw;
 
 namespace RemoteWindowsAdministrator {
 	public sealed class WmiHelpers {

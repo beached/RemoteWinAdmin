@@ -7,7 +7,9 @@ namespace RemoteWindowsAdministrator {
 	public interface IDataPageRow {
 		string ComputerName { get; set; }
 		string ConnectionStatus { get; set; }
+		Guid RowGuid { get; }
 		bool ContainsString( string value );
-		bool Valid( );		
+		bool Valid( );
+		IDictionary<string, Func<IDataPageRow, bool>> GetActions( );
 	}
 }

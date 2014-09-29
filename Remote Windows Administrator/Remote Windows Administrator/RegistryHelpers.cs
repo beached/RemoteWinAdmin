@@ -6,7 +6,7 @@ using System.Text;
 using Microsoft.Win32;
 
 namespace RemoteWindowsAdministrator {
-	public class RegistryHelpers {
+	public static class RegistryHelpers {
 		public static string GetString( RegistryKey rk, string value ) {
 			if( null == rk ) {
 				return null;

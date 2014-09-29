@@ -3,33 +3,73 @@ using SyncList;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using System.Windows.Forms;
 
 namespace RemoteWindowsAdministrator {
 
 	public sealed class PtComputerSoftware: IDataPageRow {
+		private string _computerName;
+		public string ComputerName { get { return _computerName; }
+			set {
+				Helpers.Assert( !string.IsNullOrEmpty( value ), @"Attempt to set ComputerName to a null or empty value" );
+				_computerName = value;
+			}
+		}
+
+		private string _connectionStatus;
+		public string ConnectionStatus { get { return _connectionStatus; }
+			set {
+				Helpers.Assert( !string.IsNullOrEmpty( value ), @"Attempt to set ComputerName to a null or empty value" );
+				_connectionStatus = value;				
+			}
+		}
+
 		public DateTime? InstallDate { get; set; }
 		public bool CanRemove { get; set; }
 		public bool SystemComponent { get; set; }
 		public float? Size { get; set; }
-		public string ComputerName { get; set; }
-		public string ConnectionStatus { get; set; }
 		public string Guid { get; set; }
 		public string HelpLink { get; set; }
 		public string Name { get; set; }
 		public string Publisher { get; set; }
 		public string UrlInfoAbout { get; set; }
 		public string Version { get; set; }
-
-		public PtComputerSoftware( string computerName = @"", string connectionStatus = @"OK" ) {
-			ComputerName = computerName;
-			ConnectionStatus = connectionStatus;
+		public System.Guid RowGuid {
+			get;
+			private set;
+		}
+		public IDictionary<string, Func<IDataPageRow, bool>> GetActions( ) {
+			return SetupActions( );
 		}
 
 		public PtComputerSoftware( ) {
 			ConnectionStatus = @"OK";
+			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
+			RowGuid = System.Guid.NewGuid( );
+		}
+
+		public PtComputerSoftware( string computerName, string connectionStatus = @"OK" ) {			
+			ComputerName = computerName;
+			ConnectionStatus = connectionStatus;
+			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
+			Helpers.Assert( !string.IsNullOrEmpty( ConnectionStatus ), @"ConnectionStatus is required" );
+			RowGuid = System.Guid.NewGuid( );
+		}
+
+		public static Dictionary<string, Func<IDataPageRow, bool>> SetupActions( ) {
+			var result = new Dictionary<string, Func<IDataPageRow, bool>> {{@"Uninstall", delegate( IDataPageRow rowObj ) {
+				var row = rowObj as PtComputerSoftware;
+				Helpers.Assert( null != row, @"PtComputerSoftware Action called with another class as second parameter" );
+				Helpers.Assert( !string.IsNullOrEmpty( row.Guid ), @"Guid is empty or null, it is a mandatory field" );
+				if( DialogResult.Yes != MessageBox.Show( @"Are you sure?", @"Alert", MessageBoxButtons.YesNo ) ) {
+					return false;
+				}
+				UninstallGuidOnComputerName( row.ComputerName, row.Guid );
+				return true;
+			}}};
+
+			return result;
 		}
 
 		public bool ContainsString( string value ) {
@@ -68,8 +108,14 @@ namespace RemoteWindowsAdministrator {
 								if( null == curReg || !string.IsNullOrEmpty( RegistryHelpers.GetString( curReg, @"ParentKeyName" ) ) ) {
 									continue;
 								}
-								var currentProduct = new PtComputerSoftware( ) {
-									ComputerName = computerName, Guid = currentGuid, Name = RegistryHelpers.GetString( curReg, @"DisplayName" ), Publisher = RegistryHelpers.GetString( curReg, @"Publisher" ), Version = RegistryHelpers.GetString( curReg, @"DisplayVersion" ), InstallDate = RegistryHelpers.GetDateTime( curReg, @"InstallDate" ), CanRemove = 0 == RegistryHelpers.GetDword( curReg, @"NoRemove", 0 ), SystemComponent = 1 == RegistryHelpers.GetDword( curReg, @"SystemComponent", 0 )
+								var currentProduct = new PtComputerSoftware( computerName ) {
+									Guid = currentGuid, 
+									Name = RegistryHelpers.GetString( curReg, @"DisplayName" ), 
+									Publisher = RegistryHelpers.GetString( curReg, @"Publisher" ), 
+									Version = RegistryHelpers.GetString( curReg, @"DisplayVersion" ), 
+									InstallDate = RegistryHelpers.GetDateTime( curReg, @"InstallDate" ), 
+									CanRemove = 0 == RegistryHelpers.GetDword( curReg, @"NoRemove", 0 ), 
+									SystemComponent = 1 == RegistryHelpers.GetDword( curReg, @"SystemComponent", 0 )
 								};
 								{
 									var estSize = RegistryHelpers.GetDword( curReg, @"EstimatedSize" );

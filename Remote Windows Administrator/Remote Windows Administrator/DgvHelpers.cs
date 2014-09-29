@@ -1,44 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using daw;
-using RemoteWindowsAdministrator;
 
-namespace SyncList {
+namespace RemoteWindowsAdministrator {
 	public static class DgvHelpers {
-// 		private static void Assert( bool condition, string message ) {
-// 			if( condition ) {
-// 				return;
-// 			}
-// 			var trace = new StackTrace( 1 );
-// 			MessageBox.Show( String.Format( "{0}\n{1}", message, trace ), @"Assertion Fail", MessageBoxButtons.OK, MessageBoxIcon.Error );
-// 			Application.Exit( );
-// 		}
-
-		public static DataGridViewColumn MakeColumn( string name, string headerName = null, bool hidden = false, bool canSort = true, bool readOnly = true ) {
+		public static DataGridViewColumn MakeColumn( string propertyName, string headerName = null, bool hidden = false, bool canSort = true, bool readOnly = true ) {
 			return SetSearchable( new DataGridViewColumn {
-				Name = name, HeaderText = (headerName ?? name), ReadOnly = readOnly, DataPropertyName = name, SortMode = (canSort ? DataGridViewColumnSortMode.Automatic : DataGridViewColumnSortMode.NotSortable), CellTemplate = new DataGridViewTextBoxCell( ), Visible = !hidden
+				Name = propertyName, HeaderText = (headerName ?? propertyName), ReadOnly = readOnly, DataPropertyName = propertyName, SortMode = (canSort ? DataGridViewColumnSortMode.Automatic : DataGridViewColumnSortMode.NotSortable), CellTemplate = new DataGridViewTextBoxCell( ), Visible = !hidden
 			} );
 		}
 
-		public static void AddColumn( DataGridView dgv, string name, string headerName = null, bool hidden = false, bool canSort = true, bool readOnly = true ) {
-			dgv.Columns.Add( MakeColumn( name, headerName, hidden, canSort, readOnly ) );
+		public static void AddColumn( DataGridView dgv, string propertName, string headerName = null, bool hidden = false, bool canSort = true, bool readOnly = true ) {
+			dgv.Columns.Add( MakeColumn( propertName, headerName, hidden, canSort, readOnly ) );
 		}
 
 		public static void ConvertToMultilineColumn( DataGridViewColumn column ) {
 			column.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
 		}
 
-		public static DataGridViewColumn MakeMultilineColumn( string name, string headerName = null, bool hidden = false, bool canSort = true, bool readOnly = true ) {
-			var result = MakeColumn( name, headerName, hidden, canSort, readOnly );
+		public static DataGridViewColumn MakeMultilineColumn( string propertyName, string headerName = null, bool hidden = false, bool canSort = true, bool readOnly = true ) {
+			var result = MakeColumn( propertyName, headerName, hidden, canSort, readOnly );
 			ConvertToMultilineColumn( result );
 			return result;
 		}
 
-		public static void AddMultilineColumn( DataGridView dgv, string name, string headerName = null, bool hidden = false, bool canSort = true, bool readOnly = true ) {
-			dgv.Columns.Add( MakeMultilineColumn( name, headerName, hidden, canSort, readOnly ) );
+		public static void AddMultilineColumn( DataGridView dgv, string propertyName, string headerName = null, bool hidden = false, bool canSort = true, bool readOnly = true ) {
+			dgv.Columns.Add( MakeMultilineColumn( propertyName, headerName, hidden, canSort, readOnly ) );
 		}
 		
 		public static void ConvertToLinkColumn( DataGridViewColumn column ) {
@@ -47,28 +36,28 @@ namespace SyncList {
 			column.DefaultCellStyle.NullValue = String.Empty;
 		}
 
-		public static DataGridViewColumn MakeLinkColumn( string name, string headerName = null, bool hidden = false, bool canSort = true, bool readOnly = true ) {
-			var col = MakeColumn( name, headerName, hidden, canSort, readOnly );
+		public static DataGridViewColumn MakeLinkColumn( string propertyName, string headerName = null, bool hidden = false, bool canSort = true, bool readOnly = true ) {
+			var col = MakeColumn( propertyName, headerName, hidden, canSort, readOnly );
 			ConvertToLinkColumn( col );
 			return col;
 		}		
 
-		public static void AddLinkColumn( DataGridView dgv, string name, string headerName = null, bool hidden = false, bool canSort = true, bool readOnly = true ) {
-			dgv.Columns.Add( MakeLinkColumn( name, headerName, hidden, canSort, readOnly ) );
+		public static void AddLinkColumn( DataGridView dgv, string propertyName, string headerName = null, bool hidden = false, bool canSort = true, bool readOnly = true ) {
+			dgv.Columns.Add( MakeLinkColumn( propertyName, headerName, hidden, canSort, readOnly ) );
 		}
 
-		public static DataGridViewColumn MakeButtonColumn( string name, bool hidden = false ) {
+		public static DataGridViewColumn MakeButtonColumn( string buttonName, bool hidden = false ) {
 			return new DataGridViewButtonColumn {
-				Name = name, HeaderText = name, Text = name, UseColumnTextForButtonValue = true, Visible = !hidden, Tag = @"Button"
+				Name = buttonName, HeaderText = buttonName, Text = buttonName, UseColumnTextForButtonValue = true, Visible = !hidden, Tag = @"Button"
 			};
 		}
 
-		public static void AddButtonColumn( DataGridView dgv, string name, bool hidden = false ) {
-			dgv.Columns.Add( MakeButtonColumn( name, hidden ) );
+		public static void AddButtonColumn( DataGridView dgv, string buttonName, bool hidden = false ) {
+			dgv.Columns.Add( MakeButtonColumn( buttonName, hidden ) );
 		}
  
-		public static DataGridViewColumn MakeCheckedColumn( string name, string headerName = null, bool hidden = false, bool canSort = true, bool readOnly = true ) {
-			var col = MakeColumn( name, headerName, hidden, canSort, readOnly );
+		public static DataGridViewColumn MakeCheckedColumn( string propertyName, string headerName = null, bool hidden = false, bool canSort = true, bool readOnly = true ) {
+			var col = MakeColumn( propertyName, headerName, hidden, canSort, readOnly );
 			col.DefaultCellStyle.NullValue = false;
 			col.CellTemplate = new DataGridViewCheckBoxCell( );
 			col.Tag = @"CannotSearch";
@@ -85,13 +74,13 @@ namespace SyncList {
 			return col;
 		}
 
-		public static void AddDateColumn( DataGridView dgv, string name, string headerName = null, bool hidden = false, bool canSort = true, string dateFormat = @"yyyy-MM-dd", bool readOnly = true ) {
-			dgv.Columns.Add( MakeDateColumn( name, headerName, hidden, canSort, dateFormat, readOnly ) );
+		public static void AddDateColumn( DataGridView dgv, string propertyName, string headerName = null, bool hidden = false, bool canSort = true, string dateFormat = @"yyyy-MM-dd", bool readOnly = true ) {
+			dgv.Columns.Add( MakeDateColumn( propertyName, headerName, hidden, canSort, dateFormat, readOnly ) );
 		}
 
 
 		public static int GetColumnIndex( DataGridView dgv, string columnName ) {
-			Helpers.Assert( null != columnName, "Null column name's do not make sense" );
+			Helpers.Assert( null != columnName, "Null column propertName's do not make sense" );
 			var dataGridViewColumn = dgv.Columns[columnName];
 
 			Helpers.Assert( null != dataGridViewColumn, "Column names must exist" );			
@@ -172,9 +161,9 @@ namespace SyncList {
 			public UnsupportedTypeException( Type type, string message = @"" ): base( string.Format( @"The type '{0}' is unsupported. {1}", type.FullName, message ) ) { } 
 		}
 
-		public static DataGridViewColumn GetColumn( DataGridView dgv, string columnName, bool allowNull = false ) {
+		public static DataGridViewColumn GetColumn( DataGridView dgv, string columnName ) {
 			var column = dgv.Columns[columnName];
-			Helpers.Assert( !(null == column && !allowNull), @"Supplied columnName does not exist" );
+			Helpers.Assert( null != column, @"Supplied columnName does not exist" );
 			return column;
 		}
 
@@ -202,22 +191,34 @@ namespace SyncList {
 			return column;
 		}
 
-		public static void GenerateColumns( DataGridView dgv, Type type, IList<string> columnNames ) {						
-			foreach( var columnName in columnNames ) {				
-				var property = type.GetProperty( columnName );
-				Helpers.Assert( null != property, @"Property names must exist in type specified" );
-				var columnType = property.PropertyType;
-				if( Helpers.TypeChecks.IsString( columnType ) || Helpers.TypeChecks.IsNumber( columnType ) ) {
-					
-					AddColumn( dgv, columnName, Helpers.CamelToSpace( columnName ) );
-				} else if( Helpers.TypeChecks.IsDateTime( columnType ) ) {
-					AddDateColumn( dgv, columnName, Helpers.CamelToSpace( columnName ), false, true, MagicValues.TimeDateStringFormat );
-				} else if( Helpers.TypeChecks.IsBool( columnType ) ) {
-					AddCheckedColumn( dgv, columnName, Helpers.CamelToSpace( columnName ) );
+		public static void AddColumnBasedOnDataType( DataGridView dgv, Type columnType, string columnName ) {
+			if( Helpers.TypeChecks.IsString( columnType ) || Helpers.TypeChecks.IsNumber( columnType ) ) {
+				AddColumn( dgv, columnName, Helpers.CamelToSpace( columnName ) );
+			} else if( Helpers.TypeChecks.IsDateTime( columnType ) ) {
+				AddDateColumn( dgv, columnName, Helpers.CamelToSpace( columnName ), false, true, MagicValues.TimeDateStringFormat );
+			} else if( Helpers.TypeChecks.IsBool( columnType ) ) {
+				AddCheckedColumn( dgv, columnName, Helpers.CamelToSpace( columnName ) );
+			} else {
+				throw new UnsupportedTypeException( columnType, @"Have not accounted for this type in DGVHelpers AddColumnBasedOnType" );
+			}
+		}
+
+		public static void GenerateAllColumns( DataGridView dgv, Type type, IEnumerable<string> excludedColumnNames = null ) {
+			Helpers.Assert( typeof( IDataPageRow ).IsAssignableFrom( type ), @"GenerateAllColums requires Type to implement IDataPageRO" );
+			if( null == excludedColumnNames ) {
+				excludedColumnNames = new List<string>( );
+			}
+			foreach( var property in type.GetProperties( ).Where( property => !excludedColumnNames.Contains( property.Name ) ).OrderBy( x => x.Name ) ) {
+				if( typeof( Guid ) == property.PropertyType && 0 == string.CompareOrdinal( @"RowGuid", property.Name ) ) {
+					AddColumn( dgv, property.Name, Helpers.CamelToSpace( property.Name ), true );
 				} else {
-					throw new UnsupportedTypeException( type, @"Have not accounted for this type in DGVHelpers GenerateColumns" );
+					AddColumnBasedOnDataType( dgv, property.PropertyType, property.Name );
 				}
-			} 
+			}
+		}
+
+		public static void MoveColumnToIndex( DataGridViewColumn column, int index ) {
+			column.DisplayIndex = index;
 		}
 	}
 }

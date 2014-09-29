@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows.Forms;
 
-namespace daw {
-	public class Helpers {
+namespace RemoteWindowsAdministrator {
+	public static class Helpers {
 		public static void Assert( bool condition, string message = "" ) {
 			if( condition ) {
 				return;
@@ -42,7 +42,7 @@ namespace daw {
 				}
 				result += currentChar;
 			}
-			return result;
+			return result.Trim( );
 		}
 
 		public class TypeChecks {
@@ -81,6 +81,10 @@ namespace daw {
 			public static bool IsNumber( Type type ) {
 				return IsFloat( type ) || IsInt( type ) || IsUInt( type ) || IsShort( type ) || IsUShort( type );
 
+			}
+
+			public static bool IsStringArray( Type type ) {
+				return typeof( string[] ) == type || typeof( IEnumerable<string> ) == type;
 			}
 		}
 	}

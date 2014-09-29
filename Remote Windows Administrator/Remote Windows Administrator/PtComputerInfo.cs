@@ -1,10 +1,28 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Management;
 using System.Windows.Forms;
-using daw;
 
 namespace RemoteWindowsAdministrator {
 	public sealed class PtComputerInfo: IDataPageRow {
+		private string _computerName;
+		public string ComputerName {
+			get { return _computerName; }
+			set {
+				Helpers.Assert( !string.IsNullOrEmpty( value ), @"Attempt to set ComputerName to a null or empty value" );
+				_computerName = value;
+			}
+		}
+
+		private string _connectionStatus;
+		public string ConnectionStatus {
+			get { return _connectionStatus; }
+			set {
+				Helpers.Assert( !string.IsNullOrEmpty( value ), @"Attempt to set ComputerName to a null or empty value" );
+				_connectionStatus = value;
+			}
+		}
+
 		public DateTime? HwReleaseDate { get; set; }
 		public DateTime? InstallDate { get; set; }
 		public DateTime? LastBootTime { get; set; }
@@ -12,8 +30,6 @@ namespace RemoteWindowsAdministrator {
 		public DateTime? SystemTime { get; set; }
 		public string Architecture { get; set; }
 		public string BiosVersion { get; set; }
-		public string ComputerName { get; set; }
-		public string ConnectionStatus { get; set; }
 		public string Manufacturer { get; set; }
 		public string SerialNumber { get; set; }
 		public string Version { get; set; }
@@ -25,6 +41,39 @@ namespace RemoteWindowsAdministrator {
 				var span = SystemTime.Value - LastBootTime.Value;
 				return MagicValues.TimeSpanToString( span );
 			}
+		}
+		public Guid RowGuid {
+			get;
+			private set;
+		}
+
+		public IDictionary<string, Func<IDataPageRow, bool>> GetActions( ) {
+			return SetupActions( );
+		}
+
+		public PtComputerInfo( ) {
+			ConnectionStatus = @"OK";
+			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
+			RowGuid = new Guid( );
+		}
+
+		public PtComputerInfo( string computerName, string connectionStatus = @"OK" ) {			
+			ComputerName = computerName;
+			ConnectionStatus = connectionStatus;
+			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
+			Helpers.Assert( !string.IsNullOrEmpty( ConnectionStatus ), @"ConnectionStatus is required" );
+			RowGuid = new Guid( );
+		}
+
+		public static IDictionary<string, Func<IDataPageRow, bool>> SetupActions( ) {
+			return new Dictionary<string, Func<IDataPageRow, bool>>( ) {{@"Shutdown", delegate( IDataPageRow rowObj ) {
+				var row = rowObj as PtComputerInfo;
+				Helpers.Assert( null != row, @"PtComputerSoftware Action called with another class as second parameter" );
+				using( var csd = new ConfirmShutdownDialog( new PtComputerInfo.ShutdownComputerParameters( row.ComputerName ) ) ) {
+					csd.ShowDialog( );
+				}
+				return false;
+			}}};
 		}
 
 		public bool ContainsString( string value ) {
@@ -38,7 +87,7 @@ namespace RemoteWindowsAdministrator {
 		public static void Generate( string computerName, SyncList.SyncList<PtComputerInfo> result ) {
 			Helpers.Assert( null != result, @"result SyncList cannot be null" );
 			Helpers.Assert( !string.IsNullOrEmpty( computerName ), @"Computer name cannot be empty" );
-			var ci = new PtComputerInfo { LocalSystemDateTime = DateTime.Now, ComputerName = computerName, ConnectionStatus = @"OK" };
+			var ci = new PtComputerInfo( computerName ) { LocalSystemDateTime = DateTime.Now };
 			try {
 				WmiHelpers.ForEach( computerName, @"SELECT * FROM Win32_OperatingSystem WHERE Primary=TRUE", obj => {
 					ci.LastBootTime = WmiHelpers.GetNullableDate( obj, @"LastBootUpTime" );

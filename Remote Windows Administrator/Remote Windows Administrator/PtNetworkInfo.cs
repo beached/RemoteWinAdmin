@@ -1,12 +1,27 @@
-﻿using daw;
-using SyncList;
+﻿using SyncList;
 using System;
 using System.Collections.Generic;
 
 namespace RemoteWindowsAdministrator {
 	public sealed class PtNetworkInfo: IDataPageRow {
-		public string ComputerName { get; set; }
-		public string ConnectionStatus { get; set; }
+		private string _computerName;
+		public string ComputerName {
+			get { return _computerName; }
+			set {
+				Helpers.Assert( !string.IsNullOrEmpty( value ), @"Attempt to set ComputerName to a null or empty value" );
+				_computerName = value;
+			}
+		}
+
+		private string _connectionStatus;
+		public string ConnectionStatus {
+			get { return _connectionStatus; }
+			set {
+				Helpers.Assert( !string.IsNullOrEmpty( value ), @"Attempt to set ComputerName to a null or empty value" );
+				_connectionStatus = value;
+			}
+		}
+
 		public DateTime? DhcpLeaseExpires { get; set; }
 		public DateTime? DhcpLeaseObtained { get; set; }
 		public uint Index { get; set; }
@@ -18,7 +33,6 @@ namespace RemoteWindowsAdministrator {
 		public bool? FullDnsRegistrationEnabled { get; set; }	
 		public bool? IpEnabled { get; set; }
 		public bool? WinsEnableLmHostsLookup { get; set; }
-		public string Caption { get; set; }
 		public string Description { get; set; }
 		public string DhcpServer { get; set; }
 		public string DnsDomain { get; set; }	
@@ -54,18 +68,35 @@ namespace RemoteWindowsAdministrator {
 				return Helpers.StraToStr( result );
 			}
 		}
-
-		public PtNetworkInfo( ) {
-			ConnectionStatus = @"OK";
+		public Guid RowGuid {
+			get;
+			private set;
 		}
 
-		public PtNetworkInfo( string computerName, string connectionStatus = @"OK" ) {
+		public IDictionary<string, Func<IDataPageRow, bool>> GetActions( ) {
+			return SetupActions( );
+		}
+
+		public PtNetworkInfo( ) {
+			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
+			ConnectionStatus = @"OK";
+			RowGuid = new Guid( );
+		}
+
+		public PtNetworkInfo( string computerName, string connectionStatus = @"OK" ) {			
 			ComputerName = computerName;
 			ConnectionStatus = connectionStatus;
+			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
+			Helpers.Assert( !string.IsNullOrEmpty( ConnectionStatus ), @"ConnectionStatus is required" );
+			RowGuid = new Guid( );
+		}
+
+		public static IDictionary<string, Func<IDataPageRow, bool>> SetupActions( ) {
+			return new Dictionary<string, Func<IDataPageRow, bool>>( );
 		}
 
 		public bool ContainsString( string value ) {
-			return (new ValueIsIn( value )).Add( ComputerName ).Add( ConnectionStatus ).Add( Caption ).Add( DefaultIpGateway ).Add( Description ).Add( DhcpEnabled ).Add( DhcpLeaseExpires ).Add( DhcpLeaseObtained ).Add( DhcpServer ).Add( DnsDomain ).Add( DnsDomainSuffixSearchOrder ).Add( DnsEnabledForWinsResolution ).Add( DnsHostName ).Add( DnsServerSearchOrder ).Add( DomainDnsRegistrationEnabled ).Add( FullDnsRegistrationEnabled ).Add( Index ).Add( InterfaceIndex ).Add( IpAddress ).Add( IpConnectionMetric ).Add( IpEnabled ).Add( MacAddress ).Add( WinsEnableLmHostsLookup ).Add( WinsHostLookupFile ).Add( WinsPrimaryServer ).Add( WinsSecondaryServer ).Add( WinsScopeId ).IsContained;
+			return (new ValueIsIn( value )).Add( ComputerName ).Add( ConnectionStatus ).Add( DefaultIpGateway ).Add( Description ).Add( DhcpEnabled ).Add( DhcpLeaseExpires ).Add( DhcpLeaseObtained ).Add( DhcpServer ).Add( DnsDomain ).Add( DnsDomainSuffixSearchOrder ).Add( DnsEnabledForWinsResolution ).Add( DnsHostName ).Add( DnsServerSearchOrder ).Add( DomainDnsRegistrationEnabled ).Add( FullDnsRegistrationEnabled ).Add( Index ).Add( InterfaceIndex ).Add( IpAddress ).Add( IpConnectionMetric ).Add( IpEnabled ).Add( MacAddress ).Add( WinsEnableLmHostsLookup ).Add( WinsHostLookupFile ).Add( WinsPrimaryServer ).Add( WinsSecondaryServer ).Add( WinsScopeId ).IsContained;
 		}
 
 		public bool Valid( ) {
@@ -79,7 +110,6 @@ namespace RemoteWindowsAdministrator {
 			try {
 				WmiHelpers.ForEach( computerName, @"SELECT * FROM Win32_NetworkAdapterConfiguration", obj => {
 					var ci = new PtNetworkInfo( computerName );
-					ci.Caption = WmiHelpers.GetString( obj, @"Caption" );
 					ci.DefaultIpGateway = WmiHelpers.GetStringArray( obj, @"DefaultIPGateway" );
 					ci.Description = WmiHelpers.GetString( obj, @"Description" );
 					ci.DhcpEnabled = WmiHelpers.GetBoolean( obj, @"DHCPEnabled" );

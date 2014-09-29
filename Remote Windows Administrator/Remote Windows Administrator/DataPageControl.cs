@@ -1,5 +1,4 @@
-﻿using daw;
-using SyncList;
+﻿using SyncList;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,11 +11,20 @@ using System.Windows.Forms;
 namespace RemoteWindowsAdministrator {
 	public partial class DataPageControl<T>: UserControl where T: IDataPageRow, new() {
 		private Action<DataGridView> _setupColumnsCb;
-		private SyncList<T> _ds;
+		private Int32 _actionDepth = 0;
 		private Int32 _dsThreadCount;
+		private SyncList<T> _ds;
 		private readonly Form _parent;
-
+		public Action<string, SyncList<T>> QueryDataCb { get; set; }
+		public DataGridViewColumnCollection Columns { get { return dgv.Columns; } }
+		public DataGridViewRowCollection Rows { get { return dgv.Rows; } }
 		public string CompletionMessage { get; set; }
+
+		private bool _generateLookupMenu = true;
+		public bool GenerateLookupMenu { 
+			get { return _generateLookupMenu;  } 
+			set { _generateLookupMenu = value; } 
+		}
 
 		public Action<DataGridView> SetupColumnsCb { 
 			get { return _setupColumnsCb; }
@@ -26,16 +34,6 @@ namespace RemoteWindowsAdministrator {
 				_setupColumnsCb( dgv );
 			}
 		}
-		public Action<string, SyncList<T>> QueryDataCb { get; set; }
-		public Func<DataGridView, int, int, bool> OnCellButtonClick { get; set; }
-
-		public DataGridViewColumnCollection Columns { get { return dgv.Columns; } }
-		public DataGridViewRowCollection Rows { get { return dgv.Rows; } }
-		
-		/// <summary>
-		/// All columns tagged with string "CanSearch" will be searchable on Google
-		/// </summary>
-		public bool GenerateLookupMenu { get; set; }
 		 
 		public DataPageControl( Form parent ) {
 			_parent = parent;
@@ -89,6 +87,9 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private void OnActionStart( ) {
+			if( 1 < Interlocked.Increment( ref _actionDepth ) ) {
+				return;
+			}
 			gbComputers.Enabled = false;
 			txtFilter.Enabled = false;
 		}
@@ -98,11 +99,15 @@ namespace RemoteWindowsAdministrator {
 		}
 		
 		private void OnActionEnd( bool showMessage ) {
+			if( 0 < Interlocked.Decrement( ref _actionDepth ) ) {
+				return;
+			}
 			gbComputers.Enabled = true;
 			txtFilter.Enabled = true;
-			if( showMessage && !string.IsNullOrEmpty( CompletionMessage ) ) {
-				MessageBox.Show( CompletionMessage, @"Complete", MessageBoxButtons.OK );
+			if( !showMessage || string.IsNullOrEmpty( CompletionMessage ) ) {
+				return;
 			}
+			MessageBox.Show( CompletionMessage, @"Complete", MessageBoxButtons.OK );
 		}
 
 		public void OnActionEndInvoke( ) {
@@ -127,6 +132,9 @@ namespace RemoteWindowsAdministrator {
 					continue;
 				}
 				if( !DgvHelpers.CanSearch( column )) {
+					continue;
+				}
+				if( !column.Visible ) {
 					continue;
 				}
 				var curCellValue = DgvHelpers.GetCellString( dataGridView, rowIndex, column.Index );
@@ -207,10 +215,11 @@ namespace RemoteWindowsAdministrator {
 			Clear( );
 		}
 
-		private void btnQuery_Click( object sender, EventArgs e ) {
+		private void Query( ) {
 			if( null == QueryDataCb ) {
 				return;
 			}
+			Clear(  );
 			OnActionStart( );
 			var computerNames = GetComputerNamesFromString( txtComputers.Text );
 			_dsThreadCount = computerNames.Count;
@@ -237,6 +246,10 @@ namespace RemoteWindowsAdministrator {
 			}
 		}
 
+		private void btnQuery_Click( object sender, EventArgs e ) {
+			Query( );
+		}
+
 		private void dgv_CellMouseClick( object sender, DataGridViewCellMouseEventArgs e ) {
 			if( !ValidateAndSelect( ref dgv, e ) ) {
 				return;
@@ -244,10 +257,17 @@ namespace RemoteWindowsAdministrator {
 			var curCell = dgv.Rows[e.RowIndex].Cells[e.ColumnIndex];
 			switch( e.Button ) {
 			case MouseButtons.Left: {				
-				if( null != OnCellButtonClick && IsButton( curCell ) ) {
+				if( IsButton( curCell ) ) {
 					OnActionStart(  );
 					try {
-						OnCellButtonClick( dgv, e.RowIndex, e.ColumnIndex );
+						var rowGuid = dgv.Rows[e.RowIndex].Cells[@"RowGuid"].Value as Guid?;
+						Helpers.Assert( null != rowGuid, @"All IDataPageRows must have a valid RowGuid" );
+
+						var curDsItem = _ds[_ds.Find( @"RowGuid", rowGuid )] as IDataPageRow;
+
+						if( curDsItem.GetActions(  )[curCell.Value as string]( curDsItem ) ) {
+							Query( );
+						}
 					} finally {
 						OnActionEnd( false );
 					}
