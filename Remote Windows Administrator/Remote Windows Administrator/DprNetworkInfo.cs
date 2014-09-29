@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 
 namespace RemoteWindowsAdministrator {
-	public sealed class PtNetworkInfo: IDataPageRow {
+	public sealed class DprNetworkInfo: IDataPageRow {
 		private string _computerName;
 		public string ComputerName {
 			get { return _computerName; }
@@ -77,13 +77,13 @@ namespace RemoteWindowsAdministrator {
 			return SetupActions( );
 		}
 
-		public PtNetworkInfo( ) {
+		public DprNetworkInfo( ) {
 			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
 			ConnectionStatus = @"OK";
 			RowGuid = new Guid( );
 		}
 
-		public PtNetworkInfo( string computerName, string connectionStatus = @"OK" ) {			
+		public DprNetworkInfo( string computerName, string connectionStatus = @"OK" ) {			
 			ComputerName = computerName;
 			ConnectionStatus = connectionStatus;
 			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
@@ -103,13 +103,13 @@ namespace RemoteWindowsAdministrator {
 			return !string.IsNullOrEmpty( ComputerName ) && !string.IsNullOrEmpty( ConnectionStatus );
 		}
 
-		public static void Generate( string computerName, SyncList<PtNetworkInfo> result ) {
+		public static void Generate( string computerName, SyncList<DprNetworkInfo> result ) {
 			Helpers.Assert( null != result, @"result SyncList cannot be null" );
 			Helpers.Assert( !string.IsNullOrEmpty( computerName ), @"Computer name cannot be empty" );
-			var networkInfoList = new List<PtNetworkInfo>( );
+			var networkInfoList = new List<DprNetworkInfo>( );
 			try {
 				WmiHelpers.ForEach( computerName, @"SELECT * FROM Win32_NetworkAdapterConfiguration", obj => {
-					var ci = new PtNetworkInfo( computerName );
+					var ci = new DprNetworkInfo( computerName );
 					ci.DefaultIpGateway = WmiHelpers.GetStringArray( obj, @"DefaultIPGateway" );
 					ci.Description = WmiHelpers.GetString( obj, @"Description" );
 					ci.DhcpEnabled = WmiHelpers.GetBoolean( obj, @"DHCPEnabled" );
@@ -139,10 +139,10 @@ namespace RemoteWindowsAdministrator {
 					return true;
 				}, true, false );
 			} catch( UnauthorizedAccessException ) {
-				result.Add( new PtNetworkInfo( computerName, @"Authorization Error" ) );
+				result.Add( new DprNetworkInfo( computerName, @"Authorization Error" ) );
 				return;
 			} catch( Exception ) {
-				result.Add( new PtNetworkInfo( computerName, @"Error" ) );
+				result.Add( new DprNetworkInfo( computerName, @"Error" ) );
 				return;
 			}
 			result.AddRange( networkInfoList );

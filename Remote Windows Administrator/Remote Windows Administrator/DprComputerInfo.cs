@@ -4,7 +4,7 @@ using System.Management;
 using System.Windows.Forms;
 
 namespace RemoteWindowsAdministrator {
-	public sealed class PtComputerInfo: IDataPageRow {
+	public sealed class DprComputerInfo: IDataPageRow {
 		private string _computerName;
 		public string ComputerName {
 			get { return _computerName; }
@@ -51,13 +51,13 @@ namespace RemoteWindowsAdministrator {
 			return SetupActions( );
 		}
 
-		public PtComputerInfo( ) {
+		public DprComputerInfo( ) {
 			ConnectionStatus = @"OK";
 			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
 			RowGuid = new Guid( );
 		}
 
-		public PtComputerInfo( string computerName, string connectionStatus = @"OK" ) {			
+		public DprComputerInfo( string computerName, string connectionStatus = @"OK" ) {			
 			ComputerName = computerName;
 			ConnectionStatus = connectionStatus;
 			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
@@ -67,9 +67,9 @@ namespace RemoteWindowsAdministrator {
 
 		public static IDictionary<string, Func<IDataPageRow, bool>> SetupActions( ) {
 			return new Dictionary<string, Func<IDataPageRow, bool>>( ) {{@"Shutdown", delegate( IDataPageRow rowObj ) {
-				var row = rowObj as PtComputerInfo;
+				var row = rowObj as DprComputerInfo;
 				Helpers.Assert( null != row, @"PtComputerSoftware Action called with another class as second parameter" );
-				using( var csd = new ConfirmShutdownDialog( new PtComputerInfo.ShutdownComputerParameters( row.ComputerName ) ) ) {
+				using( var csd = new ConfirmShutdownDialog( new DprComputerInfo.ShutdownComputerParameters( row.ComputerName ) ) ) {
 					csd.ShowDialog( );
 				}
 				return false;
@@ -84,10 +84,10 @@ namespace RemoteWindowsAdministrator {
 			return !string.IsNullOrEmpty( ComputerName ) && !string.IsNullOrEmpty( ConnectionStatus );
 		}
 
-		public static void Generate( string computerName, SyncList.SyncList<PtComputerInfo> result ) {
+		public static void Generate( string computerName, SyncList.SyncList<DprComputerInfo> result ) {
 			Helpers.Assert( null != result, @"result SyncList cannot be null" );
 			Helpers.Assert( !string.IsNullOrEmpty( computerName ), @"Computer name cannot be empty" );
-			var ci = new PtComputerInfo( computerName ) { LocalSystemDateTime = DateTime.Now };
+			var ci = new DprComputerInfo( computerName ) { LocalSystemDateTime = DateTime.Now };
 			try {
 				WmiHelpers.ForEach( computerName, @"SELECT * FROM Win32_OperatingSystem WHERE Primary=TRUE", obj => {
 					ci.LastBootTime = WmiHelpers.GetNullableDate( obj, @"LastBootUpTime" );

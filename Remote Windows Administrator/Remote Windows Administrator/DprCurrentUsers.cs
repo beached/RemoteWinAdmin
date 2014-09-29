@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 
 namespace RemoteWindowsAdministrator {
-	public sealed class PtCurrentUsers: IDataPageRow {
+	public sealed class DprCurrentUsers: IDataPageRow {
 		private string _computerName;
 		public string ComputerName {
 			get { return _computerName; }
@@ -46,13 +46,13 @@ namespace RemoteWindowsAdministrator {
 			return SetupActions( );
 		}
 
-		public PtCurrentUsers( ) {
+		public DprCurrentUsers( ) {
 			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
 			ConnectionStatus = @"OK";
 			RowGuid = new Guid( );
 		}
 
-		public PtCurrentUsers( string computerName, string connectionStatus = @"OK" ) {			
+		public DprCurrentUsers( string computerName, string connectionStatus = @"OK" ) {			
 			ComputerName = computerName;
 			ConnectionStatus = connectionStatus;
 			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
@@ -78,11 +78,11 @@ namespace RemoteWindowsAdministrator {
 			return !string.IsNullOrEmpty( ComputerName ) && !string.IsNullOrEmpty( ConnectionStatus );
 		}
 
-		private static void GetLocallyLoggedOnUsers( string computerName, SyncList.SyncList<PtCurrentUsers> result ) {
-			var usersList = new List<PtCurrentUsers>( );
+		private static void GetLocallyLoggedOnUsers( string computerName, SyncList.SyncList<DprCurrentUsers> result ) {
+			var usersList = new List<DprCurrentUsers>( );
 			using( var regHku = RegistryKey.OpenRemoteBaseKey( RegistryHive.Users, string.Empty ) ) {
 				foreach( var currentSid in regHku.GetSubKeyNames( ).Where( IsSid ) ) {
-					var cu = new PtCurrentUsers( computerName ) { Sid = currentSid };
+					var cu = new DprCurrentUsers( computerName ) { Sid = currentSid };
 					try {
 						if( Win32.WellKnownSids.ContainsKey( currentSid ) ) {
 							cu.Domain = computerName;	// Local account
@@ -93,7 +93,7 @@ namespace RemoteWindowsAdministrator {
 						cu.ProfileFolder = RegistryHelpers.GetString( computerName, RegistryHive.LocalMachine, string.Format( @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\{0}", currentSid ), @"ProfileImagePath" );
 						cu.LastLogon = GetUsersLogonTimestamp( cu );
 					} catch {
-						cu = new PtCurrentUsers( computerName, @"Error" ) { Sid = currentSid };
+						cu = new DprCurrentUsers( computerName, @"Error" ) { Sid = currentSid };
 					}
 					usersList.Add( cu );
 				}
@@ -101,13 +101,13 @@ namespace RemoteWindowsAdministrator {
 			result.AddRange( usersList );
 		}
 
-		private static Win32.Error GetNetworkUsers( string computerName, ref SyncList.SyncList<PtCurrentUsers> result ) {
+		private static Win32.Error GetNetworkUsers( string computerName, ref SyncList.SyncList<DprCurrentUsers> result ) {
 			Win32.Error res;
 			var er = 0;
 			var tr = 0;
 			var resume = 0;
 			var buffer = IntPtr.Zero;
-			var usersList = new List<PtCurrentUsers>( );
+			var usersList = new List<DprCurrentUsers>( );
 			do {
 				try {
 					res = (Win32.Error)Win32.NetSessionEnum( computerName, null, null, 502, out buffer, -1, ref er, ref tr, ref resume );
@@ -115,7 +115,7 @@ namespace RemoteWindowsAdministrator {
 						var bufferPtrInt = buffer.ToInt32( );
 						for( var i = 0; i < er; i++ ) {
 							var sessionInfo = (Win32.SessionInfo502)Marshal.PtrToStructure( new IntPtr( bufferPtrInt ), typeof( Win32.SessionInfo502 ) );
-							var userInfo = new PtCurrentUsers( computerName ) {
+							var userInfo = new DprCurrentUsers( computerName ) {
 								UserName = sessionInfo.userName, LastLogon = DateTime.Now.AddSeconds( -sessionInfo.logonDuration )
 							};
 							usersList.Add( userInfo );
@@ -182,7 +182,7 @@ namespace RemoteWindowsAdministrator {
 			return Win32.Error.Success;
 		}
 
-		private static void GetUserAccountFromSid( ref PtCurrentUsers user ) {
+		private static void GetUserAccountFromSid( ref DprCurrentUsers user ) {
 			var binSid = Win32.StringToBinarySid( user.Sid );
 			if( null == binSid ) {
 				user.ConnectionStatus = @"Error resolving SID";
@@ -214,7 +214,7 @@ namespace RemoteWindowsAdministrator {
 			}
 		}
 
-		public static void Generate( string computerName, SyncList.SyncList<PtCurrentUsers> result ) {
+		public static void Generate( string computerName, SyncList.SyncList<DprCurrentUsers> result ) {
 			Helpers.Assert( null != result, @"result SyncList cannot be null" );
 			Helpers.Assert( !string.IsNullOrEmpty( computerName ), @"Computer name cannot be empty" );
 
@@ -224,18 +224,18 @@ namespace RemoteWindowsAdministrator {
 			case Win32.Error.ErrorMoreData:
 				break;
 			case Win32.Error.ErrorAccessDenied:
-				result.Add( new PtCurrentUsers( computerName, @"Access Denied" ) );
+				result.Add( new DprCurrentUsers( computerName, @"Access Denied" ) );
 				//return;
 				break;
 			default:
-				result.Add( new PtCurrentUsers( computerName, @"Error" ) );
+				result.Add( new DprCurrentUsers( computerName, @"Error" ) );
 				//return;
 				break;
 			}
 			GetLocallyLoggedOnUsers( computerName, result );
 		}
 
-		private static DateTime? GetUsersLogonTimestamp( PtCurrentUsers user ) {
+		private static DateTime? GetUsersLogonTimestamp( DprCurrentUsers user ) {
 			if( string.IsNullOrEmpty( user.UserName ) || string.IsNullOrEmpty( user.Domain ) || Win32.WellKnownSids.ContainsKey( user.Sid ) ) {
 				return null;
 			}

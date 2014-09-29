@@ -56,9 +56,9 @@
     </Compile>
     <Compile Include="DgvHelpers.cs" />
     <Compile Include="Helpers.cs" />
-    <Compile Include="PtCurrentUsers.cs" />
+    <Compile Include="DprCurrentUsers.cs" />
     <Compile Include="IDataPageRow.cs" />
-    <Compile Include="PtNetworkInfo.cs" />
+    <Compile Include="DprNetworkInfo.cs" />
     <Compile Include="Win32.cs" />
     <Compile Include="RegistryHelpers.cs" />
     <Compile Include="ShutdownDialog.cs">
@@ -68,7 +68,7 @@
       <DependentUpon>ShutdownDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="ValueIsIn.cs" />
-    <Compile Include="PtComputerInfo.cs" />
+    <Compile Include="DprComputerInfo.cs" />
     <Compile Include="frmMain.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -78,7 +78,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="wmi_helpers.cs" />
-    <Compile Include="PtComputerSoftware.cs" />
+    <Compile Include="DprComputerSoftware.cs" />
     <EmbeddedResource Include="DataPageControl.resx">
       <DependentUpon>DataPageControl.cs</DependentUpon>
     </EmbeddedResource>

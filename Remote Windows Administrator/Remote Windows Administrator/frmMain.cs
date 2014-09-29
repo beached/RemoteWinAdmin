@@ -15,17 +15,17 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private void SetupSoftwareTab( ) {
-			AddDataPageToTabControl( @"Software", tcMain, new DataPageControl<PtComputerSoftware>( this ) {
+			AddDataPageToTabControl( @"Software", tcMain, new DataPageControl<DprComputerSoftware>( this ) {
 				CompletionMessage = @"Computer Software Query Complete", 
-				QueryDataCb = PtComputerSoftware.Generate, 
+				QueryDataCb = DprComputerSoftware.Generate, 
 				SetupColumnsCb = delegate( DataGridView dgv ) {
-					DgvHelpers.GenerateAllColumns( dgv, typeof( PtComputerSoftware ) );
+					DgvHelpers.GenerateAllColumns( dgv, typeof( DprComputerSoftware ) );
 					DgvHelpers.ConvertToLinkColumn( DgvHelpers.GetColumn( dgv,@"HelpLink" ) );
 					DgvHelpers.ConvertToLinkColumn( DgvHelpers.GetColumn( dgv, @"UrlInfoAbout" ) );
 					DgvHelpers.SetColumnHeader( DgvHelpers.GetColumn( dgv, @"Guid" ), @"GUID" );
 					DgvHelpers.SetColumnHeader( DgvHelpers.GetColumn( dgv, @"Size" ), @"Size(MB)" );
 					MoveStatusColumnsFirst( dgv );
-					foreach( var actionName in PtComputerSoftware.SetupActions(  ).Keys ) {
+					foreach( var actionName in DprComputerSoftware.SetupActions(  ).Keys ) {
 						DgvHelpers.AddButtonColumn( dgv, actionName );
 					}					
 				}
@@ -33,12 +33,12 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private void SetupComputerInfoTab( ) {
-			AddDataPageToTabControl( "Computer Info", tcMain, new DataPageControl<PtComputerInfo>( this ) {
-				QueryDataCb = PtComputerInfo.Generate, 
+			AddDataPageToTabControl( "Computer Info", tcMain, new DataPageControl<DprComputerInfo>( this ) {
+				QueryDataCb = DprComputerInfo.Generate, 
 				SetupColumnsCb = delegate( DataGridView dgv ) {
-					DgvHelpers.GenerateAllColumns( dgv, typeof( PtComputerInfo) );
+					DgvHelpers.GenerateAllColumns( dgv, typeof( DprComputerInfo) );
 					MoveStatusColumnsFirst( dgv );
-					foreach( var actionName in PtComputerInfo.SetupActions( ).Keys ) {
+					foreach( var actionName in DprComputerInfo.SetupActions( ).Keys ) {
 						DgvHelpers.AddButtonColumn( dgv, actionName );
 					}
 				}
@@ -46,29 +46,29 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private void SetupCurrentUsersTab( ) {
-			AddDataPageToTabControl( "Current Users", tcMain, new DataPageControl<PtCurrentUsers>( this ) {
+			AddDataPageToTabControl( "Current Users", tcMain, new DataPageControl<DprCurrentUsers>( this ) {
 				GenerateLookupMenu = false, 
-				QueryDataCb = PtCurrentUsers.Generate, 
+				QueryDataCb = DprCurrentUsers.Generate, 
 				SetupColumnsCb = delegate( DataGridView dgv ) {
-				DgvHelpers.GenerateAllColumns( dgv, typeof( PtCurrentUsers ) );
+				DgvHelpers.GenerateAllColumns( dgv, typeof( DprCurrentUsers ) );
 				MoveStatusColumnsFirst( dgv );
-				foreach( var actionName in PtCurrentUsers.SetupActions( ).Keys ) {
+				foreach( var actionName in DprCurrentUsers.SetupActions( ).Keys ) {
 					DgvHelpers.AddButtonColumn( dgv, actionName );
 				}
 			}} );
 		}
 
 		private void SetupNetworkInfoTab( ) {
-			AddDataPageToTabControl( "Network Info", tcMain, new DataPageControl<PtNetworkInfo>( this ) {
-				QueryDataCb = PtNetworkInfo.Generate, SetupColumnsCb = delegate( DataGridView dgv ) {
-					DgvHelpers.GenerateAllColumns( dgv, typeof( PtNetworkInfo ), new List<string>( ) {@"DefaultIpGateway", @"DnsDomainSuffixSearchOrder", @"DnsServerSearchOrder", @"IpAddress"} );
+			AddDataPageToTabControl( "Network Info", tcMain, new DataPageControl<DprNetworkInfo>( this ) {
+				QueryDataCb = DprNetworkInfo.Generate, SetupColumnsCb = delegate( DataGridView dgv ) {
+					DgvHelpers.GenerateAllColumns( dgv, typeof( DprNetworkInfo ), new List<string>( ) {@"DefaultIpGateway", @"DnsDomainSuffixSearchOrder", @"DnsServerSearchOrder", @"IpAddress"} );
 					MoveStatusColumnsFirst( dgv );
 					DgvHelpers.ConvertToMultilineColumn( DgvHelpers.GetColumn( dgv, @"DnsServerSearchOrders" ) );
 					DgvHelpers.ConvertToMultilineColumn( DgvHelpers.GetColumn( dgv, @"DefaultIpGateways" ) );
 					DgvHelpers.ConvertToMultilineColumn( DgvHelpers.GetColumn( dgv, @"IpAddresses" ) );
 					DgvHelpers.ConvertToMultilineColumn( DgvHelpers.GetColumn( dgv, @"WinsServers" ) );
 					DgvHelpers.MoveColumnToIndex( DgvHelpers.GetColumn( dgv, @"Description" ), 2 );
-					foreach( var actionName in PtNetworkInfo.SetupActions( ).Keys ) {
+					foreach( var actionName in DprNetworkInfo.SetupActions( ).Keys ) {
 						DgvHelpers.AddButtonColumn( dgv, actionName );
 					}
 				}

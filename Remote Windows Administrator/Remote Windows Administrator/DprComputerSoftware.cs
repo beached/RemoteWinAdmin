@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace RemoteWindowsAdministrator {
 
-	public sealed class PtComputerSoftware: IDataPageRow {
+	public sealed class DprComputerSoftware: IDataPageRow {
 		private string _computerName;
 		public string ComputerName { get { return _computerName; }
 			set {
@@ -43,13 +43,13 @@ namespace RemoteWindowsAdministrator {
 			return SetupActions( );
 		}
 
-		public PtComputerSoftware( ) {
+		public DprComputerSoftware( ) {
 			ConnectionStatus = @"OK";
 			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
 			RowGuid = System.Guid.NewGuid( );
 		}
 
-		public PtComputerSoftware( string computerName, string connectionStatus = @"OK" ) {			
+		public DprComputerSoftware( string computerName, string connectionStatus = @"OK" ) {			
 			ComputerName = computerName;
 			ConnectionStatus = connectionStatus;
 			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
@@ -59,7 +59,7 @@ namespace RemoteWindowsAdministrator {
 
 		public static Dictionary<string, Func<IDataPageRow, bool>> SetupActions( ) {
 			var result = new Dictionary<string, Func<IDataPageRow, bool>> {{@"Uninstall", delegate( IDataPageRow rowObj ) {
-				var row = rowObj as PtComputerSoftware;
+				var row = rowObj as DprComputerSoftware;
 				Helpers.Assert( null != row, @"PtComputerSoftware Action called with another class as second parameter" );
 				Helpers.Assert( !string.IsNullOrEmpty( row.Guid ), @"Guid is empty or null, it is a mandatory field" );
 				if( DialogResult.Yes != MessageBox.Show( @"Are you sure?", @"Alert", MessageBoxButtons.YesNo ) ) {
@@ -80,7 +80,7 @@ namespace RemoteWindowsAdministrator {
 			return !string.IsNullOrEmpty( Name ) && !string.IsNullOrEmpty( Guid ) && !string.IsNullOrEmpty( ComputerName ) && !string.IsNullOrEmpty( ConnectionStatus );
 		}
 
-		private static bool HasGuid( IEnumerable<PtComputerSoftware> values, string guid ) {
+		private static bool HasGuid( IEnumerable<DprComputerSoftware> values, string guid ) {
 			return values.Any( currentValue => guid.Equals( currentValue.Guid, StringComparison.OrdinalIgnoreCase ) );
 		}
 
@@ -90,10 +90,10 @@ namespace RemoteWindowsAdministrator {
 			return !shown && SystemComponent;
 		}
 
-		public static void Generate( string computerName, SyncList<PtComputerSoftware> result ) {
+		public static void Generate( string computerName, SyncList<DprComputerSoftware> result ) {
 			Debug.Assert( null != result, @"result SyncList cannot be null" );
 			Debug.Assert( !string.IsNullOrEmpty( computerName ), @"Computer name cannot be empty" );
-			var softwareList = new List<PtComputerSoftware>();
+			var softwareList = new List<DprComputerSoftware>();
 			try {
 				string[] regPaths = {
 					@"SOFTWARE\Wow6432node\Microsoft\Windows\CurrentVersion\Uninstall", @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
@@ -108,7 +108,7 @@ namespace RemoteWindowsAdministrator {
 								if( null == curReg || !string.IsNullOrEmpty( RegistryHelpers.GetString( curReg, @"ParentKeyName" ) ) ) {
 									continue;
 								}
-								var currentProduct = new PtComputerSoftware( computerName ) {
+								var currentProduct = new DprComputerSoftware( computerName ) {
 									Guid = currentGuid, 
 									Name = RegistryHelpers.GetString( curReg, @"DisplayName" ), 
 									Publisher = RegistryHelpers.GetString( curReg, @"Publisher" ), 
@@ -134,13 +134,13 @@ namespace RemoteWindowsAdministrator {
 					}
 				}
 			} catch( System.IO.IOException ) {
-				result.Add( new PtComputerSoftware( computerName, @"Connection Error" ) );
+				result.Add( new DprComputerSoftware( computerName, @"Connection Error" ) );
 				softwareList.Clear( );
 			} catch( UnauthorizedAccessException ) {
-				result.Add( new PtComputerSoftware( computerName, @"Authorization Error" ) );
+				result.Add( new DprComputerSoftware( computerName, @"Authorization Error" ) );
 				softwareList.Clear( );
 			} catch( System.Security.SecurityException ) {
-				result.Add( new PtComputerSoftware( computerName, @"Authorization Error" ) );
+				result.Add( new DprComputerSoftware( computerName, @"Authorization Error" ) );
 				softwareList.Clear( );
 			}
 			result.AddRange( softwareList );
