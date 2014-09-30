@@ -97,8 +97,9 @@ namespace RemoteWindowsAdministrator {
 							GetUserAccountFromSid( ref cu );
 						}
 						cu.ProfileFolder = RegistryHelpers.GetString( computerName, RegistryHive.LocalMachine, string.Format( @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\{0}", currentSid ), @"ProfileImagePath" );
-						cu.LastLogon = GetUsersLogonTimestamp( cu );
-					} catch {
+						cu.LastLogon = GetUsersLogonTimestamp( cu );					
+					} catch( Exception ex ) {
+						GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"Exception - {0} - {1}", ex.TargetSite, ex.Message );
 						cu = new DprCurrentUsers( computerName, ConnectionStatuses.Error ) { Sid = currentSid };
 					}
 					cu.LogonType = LogonTypes.Local;
@@ -132,49 +133,49 @@ namespace RemoteWindowsAdministrator {
 					} else {
 						switch( res ) {
 						case Win32.Error.ErrorAccessDenied:
-							Debug.WriteLine( string.Format( @"GetNetworkUsers: Access Denied: {0}", computerName ) );
+							GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"GetNetworkUsers: Access Denied: {0}", computerName );
 							break;
 						case Win32.Error.ErrorNotEnoughMemory:
-							Debug.WriteLine( string.Format( @"GetNetworkUsers: Not Enough Memory: {0}", computerName ) );
+							GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"GetNetworkUsers: Not Enough Memory: {0}", computerName );
 							break;
 						case Win32.Error.ErrorBadNetpath:
-							Debug.WriteLine( string.Format( @"GetNetworkUsers: Bad Network Path: {0}", computerName ) );
+							GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"GetNetworkUsers: Bad Network Path: {0}", computerName );
 							break;
 						case Win32.Error.ErrorNetworkBusy:
-							Debug.WriteLine( string.Format( @"GetNetworkUsers: Network Busy: {0}", computerName ) );
+							GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"GetNetworkUsers: Network Busy: {0}", computerName );
 							break;
 						case Win32.Error.ErrorInvalidParameter:
-							Debug.WriteLine( string.Format( @"GetNetworkUsers: Invalid Parameter: {0}", computerName ) );
+							GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"GetNetworkUsers: Invalid Parameter: {0}", computerName );
 							break;
 						case Win32.Error.ErrorInsufficientBuffer:
-							Debug.WriteLine( string.Format( @"GetNetworkUsers: Insufficient Buff: {0}", computerName ) );
+							GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"GetNetworkUsers: Insufficient Buff: {0}", computerName );
 							break;
 						case Win32.Error.ErrorInvalidLevel:
-							Debug.WriteLine( string.Format( @"GetNetworkUsers: Invalid Level: {0}", computerName ) );
+							GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"GetNetworkUsers: Invalid Level: {0}", computerName );
 							break;
 						case Win32.Error.ErrorExtendedError:
-							Debug.WriteLine( string.Format( @"GetNetworkUsers: Exended Error: {0}", computerName ) );
+							GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"GetNetworkUsers: Exended Error: {0}", computerName );
 							break;
 						case Win32.Error.ErrorNoNetwork:
-							Debug.WriteLine( string.Format( @"GetNetworkUsers: No Network: {0}", computerName ) );
+							GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"GetNetworkUsers: No Network: {0}", computerName );
 							break;
 						case Win32.Error.ErrorInvalidHandleState:
-							Debug.WriteLine( string.Format( @"GetNetworkUsers: Invalid Handle State: {0}", computerName ) );
+							GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"GetNetworkUsers: Invalid Handle State: {0}", computerName );
 							break;
 						case Win32.Error.NerrBase:
-							Debug.WriteLine( string.Format( @"GetNetworkUsers: NERR_BASE: {0}", computerName ) );
+							GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"GetNetworkUsers: NERR_BASE: {0}", computerName );
 							break;
 						case Win32.Error.NerrUnknownDevDir:
-							Debug.WriteLine( string.Format( @"GetNetworkUsers: Unknown Device Directory: {0}", computerName ) );
+							GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"GetNetworkUsers: Unknown Device Directory: {0}", computerName );
 							break;
 						case Win32.Error.NerrDuplicateShare:
-							Debug.WriteLine( string.Format( @"GetNetworkUsers: Duplicate Share: {0}", computerName ) );
+							GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"GetNetworkUsers: Duplicate Share: {0}", computerName );
 							break;
 						case Win32.Error.NerrBufTooSmall:
-							Debug.WriteLine( string.Format( @"GetNetworkUsers: Buffer too small: {0}", computerName ) );
+							GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"GetNetworkUsers: Buffer too small: {0}", computerName );
 							break;
 						case Win32.Error.ErrorNoBrowserServersFound:
-							Debug.WriteLine( string.Format( @"GetNetworkUsers: No Browser Servers Found: {0}", computerName ) );
+							GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"GetNetworkUsers: No Browser Servers Found: {0}", computerName );
 							break;
 						}
 						return res;
@@ -192,6 +193,7 @@ namespace RemoteWindowsAdministrator {
 		private static void GetUserAccountFromSid( ref DprCurrentUsers user ) {
 			var binSid = Win32.StringToBinarySid( user.Sid );
 			if( null == binSid ) {
+				GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"DgvHelpers - GetNetworkUsers - Error Resolving SID" );
 				user.ConnectionStatus = ConnectionStatuses.ErrorResolvingSid;
 				return;
 			}
@@ -217,6 +219,7 @@ namespace RemoteWindowsAdministrator {
 				user.UserName = name.ToString( );
 				user.Domain = referencedDomainName.ToString( );
 			} else {
+				GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"DgvHelpers - GetNetworkUsers - Error Resolving SID - Error ", err );
 				user.ConnectionStatus = ConnectionStatuses.ErrorResolvingSid;
 			}
 		}
@@ -231,10 +234,12 @@ namespace RemoteWindowsAdministrator {
 			case Win32.Error.ErrorMoreData:
 				break;
 			case Win32.Error.ErrorAccessDenied:
+				GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"DprCurrentUsers - Generate - Access Denied for {0}", computerName );
 				result.Add( new DprCurrentUsers( computerName, ConnectionStatuses.AccessDenied ) );
 				//return;
 				break;
 			default:
+				GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"DprCurrentUsers - Generate - Unknown Error for {0}", computerName );
 				result.Add( new DprCurrentUsers( computerName, ConnectionStatuses.Error ) );
 				//return;
 				break;
@@ -260,19 +265,19 @@ namespace RemoteWindowsAdministrator {
 					var roq = new RelatedObjectQuery( string.Format( @"associators of {{Win32_LogonSession.LogonId='{0}'}} WHERE AssocClass = Win32_LoggedOnUser", WmiHelpers.GetString( obj, @"LogonId" ) ) );
 					using( var searcher = new ManagementObjectSearcher( scope, roq ) ) {
 						foreach( var mobObj in searcher.Get( ) ) {
-							Debug.Assert( null != mobObj, @"WMI Error, null value returned." );
+							Helpers.Assert( null != mobObj, @"WMI Error, null value returned." );
 							var mob = (ManagementObject)mobObj;
 							var name = WmiHelpers.GetString( mob, @"Name" );
 							var domain = WmiHelpers.GetString( mob, @"Domain" );
-							if( name.Equals( user.UserName ) && domain.Equals( user.Domain ) ) {
-								user.LastLogon = WmiHelpers.GetNullableDate( obj, @"StartTime" );
-								return false; // Found, stop loop
+							if( !name.Equals( user.UserName ) || !domain.Equals( user.Domain ) ) {
+								continue;
 							}
+							user.LastLogon = WmiHelpers.GetNullableDate( obj, @"StartTime" );
+							return false; // Found, stop loop
 						}
 					}
 				} catch( System.Management.ManagementException ex ) {
-					Debug.WriteLine( string.Format( @"Error finding last logon on {0} for {1}\{2}", user.ComputerName, user.Domain, user.UserName ) );
-					Debug.WriteLine( ex.Message );
+					GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"Error finding last logon on {0} for {1}\{2}\n{3}", user.ComputerName, user.Domain, user.UserName, ex.Message );
 				}
 				return true;
 			}, false, false );

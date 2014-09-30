@@ -10,6 +10,7 @@ namespace RemoteWindowsAdministrator {
 				return;
 			}
 			var trace = new StackTrace( 1 );
+			GlobalLogging.WriteLine( Logging.LogSeverity.Fatal, @"Assertion Failure - {0} - {1}", message, trace );
 			MessageBox.Show( String.Format( "{0}\n{1}", message, trace ), @"Assertion Fail", MessageBoxButtons.OK, MessageBoxIcon.Error );
 			Application.Exit( );
 		}

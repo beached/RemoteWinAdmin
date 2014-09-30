@@ -101,12 +101,13 @@ namespace RemoteWindowsAdministrator {
 					ci.BiosVersion = WmiHelpers.GetString( obj, @"SMBIOSBIOSVersion" );
 					return true;
 				} );
-			} catch( UnauthorizedAccessException ) {
+			} catch( UnauthorizedAccessException uae ) {
+				GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"Exception - {0} - {1}", uae.TargetSite, uae.Message );
 				ci.ConnectionStatus = ConnectionStatuses.AuthorizationError;
-			} catch( Exception ) {
+			} catch( Exception ex ) {
+				GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"Exception - {0} - {1}", ex.TargetSite, ex.Message );
 				ci.ConnectionStatus = ConnectionStatuses.Error;
 			}
-
 			result.Add( ci );
 			ValidateUniqueness( result );
 		}
@@ -147,9 +148,7 @@ namespace RemoteWindowsAdministrator {
 			public bool Forced { get; set; }
 
 			public ShutdownComputerParameters( string computerName ) {
-				if( string.IsNullOrEmpty( computerName ) ) {
-					throw new ArgumentNullException( @"computerName", @"compueterName cannot be empty or null" );
-				}
+				Helpers.Assert( !string.IsNullOrEmpty( computerName ), @"computerName cannot be empty or null" );
 				ComputerName = computerName;
 				Timeout = 120;
 				ShutdownType = ShutdownTypes.Reboot;
@@ -171,16 +170,24 @@ namespace RemoteWindowsAdministrator {
 					var outParams = obj.InvokeMethod( @"Win32ShutdownTracker", inParams, null );
 					var result = (null == outParams ? null : outParams[@"ReturnValue"]) as uint?;
 					if( null == result || 0 != result ) {
-						MessageBox.Show( string.Format( @"Failed to reboot {0} with error {1}", parameters.ComputerName, result ) );
+						var message = string.Format( @"Failed to reboot {0} with error {1}", parameters.ComputerName, result );
+						GlobalLogging.WriteLine( Logging.LogSeverity.Error, message );
+						MessageBox.Show( message );
 					}
 					return true;
 				}, true );
 			} catch( UnauthorizedAccessException ) {
-				MessageBox.Show( string.Format( @"Failed to reboot {0}, permission denied", parameters.ComputerName ) );
+				var message = string.Format( @"Failed to reboot {0}, permission denied", parameters.ComputerName );
+				GlobalLogging.WriteLine( Logging.LogSeverity.Error, message );
+				MessageBox.Show( message );
 			} catch( ManagementException e ) {
-				MessageBox.Show( string.Format( "Failed to reboot {0}, WMI Error\n{1}", parameters.ComputerName, e.Message ) );
+				var message = string.Format( "Failed to reboot {0}, WMI Error\n{1}", parameters.ComputerName, e.Message );
+				GlobalLogging.WriteLine( Logging.LogSeverity.Error, message );
+				MessageBox.Show( message );
 			} catch( Exception e ) {
-				MessageBox.Show( string.Format( "Failed to reboot {0}, unexpected error\n{1}\n{2}", parameters.ComputerName, e.GetType( ).Name, e.Message ) );
+				var message = string.Format( "Failed to reboot {0}, unexpected error\n{1}\n{2}", parameters.ComputerName, e.GetType( ).Name, e.Message );
+				GlobalLogging.WriteLine( Logging.LogSeverity.Error, message );
+				MessageBox.Show( message );
 			}
 		}
 	}

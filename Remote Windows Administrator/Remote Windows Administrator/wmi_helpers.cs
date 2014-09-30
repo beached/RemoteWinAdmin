@@ -20,7 +20,7 @@ namespace RemoteWindowsAdministrator {
 						return true;
 					}
 					Debug.Assert( reply != null, "Ping reply was null, this shouldn't happen" );
-					Debug.WriteLine( string.Format( @"Ping Status for '{0}' is {1}", computerName, reply.Status ) );
+					GlobalLogging.WriteLine( Logging.LogSeverity.Info, @"Ping Status for '{0}' is {1}", computerName, reply.Status );
 					return false;
 				}
 			} catch( Exception ) {
@@ -33,9 +33,9 @@ namespace RemoteWindowsAdministrator {
 			var scope = new ManagementScope( string.Format( @"\\{0}\root\CIMV2", computerName ), conOpt );
 			var query = new ObjectQuery( queryString );
 			using( var objSearch = new ManagementObjectSearcher( scope, query ) ) {
-				Debug.Assert( !expectOne || 1 == objSearch.Get( ).Count, string.Format( @"Only expecting one result, {0} found", objSearch.Get( ).Count ) );
+				Helpers.Assert( !expectOne || 1 == objSearch.Get( ).Count, string.Format( @"Only expecting one result, {0} found", objSearch.Get( ).Count ) );
 				foreach( var obj in objSearch.Get( ) ) {
-					Debug.Assert( null != obj, @"WMI Error, null value returned." );
+					Helpers.Assert( null != obj, @"WMI Error, null value returned." );
 					if( !func( (ManagementObject)obj ) ) {
 						break;
 					}

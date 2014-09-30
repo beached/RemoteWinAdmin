@@ -214,7 +214,7 @@ namespace RemoteWindowsAdministrator {
 			try {
 				si = new SecurityIdentifier( sid );
 			} catch( ArgumentException ex ) {
-				Debug.WriteLine( string.Format( "Exception while looking up SID\n{0}", ex.Message ) );
+				GlobalLogging.WriteLine( Logging.LogSeverity.Error, "Exception while looking up SID\n{0}", ex.Message );
 				return null;
 			}
 			var binSid = new byte[si.BinaryLength];

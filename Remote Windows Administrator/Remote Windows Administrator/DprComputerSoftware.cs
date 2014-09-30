@@ -156,12 +156,14 @@ namespace RemoteWindowsAdministrator {
 
 		public static void UninstallGuidOnComputerName( string computerName, string guid ) {			
 			WmiHelpers.ForEach( computerName, string.Format( @"SELECT * FROM Win32_Product WHERE IdentifyingNumber='{0}'", guid ), obj => {
-				Debug.WriteLine( string.Format( @"Uninstalling '{0}' from {1}", obj.Properties["Name"].Value, computerName ) );
+				GlobalLogging.WriteLine( Logging.LogSeverity.Info, @"Uninstalling '{0}' from {1}", obj.Properties["Name"].Value, computerName ) ;
 				var outParams = obj.InvokeMethod( @"Uninstall", null, null );
 				Debug.Assert( outParams != null, @"Return value from uninstall was null.  This is not allowed" );
 				var retVal = int.Parse( outParams[@"returnValue"].ToString( ) );
 				if( 0 != retVal ) {
-					MessageBox.Show( string.Format( @"Error uninstalling '{0}' from {1}. Returned a value of {2}", obj.Properties["Name"].Value, computerName, retVal ), @"Error", MessageBoxButtons.OK );
+					var message = string.Format( @"Error uninstalling '{0}' from {1}. Returned a value of {2}", obj.Properties["Name"].Value, computerName, retVal );
+					MessageBox.Show( message, @"Error", MessageBoxButtons.OK );
+					GlobalLogging.WriteLine( Logging.LogSeverity.Warning, message );
 					return false;	// Stop all on error.  This might be wrong
 				}
 				return true;

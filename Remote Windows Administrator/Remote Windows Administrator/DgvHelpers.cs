@@ -87,9 +87,10 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public static string GetCellString( DataGridView dgv, int row, string columnName ) {
-			if( 0 > row || dgv.RowCount <= row ) {
-				return String.Empty;
-			}
+			Helpers.Assert( 0 <= row && row < dgv.RowCount, @"Invalid row specified" );
+// 			if( 0 > row || dgv.RowCount <= row ) {
+// 				return String.Empty;
+// 			}
 			return GetCellString( dgv, row, GetColumnIndex( dgv, columnName ) );
 		}
 
@@ -198,7 +199,9 @@ namespace RemoteWindowsAdministrator {
 			} else if( Helpers.TypeChecks.IsBool( columnType ) ) {
 				AddCheckedColumn( dgv, columnName, Helpers.CamelToSpace( columnName ) );
 			} else {
-				throw new UnsupportedTypeException( columnType, @"Have not accounted for this type in DGVHelpers AddColumnBasedOnType" );
+				const string message = @"Have not accounted for this type in DGVHelpers AddColumnBasedOnType";
+				GlobalLogging.WriteLine( Logging.LogSeverity.Fatal, @"AddColumnBasedOnDataType - {0}", message );
+				throw new UnsupportedTypeException( columnType, message );
 			}
 		}
 

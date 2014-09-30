@@ -59,6 +59,7 @@
     <Compile Include="DprCurrentUsers.cs" />
     <Compile Include="IDataPageRow.cs" />
     <Compile Include="DprNetworkInfo.cs" />
+    <Compile Include="Logging.cs" />
     <Compile Include="Win32.cs" />
     <Compile Include="RegistryHelpers.cs" />
     <Compile Include="ShutdownDialog.cs">
