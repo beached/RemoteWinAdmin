@@ -51,15 +51,15 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private static void SetDgvDefaults( DataGridView dgv ) {
-			dgv.AutoGenerateColumns = false;
-			dgv.RowHeadersVisible = true;
-			dgv.MultiSelect = true;
 			dgv.AllowUserToAddRows = false;
 			dgv.AllowUserToDeleteRows = false;
-			dgv.ReadOnly = true;
+			dgv.AutoGenerateColumns = false;
 			dgv.AutoResizeColumnHeadersHeight( );
-			dgv.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCells;
-			dgv.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells;
+			dgv.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
+			dgv.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
+			dgv.MultiSelect = true;
+			dgv.ReadOnly = true;
+			dgv.RowHeadersVisible = true;
 		}
 
 		private static IEnumerable<string> GetComputerNamesFromFile( string fileName ) {
@@ -83,7 +83,7 @@ namespace RemoteWindowsAdministrator {
 				}
 			}
 
-			return result.OrderBy( name => name ).Distinct( ).ToList( );
+			return result.Where( name => !string.IsNullOrEmpty( name.Trim( ) ) ).OrderBy( name => name ).Distinct( ).ToList( );
 		}
 
 		private void OnActionStart( ) {
@@ -92,6 +92,7 @@ namespace RemoteWindowsAdministrator {
 			}
 			gbComputers.Enabled = false;
 			txtFilter.Enabled = false;
+			dgv.DataSource = null;
 		}
 
 		private void OnActionEnd( ) {
@@ -104,6 +105,9 @@ namespace RemoteWindowsAdministrator {
 			}
 			gbComputers.Enabled = true;
 			txtFilter.Enabled = true;
+			dgv.DataSource = _ds;
+			dgv.AutoResizeColumns( DataGridViewAutoSizeColumnsMode.AllCells);
+			dgv.AutoResizeRows( DataGridViewAutoSizeRowsMode.AllCells );
 			if( !showMessage || string.IsNullOrEmpty( CompletionMessage ) ) {
 				return;
 			}
@@ -152,12 +156,23 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private static void FilterText<U>( DataGridView dgv, ref SyncList<U> values, string filter ) where U: IDataPageRow {
-			// TODO replace with filtering in SyncList to maintain data binding
-			if( !string.IsNullOrEmpty( filter ) ) {
-				var filteredList = values.AsEnumerable( ).Where( item => item.ContainsString( filter ) ).ToList( );
-				dgv.DataSource = filteredList;
-			} else {
-				dgv.DataSource = values;
+			if( null == filter ) {
+				filter = string.Empty;
+			}
+			filter = filter.Trim( );
+			var filters = filter.Split( ' ' );
+			dgv.CurrentCell = null;
+			var rowVisibility = Enumerable.Repeat( true, dgv.Rows.Count ).ToList( );
+
+			foreach( var currentFilter in filters ) {
+				for( var row = 0; row < rowVisibility.Count; ++row ) {
+					if( rowVisibility[row] ) {
+						rowVisibility[row] = values[row].ContainsString( currentFilter );
+					}
+				}
+			}
+			for( var row = 0; row < rowVisibility.Count && row < dgv.Rows.Count; ++row ) {
+				dgv.Rows[row].Visible = rowVisibility[row];
 			}
 		}
 
@@ -232,9 +247,10 @@ namespace RemoteWindowsAdministrator {
 							QueryDataCb( computerName, _ds );
 						} else {
 							lock( _ds ) {
-								_ds.Add( new T {
-									ComputerName = computerName, ConnectionStatus = @"Connection Error"
-								} );
+								var value = new T( ) {
+									ComputerName = computerName, ConnectionStatus = ConnectionStatuses.ConnectionError
+								};
+								_ds.Add( value );
 							}
 						}
 					} finally {

@@ -17,11 +17,12 @@ namespace RemoteWindowsAdministrator {
 				CompletionMessage = @"Computer Software Query Complete", 
 				QueryDataCb = DprComputerSoftware.Generate, 
 				SetupColumnsCb = delegate( DataGridView dgv ) {
-					DgvHelpers.GenerateAllColumns( dgv, typeof( DprComputerSoftware ) );
+					DgvHelpers.GenerateAllColumns( dgv, typeof( DprComputerSoftware ), new List<string> { @"ConnectionStatus" } );
 					DgvHelpers.ConvertToLinkColumn( DgvHelpers.GetColumn( dgv,@"HelpLink" ) );
 					DgvHelpers.ConvertToLinkColumn( DgvHelpers.GetColumn( dgv, @"UrlInfoAbout" ) );
 					DgvHelpers.SetColumnHeader( DgvHelpers.GetColumn( dgv, @"Guid" ), @"GUID" );
 					DgvHelpers.SetColumnHeader( DgvHelpers.GetColumn( dgv, @"Size" ), @"Size(MB)" );
+					DgvHelpers.SetColumnHeader( DgvHelpers.GetColumn( dgv, @"ConnectionStatusString" ), @"Connection Status" );
 					MoveStatusColumnsFirst( dgv );
 					foreach( var actionName in DprComputerSoftware.SetupActions(  ).Keys ) {
 						DgvHelpers.AddButtonColumn( dgv, actionName );
@@ -34,7 +35,8 @@ namespace RemoteWindowsAdministrator {
 			AddDataPageToTabControl( "Computer Info", tcMain, new DataPageControl<DprComputerInfo>( this ) {
 				QueryDataCb = DprComputerInfo.Generate, 
 				SetupColumnsCb = delegate( DataGridView dgv ) {
-					DgvHelpers.GenerateAllColumns( dgv, typeof( DprComputerInfo) );
+					DgvHelpers.GenerateAllColumns( dgv, typeof( DprComputerInfo ), new List<string> { @"ConnectionStatus" } );
+					DgvHelpers.SetColumnHeader( DgvHelpers.GetColumn( dgv, @"ConnectionStatusString" ), @"Connection Status" );
 					MoveStatusColumnsFirst( dgv );
 					foreach( var actionName in DprComputerInfo.SetupActions( ).Keys ) {
 						DgvHelpers.AddButtonColumn( dgv, actionName );
@@ -49,6 +51,7 @@ namespace RemoteWindowsAdministrator {
 				QueryDataCb = DprCurrentUsers.Generate, 
 				SetupColumnsCb = delegate( DataGridView dgv ) {
 				DgvHelpers.GenerateAllColumns( dgv, typeof( DprCurrentUsers ) );
+				DgvHelpers.SetColumnHeader( DgvHelpers.GetColumn( dgv, @"ConnectionStatusString" ), @"Connection Status" );
 				MoveStatusColumnsFirst( dgv );
 				foreach( var actionName in DprCurrentUsers.SetupActions( ).Keys ) {
 					DgvHelpers.AddButtonColumn( dgv, actionName );
@@ -59,13 +62,15 @@ namespace RemoteWindowsAdministrator {
 		private void SetupNetworkInfoTab( ) {
 			AddDataPageToTabControl( "Network Info", tcMain, new DataPageControl<DprNetworkInfo>( this ) {
 				QueryDataCb = DprNetworkInfo.Generate, SetupColumnsCb = delegate( DataGridView dgv ) {
-					DgvHelpers.GenerateAllColumns( dgv, typeof( DprNetworkInfo ), new List<string> {@"DefaultIpGateway", @"DnsDomainSuffixSearchOrder", @"DnsServerSearchOrder", @"IpAddress"} );
+					DgvHelpers.GenerateAllColumns( dgv, typeof( DprNetworkInfo ), new List<string> {@"DefaultIpGateway", @"DnsDomainSuffixSearchOrder", @"DnsServerSearchOrder", @"IpAddress", @"ConnectionStatus"} );
 					MoveStatusColumnsFirst( dgv );
-					DgvHelpers.ConvertToMultilineColumn( DgvHelpers.GetColumn( dgv, @"DnsServerSearchOrders" ) );
 					DgvHelpers.ConvertToMultilineColumn( DgvHelpers.GetColumn( dgv, @"DefaultIpGateways" ) );
+					DgvHelpers.ConvertToMultilineColumn( DgvHelpers.GetColumn( dgv, @"DnsDomainSuffixSearchOrders" ) );
+					DgvHelpers.ConvertToMultilineColumn( DgvHelpers.GetColumn( dgv, @"DnsServerSearchOrders" ) );
 					DgvHelpers.ConvertToMultilineColumn( DgvHelpers.GetColumn( dgv, @"IpAddresses" ) );
 					DgvHelpers.ConvertToMultilineColumn( DgvHelpers.GetColumn( dgv, @"WinsServers" ) );
 					DgvHelpers.MoveColumnToIndex( DgvHelpers.GetColumn( dgv, @"Description" ), 2 );
+					DgvHelpers.SetColumnHeader( DgvHelpers.GetColumn( dgv, @"ConnectionStatusString" ), @"Connection Status" );
 					DgvHelpers.SetVisible( DgvHelpers.GetColumn( dgv, @"InterfaceIndex" ), false );
 					DgvHelpers.SetVisible( DgvHelpers.GetColumn( dgv, @"SettingId" ), false );
 					foreach( var actionName in DprNetworkInfo.SetupActions( ).Keys ) {
@@ -86,7 +91,7 @@ namespace RemoteWindowsAdministrator {
 
 		private static void MoveStatusColumnsFirst( DataGridView dgv ) {
 			DgvHelpers.MoveColumnToIndex( DgvHelpers.GetColumn( dgv, @"ComputerName" ), 0 );
-			DgvHelpers.MoveColumnToIndex( DgvHelpers.GetColumn( dgv, @"ConnectionStatus" ), 1 );
+			DgvHelpers.MoveColumnToIndex( DgvHelpers.GetColumn( dgv, @"ConnectionStatusString" ), 1 );
 		}
 	}
 

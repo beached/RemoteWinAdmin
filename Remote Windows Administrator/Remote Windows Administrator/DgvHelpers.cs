@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace RemoteWindowsAdministrator {
@@ -192,8 +191,8 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public static void AddColumnBasedOnDataType( DataGridView dgv, Type columnType, string columnName ) {
-			if( Helpers.TypeChecks.IsString( columnType ) || Helpers.TypeChecks.IsNumber( columnType ) ) {
-				AddColumn( dgv, columnName, Helpers.CamelToSpace( columnName ) );
+			if( Helpers.TypeChecks.IsString( columnType ) || Helpers.TypeChecks.IsNumber( columnType ) || Helpers.TypeChecks.IsEnum( columnType ) ) {
+				AddColumn( dgv, columnName, Helpers.CamelToSpace( columnName ) ); 
 			} else if( Helpers.TypeChecks.IsDateTime( columnType ) ) {
 				AddDateColumn( dgv, columnName, Helpers.CamelToSpace( columnName ), false, true, MagicValues.TimeDateStringFormat );
 			} else if( Helpers.TypeChecks.IsBool( columnType ) ) {

@@ -9,30 +9,39 @@ using System.Text;
 
 namespace RemoteWindowsAdministrator {
 	public sealed class DprCurrentUsers: IDataPageRow {
+		public enum LogonTypes {
+			Unknown = 0,
+			Local,
+			Share
+		}
+
 		private string _computerName;
 		public string ComputerName {
-			get { return _computerName; }
+			get {
+				Helpers.Assert( !string.IsNullOrEmpty( _computerName ), @"Computer name is mandatory and must be set" );
+				return _computerName;
+			}
 			set {
 				Helpers.Assert( !string.IsNullOrEmpty( value ), @"Attempt to set ComputerName to a null or empty value" );
 				_computerName = value;
 			}
 		}
 
-		private string _connectionStatus;
-		public string ConnectionStatus {
-			get { return _connectionStatus; }
-			set {
-				Helpers.Assert( !string.IsNullOrEmpty( value ), @"Attempt to set ComputerName to a null or empty value" );
-				_connectionStatus = value;
-			}
+		public ConnectionStatuses ConnectionStatus { get; set; }
+		public string ConnectionStatusString {
+			get { return Helpers.CamelToSpace( ConnectionStatus.ToString( ) ); }
 		}
 
-		public DateTime? LastLogon { get; set; }
-		public string Domain { get; set; }
-		public string ProfileFolder { get; set; }
-		public string Sid { get; set; }
-		public string UserName { get; set; }
 
+		public DateTime? LastLogon { get; private set; }
+		public string Domain { get; private set; }
+		public string ProfileFolder { get; private set; }
+		public string Sid { get; private set; }
+		public string UserName { get; private set; }
+		public LogonTypes LogonType {
+			get;
+			private set;
+		}
 		public string LogonDuration {
 			get {
 				return null != LastLogon ? MagicValues.TimeSpanToString( DateTime.Now - LastLogon.Value ) : null;
@@ -47,17 +56,14 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public DprCurrentUsers( ) {
-			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
-			ConnectionStatus = @"OK";
-			RowGuid = new Guid( );
+			ConnectionStatus = ConnectionStatuses.Ok;
+			RowGuid = Guid.NewGuid( );
 		}
 
-		public DprCurrentUsers( string computerName, string connectionStatus = @"OK" ) {			
+		public DprCurrentUsers( string computerName, ConnectionStatuses connectionStatus = ConnectionStatuses.Ok ) {			
 			ComputerName = computerName;
 			ConnectionStatus = connectionStatus;
-			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
-			Helpers.Assert( !string.IsNullOrEmpty( ConnectionStatus ), @"ConnectionStatus is required" );
-			RowGuid = new Guid( );
+			RowGuid = Guid.NewGuid( );
 		}
 
 		public static IDictionary<string, Func<IDataPageRow, bool>> SetupActions( ) {
@@ -75,7 +81,7 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public bool Valid( ) {
-			return !string.IsNullOrEmpty( ComputerName ) && !string.IsNullOrEmpty( ConnectionStatus );
+			return !string.IsNullOrEmpty( ComputerName );
 		}
 
 		private static void GetLocallyLoggedOnUsers( string computerName, SyncList.SyncList<DprCurrentUsers> result ) {
@@ -93,8 +99,9 @@ namespace RemoteWindowsAdministrator {
 						cu.ProfileFolder = RegistryHelpers.GetString( computerName, RegistryHive.LocalMachine, string.Format( @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\{0}", currentSid ), @"ProfileImagePath" );
 						cu.LastLogon = GetUsersLogonTimestamp( cu );
 					} catch {
-						cu = new DprCurrentUsers( computerName, @"Error" ) { Sid = currentSid };
+						cu = new DprCurrentUsers( computerName, ConnectionStatuses.Error ) { Sid = currentSid };
 					}
+					cu.LogonType = LogonTypes.Local;
 					usersList.Add( cu );
 				}
 			}
@@ -115,10 +122,10 @@ namespace RemoteWindowsAdministrator {
 						var bufferPtrInt = buffer.ToInt32( );
 						for( var i = 0; i < er; i++ ) {
 							var sessionInfo = (Win32.SessionInfo502)Marshal.PtrToStructure( new IntPtr( bufferPtrInt ), typeof( Win32.SessionInfo502 ) );
-							var userInfo = new DprCurrentUsers( computerName ) {
-								UserName = sessionInfo.userName, LastLogon = DateTime.Now.AddSeconds( -sessionInfo.logonDuration )
+							var cu = new DprCurrentUsers( computerName ) {
+								UserName = sessionInfo.userName, LastLogon = DateTime.Now.AddSeconds( -sessionInfo.logonDuration ), LogonType = LogonTypes.Share
 							};
-							usersList.Add( userInfo );
+							usersList.Add( cu );
 							bufferPtrInt += Marshal.SizeOf( typeof( Win32.SessionInfo502 ) );
 						}
 
@@ -185,7 +192,7 @@ namespace RemoteWindowsAdministrator {
 		private static void GetUserAccountFromSid( ref DprCurrentUsers user ) {
 			var binSid = Win32.StringToBinarySid( user.Sid );
 			if( null == binSid ) {
-				user.ConnectionStatus = @"Error resolving SID";
+				user.ConnectionStatus = ConnectionStatuses.ErrorResolvingSid;
 				return;
 			}
 			var name = new StringBuilder( );
@@ -210,7 +217,7 @@ namespace RemoteWindowsAdministrator {
 				user.UserName = name.ToString( );
 				user.Domain = referencedDomainName.ToString( );
 			} else {
-				user.ConnectionStatus = @"Error resolving SID";
+				user.ConnectionStatus = ConnectionStatuses.ErrorResolvingSid;
 			}
 		}
 
@@ -224,15 +231,24 @@ namespace RemoteWindowsAdministrator {
 			case Win32.Error.ErrorMoreData:
 				break;
 			case Win32.Error.ErrorAccessDenied:
-				result.Add( new DprCurrentUsers( computerName, @"Access Denied" ) );
+				result.Add( new DprCurrentUsers( computerName, ConnectionStatuses.AccessDenied ) );
 				//return;
 				break;
 			default:
-				result.Add( new DprCurrentUsers( computerName, @"Error" ) );
+				result.Add( new DprCurrentUsers( computerName, ConnectionStatuses.Error ) );
 				//return;
 				break;
 			}
 			GetLocallyLoggedOnUsers( computerName, result );
+			ValidateUniqueness( result );			
+		}
+
+		public static void ValidateUniqueness( SyncList.SyncList<DprCurrentUsers> rows ) {
+			var guids = new HashSet<System.Guid>( );
+			foreach( var item in rows ) {
+				Helpers.Assert( !guids.Contains( item.RowGuid ), @"RowGuid's must be unique" );
+				guids.Add( item.RowGuid );
+			}
 		}
 
 		private static DateTime? GetUsersLogonTimestamp( DprCurrentUsers user ) {

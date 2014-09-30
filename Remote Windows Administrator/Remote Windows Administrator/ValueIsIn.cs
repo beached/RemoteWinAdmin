@@ -7,18 +7,28 @@ using System.Web.UI;
 
 namespace RemoteWindowsAdministrator {
 	public class ValueIsIn {
-		private string _valueToCheck;
-		public string ValueToCheck { set { _valueToCheck = value.ToUpperInvariant( ); } }
+		private readonly string _valueToCheck;
+		private readonly bool _ignoreCase;
+
 		public bool IsContained { get; private set; }
 
-		public ValueIsIn( string value ) {
+		public ValueIsIn( string value, bool ignoreCase = true ) {
+			_valueToCheck = value;
+			_ignoreCase = ignoreCase;
 			IsContained = false;
-			_valueToCheck = value.ToUpperInvariant( );
+			if( _ignoreCase ) {
+				_valueToCheck = _valueToCheck.ToUpperInvariant( );
+			}
 		}
 	
 		public ValueIsIn Add( string value ) {
-			if( !IsContained && !string.IsNullOrEmpty( value ) ) {
+			if( IsContained || string.IsNullOrEmpty( value ) ) {
+				return this;
+			}
+			if( _ignoreCase ) {
 				IsContained |= value.ToUpperInvariant( ).Contains( _valueToCheck );
+			} else {
+				IsContained |= value.Contains( _valueToCheck );
 			}
 			return this;
 		}

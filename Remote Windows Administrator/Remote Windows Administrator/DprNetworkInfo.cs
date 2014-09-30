@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System.Collections.Specialized;
+using System.Diagnostics;
+using System.Linq;
 using System.Web.SessionState;
 using System.Web.UI.WebControls.WebParts;
 using System.Windows.Forms;
@@ -11,21 +13,22 @@ namespace RemoteWindowsAdministrator {
 	public sealed class DprNetworkInfo: IDataPageRow {
 		private string _computerName;
 		public string ComputerName {
-			get { return _computerName; }
+			get {
+				Helpers.Assert( !string.IsNullOrEmpty( _computerName ), @"Computer name is mandatory and must be set" );
+				return _computerName;
+			}
 			set {
 				Helpers.Assert( !string.IsNullOrEmpty( value ), @"Attempt to set ComputerName to a null or empty value" );
 				_computerName = value;
 			}
 		}
 
-		private string _connectionStatus;
-		public string ConnectionStatus {
-			get { return _connectionStatus; }
-			set {
-				Helpers.Assert( !string.IsNullOrEmpty( value ), @"Attempt to set ComputerName to a null or empty value" );
-				_connectionStatus = value;
-			}
+
+		public ConnectionStatuses ConnectionStatus { get; set; }
+		public string ConnectionStatusString {
+			get { return Helpers.CamelToSpace( ConnectionStatus.ToString( ) ); }
 		}
+
 
 		public DateTime? DhcpLeaseExpires { get; set; }
 		public DateTime? DhcpLeaseObtained { get; set; }
@@ -84,17 +87,14 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public DprNetworkInfo( ) {
-			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
-			ConnectionStatus = @"OK";
-			RowGuid = new Guid( );
+			ConnectionStatus = ConnectionStatuses.Ok;
+			RowGuid = Guid.NewGuid( );
 		}
 
-		public DprNetworkInfo( string computerName, string connectionStatus = @"OK" ) {
+		public DprNetworkInfo( string computerName, ConnectionStatuses connectionStatus = ConnectionStatuses.Ok ) {
 			ComputerName = computerName;
 			ConnectionStatus = connectionStatus;
-			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
-			Helpers.Assert( !string.IsNullOrEmpty( ConnectionStatus ), @"ConnectionStatus is required" );
-			RowGuid = new Guid( );
+			RowGuid = Guid.NewGuid( );
 		}
 
 		public static IDictionary<string, Func<IDataPageRow, bool>> SetupActions( ) {
@@ -122,7 +122,7 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public bool Valid( ) {
-			return !string.IsNullOrEmpty( ComputerName ) && !string.IsNullOrEmpty( ConnectionStatus );
+			return !string.IsNullOrEmpty( ComputerName );
 		}
 
 		public static void Generate( string computerName, SyncList<DprNetworkInfo> result ) {
@@ -162,15 +162,24 @@ namespace RemoteWindowsAdministrator {
 					return true;
 				}, true, false );
 			} catch( UnauthorizedAccessException ) {
-				result.Add( new DprNetworkInfo( computerName, @"Authorization Error" ) );
+				result.Add( new DprNetworkInfo( computerName, ConnectionStatuses.AuthorizationError ) );
 				return;
 			} catch( Exception ) {
-				result.Add( new DprNetworkInfo( computerName, @"Error" ) );
+				result.Add( new DprNetworkInfo( computerName, ConnectionStatuses.Error ) );
 				return;
 			}
 			result.AddRange( networkInfoList );
-
+			ValidateUniqueness( result );
 		}
+
+		public static void ValidateUniqueness( SyncList.SyncList<DprNetworkInfo> rows ) {
+			var guids = new HashSet<System.Guid>( );
+			foreach( var item in rows ) {
+				Helpers.Assert( !guids.Contains( item.RowGuid ), @"RowGuid's must be unique" );
+				guids.Add( item.RowGuid );
+			}
+		}
+
 
 		public enum NetworkAdapterConfigurationReturnCodes: uint {
 			Sucessful = 0,

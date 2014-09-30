@@ -14,13 +14,10 @@ namespace RemoteWindowsAdministrator {
 			}
 		}
 
-		private string _connectionStatus;
-		public string ConnectionStatus {
-			get { return _connectionStatus; }
-			set {
-				Helpers.Assert( !string.IsNullOrEmpty( value ), @"Attempt to set ComputerName to a null or empty value" );
-				_connectionStatus = value;
-			}
+		public ConnectionStatuses ConnectionStatus { get; set; }
+
+		public string ConnectionStatusString {
+			get { return Helpers.CamelToSpace( ConnectionStatus.ToString( ) ); }
 		}
 
 		public DateTime? HwReleaseDate { get; set; }
@@ -52,17 +49,16 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public DprComputerInfo( ) {
-			ConnectionStatus = @"OK";
+			ConnectionStatus = ConnectionStatuses.Ok;
 			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
-			RowGuid = new Guid( );
+			RowGuid = Guid.NewGuid( );
 		}
 
-		public DprComputerInfo( string computerName, string connectionStatus = @"OK" ) {			
+		public DprComputerInfo( string computerName, ConnectionStatuses connectionStatus = ConnectionStatuses.Ok ) {			
 			ComputerName = computerName;
 			ConnectionStatus = connectionStatus;
 			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
-			Helpers.Assert( !string.IsNullOrEmpty( ConnectionStatus ), @"ConnectionStatus is required" );
-			RowGuid = new Guid( );
+			RowGuid = Guid.NewGuid( );
 		}
 
 		public static IDictionary<string, Func<IDataPageRow, bool>> SetupActions( ) {
@@ -81,7 +77,7 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public bool Valid( ) {
-			return !string.IsNullOrEmpty( ComputerName ) && !string.IsNullOrEmpty( ConnectionStatus );
+			return !string.IsNullOrEmpty( ComputerName );
 		}
 
 		public static void Generate( string computerName, SyncList.SyncList<DprComputerInfo> result ) {
@@ -106,11 +102,21 @@ namespace RemoteWindowsAdministrator {
 					return true;
 				} );
 			} catch( UnauthorizedAccessException ) {
-				ci.ConnectionStatus = @"Authorization Error";
+				ci.ConnectionStatus = ConnectionStatuses.AuthorizationError;
 			} catch( Exception ) {
-				ci.ConnectionStatus = @"Error";
+				ci.ConnectionStatus = ConnectionStatuses.Error;
 			}
+
 			result.Add( ci );
+			ValidateUniqueness( result );
+		}
+
+		public static void ValidateUniqueness( SyncList.SyncList<DprComputerInfo> rows ) {
+			var guids = new HashSet<System.Guid>( );
+			foreach( var item in rows ) {
+				Helpers.Assert( !guids.Contains( item.RowGuid ), @"RowGuid's must be unique" );
+				guids.Add( item.RowGuid );
+			}
 		}
 
 		public class ShutdownComputerParameters {

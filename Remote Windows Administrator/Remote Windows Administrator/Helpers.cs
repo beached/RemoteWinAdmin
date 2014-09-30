@@ -80,7 +80,10 @@ namespace RemoteWindowsAdministrator {
 
 			public static bool IsNumber( Type type ) {
 				return IsFloat( type ) || IsInt( type ) || IsUInt( type ) || IsShort( type ) || IsUShort( type );
+			}
 
+			public static bool IsEnum( Type type ) {
+				return type.IsEnum;
 			}
 
 			public static bool IsStringArray( Type type ) {

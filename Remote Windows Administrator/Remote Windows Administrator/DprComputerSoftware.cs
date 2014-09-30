@@ -10,20 +10,22 @@ namespace RemoteWindowsAdministrator {
 
 	public sealed class DprComputerSoftware: IDataPageRow {
 		private string _computerName;
-		public string ComputerName { get { return _computerName; }
+		public string ComputerName {
+			get {
+				Helpers.Assert( !string.IsNullOrEmpty( _computerName ), @"Computer name is mandatory and must be set" );
+				return _computerName;
+			}
 			set {
 				Helpers.Assert( !string.IsNullOrEmpty( value ), @"Attempt to set ComputerName to a null or empty value" );
 				_computerName = value;
 			}
 		}
 
-		private string _connectionStatus;
-		public string ConnectionStatus { get { return _connectionStatus; }
-			set {
-				Helpers.Assert( !string.IsNullOrEmpty( value ), @"Attempt to set ComputerName to a null or empty value" );
-				_connectionStatus = value;				
-			}
+		public ConnectionStatuses ConnectionStatus { get; set; }
+		public string ConnectionStatusString {
+			get { return Helpers.CamelToSpace( ConnectionStatus.ToString( ) ); }
 		}
+
 
 		public DateTime? InstallDate { get; set; }
 		public bool CanRemove { get; set; }
@@ -44,16 +46,13 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public DprComputerSoftware( ) {
-			ConnectionStatus = @"OK";
-			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
+			ConnectionStatus = ConnectionStatuses.Ok;
 			RowGuid = System.Guid.NewGuid( );
 		}
 
-		public DprComputerSoftware( string computerName, string connectionStatus = @"OK" ) {			
+		public DprComputerSoftware( string computerName, ConnectionStatuses connectionStatus = ConnectionStatuses.Ok ) {			
 			ComputerName = computerName;
 			ConnectionStatus = connectionStatus;
-			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
-			Helpers.Assert( !string.IsNullOrEmpty( ConnectionStatus ), @"ConnectionStatus is required" );
 			RowGuid = System.Guid.NewGuid( );
 		}
 
@@ -73,22 +72,22 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public bool ContainsString( string value ) {
-			return (new ValueIsIn( value )).Add(ComputerName).Add( ConnectionStatus).Add( Name ).Add( Publisher ).Add( Version ).Add( InstallDate ).Add( Size ).Add( Guid ).Add( IsHidden( ) ).Add( HelpLink ).Add( UrlInfoAbout ).IsContained;
+			return (new ValueIsIn( value )).Add(ComputerName).Add( ConnectionStatus).Add( Name ).Add( Publisher ).Add( Version ).Add( InstallDate ).Add( Size ).Add( Guid ).Add( HelpLink ).Add( UrlInfoAbout ).IsContained;
 		}
 
 		public bool Valid( ) {
-			return !string.IsNullOrEmpty( Name ) && !string.IsNullOrEmpty( Guid ) && !string.IsNullOrEmpty( ComputerName ) && !string.IsNullOrEmpty( ConnectionStatus );
+			return !string.IsNullOrEmpty( Name ) && !string.IsNullOrEmpty( Guid ) && !string.IsNullOrEmpty( ComputerName );
 		}
 
 		private static bool HasGuid( IEnumerable<DprComputerSoftware> values, string guid ) {
 			return values.Any( currentValue => guid.Equals( currentValue.Guid, StringComparison.OrdinalIgnoreCase ) );
 		}
 
-		public bool ShouldHide { get { return IsHidden( ); } }
-
-		private bool IsHidden( bool shown = false ) {
-			return !shown && SystemComponent;
-		}
+// 		public bool ShouldHide { get { return IsHidden( ); } }
+// 
+// 		private bool IsHidden( bool shown = false ) {
+// 			return !shown && SystemComponent;
+// 		}
 
 		public static void Generate( string computerName, SyncList<DprComputerSoftware> result ) {
 			Debug.Assert( null != result, @"result SyncList cannot be null" );
@@ -134,16 +133,25 @@ namespace RemoteWindowsAdministrator {
 					}
 				}
 			} catch( System.IO.IOException ) {
-				result.Add( new DprComputerSoftware( computerName, @"Connection Error" ) );
+				result.Add( new DprComputerSoftware( computerName, ConnectionStatuses.ConnectionError ) );
 				softwareList.Clear( );
 			} catch( UnauthorizedAccessException ) {
-				result.Add( new DprComputerSoftware( computerName, @"Authorization Error" ) );
+				result.Add( new DprComputerSoftware( computerName, ConnectionStatuses.AuthorizationError ) );
 				softwareList.Clear( );
 			} catch( System.Security.SecurityException ) {
-				result.Add( new DprComputerSoftware( computerName, @"Authorization Error" ) );
+				result.Add( new DprComputerSoftware( computerName, ConnectionStatuses.AuthorizationError ) );
 				softwareList.Clear( );
 			}
 			result.AddRange( softwareList );
+			ValidateUniqueness( result );
+		}
+
+		public static void ValidateUniqueness( SyncList<DprComputerSoftware> rows ) {
+			var guids = new HashSet<System.Guid>( );
+			foreach( var item in rows ) {
+				Helpers.Assert( !guids.Contains( item.RowGuid ), @"RowGuid's must be unique" );
+				guids.Add( item.RowGuid );
+			}
 		}
 
 		public static void UninstallGuidOnComputerName( string computerName, string guid ) {			
