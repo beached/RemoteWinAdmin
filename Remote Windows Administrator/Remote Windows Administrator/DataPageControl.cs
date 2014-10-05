@@ -42,12 +42,20 @@ namespace RemoteWindowsAdministrator {
 			SetDgvDefaults( dgv );
 		}
 
-		private void Clear( ) {
-			lock( _ds ) {
-				_ds.Clear( );
+		private void InvokeIfNeeded( Action action ) {
+			if( InvokeRequired ) {
+				Invoke( action );
+			} else {
+				action( );
 			}
-			txtFilter.Clear(  );
-			dgv.DataSource = _ds;
+		}
+
+		private void Clear( ) {
+			InvokeIfNeeded( ( ) => {
+				_ds.Clear( );
+				txtFilter.Clear( );
+				dgv.DataSource = _ds;				
+			} );
 		}
 
 		private static void SetDgvDefaults( DataGridView dgv ) {
@@ -250,12 +258,10 @@ namespace RemoteWindowsAdministrator {
 						if( WmiHelpers.IsAlive( computerName ) ) {
 							QueryDataCb( computerName, _ds );
 						} else {
-							lock( _ds ) {
-								var value = new T {
-									ComputerName = computerName, ConnectionStatus = ConnectionStatuses.ConnectionError
-								};
-								_ds.Add( value );
-							}
+							var value = new T {
+								ComputerName = computerName, ConnectionStatus = ConnectionStatuses.ConnectionError
+							};
+							InvokeIfNeeded( ( ) => _ds.Add( value ) );
 						}
 					} finally {
 						if( 0 >= Interlocked.Decrement( ref _dsThreadCount ) ) {
