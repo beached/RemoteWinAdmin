@@ -111,11 +111,15 @@ namespace RemoteWindowsAdministrator {
 			if( !showMessage || string.IsNullOrEmpty( CompletionMessage ) ) {
 				return;
 			}
-			MessageBox.Show( CompletionMessage, @"Complete", MessageBoxButtons.OK );
+			NotificationWindow.NotificationWindow.AddMessage( CompletionMessage );
 		}
 
 		public void OnActionEndInvoke( ) {
-			Invoke( new Action( OnActionEnd ) );
+			if( InvokeRequired ) {
+				Invoke( new Action( OnActionEnd ) );
+			} else {
+				OnActionEnd( );
+			}
 		}
 
 		private ContextMenu MakeCopyLookupMenus( DataGridView dataGridView, int rowIndex, int columnIndex ) {
@@ -263,7 +267,9 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private void btnQuery_Click( object sender, EventArgs e ) {
-			Query( );
+			if( !string.IsNullOrEmpty( txtComputers.Text.Trim( ) ) ) {
+				Query( );
+			}
 		}
 
 		private void dgv_CellMouseClick( object sender, DataGridViewCellMouseEventArgs e ) {

@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Remote Windows Administrato
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyncList", "..\..\Scraps\SyncList\SyncList\SyncList.csproj", "{BB8462BF-BF16-4121-AB48-98DB9D3794D4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationWindow", "..\..\NotificationWindow\NotificationWindow\NotificationWindow.csproj", "{53340B83-BAF7-428D-A2E4-1BB34E59E322}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{BB8462BF-BF16-4121-AB48-98DB9D3794D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BB8462BF-BF16-4121-AB48-98DB9D3794D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BB8462BF-BF16-4121-AB48-98DB9D3794D4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53340B83-BAF7-428D-A2E4-1BB34E59E322}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53340B83-BAF7-428D-A2E4-1BB34E59E322}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53340B83-BAF7-428D-A2E4-1BB34E59E322}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53340B83-BAF7-428D-A2E4-1BB34E59E322}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

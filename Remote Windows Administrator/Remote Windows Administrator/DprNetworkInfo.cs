@@ -109,7 +109,7 @@ namespace RemoteWindowsAdministrator {
 				var row = rowObj as DprNetworkInfo;
 				Helpers.Assert( null != row, @"PtNetworkInfo Action called with another class as second parameter" );
 				if( !SetDnsServers( row.ComputerName, row.SettingId ) ) {
-					MessageBox.Show( @"Error setting DNS to use DHCP", @"Error", MessageBoxButtons.OK );
+					NotificationWindow.NotificationWindow.AddErrorMessage( @"Error setting DNS to use DHCP" );
 				}
 				RunWin32ConfigurationFunction( row.ComputerName, row.InterfaceIndex, @"EnableDHCP" );
 				return true;
@@ -233,10 +233,10 @@ namespace RemoteWindowsAdministrator {
 				case NetworkAdapterConfigurationReturnCodes.Sucessful:
 					return true;
 				case NetworkAdapterConfigurationReturnCodes.SucessfulRebootRequired:
-					MessageBox.Show( string.Format( @"Computer '{0}' successfully ran {1} but requires a reboot.", computerName, functionName ), @"Message", MessageBoxButtons.OK );
+					NotificationWindow.NotificationWindow.AddErrorMessage( @"Computer '{0}' successfully ran {1} but requires a reboot.", computerName, functionName );
 					return true;
 				default:
-					MessageBox.Show( string.Format( @"Error running {0} on '{1}'.  Returned a value of {2}", functionName, computerName, retVal ), @"Error", MessageBoxButtons.OK );
+					NotificationWindow.NotificationWindow.AddErrorMessage( @"Error running {0} on '{1}'.  Returned a value of {2}", functionName, computerName, retVal );
 					return false;
 				}
 			} );

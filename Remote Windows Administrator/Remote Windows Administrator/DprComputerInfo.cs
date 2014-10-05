@@ -172,22 +172,22 @@ namespace RemoteWindowsAdministrator {
 					if( null == result || 0 != result ) {
 						var message = string.Format( @"Failed to reboot {0} with error {1}", parameters.ComputerName, result );
 						GlobalLogging.WriteLine( Logging.LogSeverity.Error, message );
-						MessageBox.Show( message );
+						NotificationWindow.NotificationWindow.AddErrorMessage( message );
 					}
 					return true;
 				}, true );
 			} catch( UnauthorizedAccessException ) {
 				var message = string.Format( @"Failed to reboot {0}, permission denied", parameters.ComputerName );
 				GlobalLogging.WriteLine( Logging.LogSeverity.Error, message );
-				MessageBox.Show( message );
+				NotificationWindow.NotificationWindow.AddErrorMessage( message );
 			} catch( ManagementException e ) {
 				var message = string.Format( "Failed to reboot {0}, WMI Error\n{1}", parameters.ComputerName, e.Message );
 				GlobalLogging.WriteLine( Logging.LogSeverity.Error, message );
-				MessageBox.Show( message );
+				NotificationWindow.NotificationWindow.AddErrorMessage( message );
 			} catch( Exception e ) {
 				var message = string.Format( "Failed to reboot {0}, unexpected error\n{1}\n{2}", parameters.ComputerName, e.GetType( ).Name, e.Message );
 				GlobalLogging.WriteLine( Logging.LogSeverity.Error, message );
-				MessageBox.Show( message );
+				NotificationWindow.NotificationWindow.AddErrorMessage( message );
 			}
 		}
 	}

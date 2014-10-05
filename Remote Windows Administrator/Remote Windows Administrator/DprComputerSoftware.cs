@@ -161,9 +161,9 @@ namespace RemoteWindowsAdministrator {
 				Debug.Assert( outParams != null, @"Return value from uninstall was null.  This is not allowed" );
 				var retVal = int.Parse( outParams[@"returnValue"].ToString( ) );
 				if( 0 != retVal ) {
-					var message = string.Format( @"Error uninstalling '{0}' from {1}. Returned a value of {2}", obj.Properties["Name"].Value, computerName, retVal );
-					MessageBox.Show( message, @"Error", MessageBoxButtons.OK );
+					var message = string.Format( @"Error uninstalling '{0}' from {1}. Returned a value of {2}", obj.Properties["Name"].Value, computerName, retVal );					
 					GlobalLogging.WriteLine( Logging.LogSeverity.Warning, message );
+					NotificationWindow.NotificationWindow.AddErrorMessage( message );
 					return false;	// Stop all on error.  This might be wrong
 				}
 				return true;
