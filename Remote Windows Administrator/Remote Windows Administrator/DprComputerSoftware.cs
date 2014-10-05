@@ -37,7 +37,7 @@ namespace RemoteWindowsAdministrator {
 		public string Publisher { get; set; }
 		public string UrlInfoAbout { get; set; }
 		public string Version { get; set; }
-		public System.Guid RowGuid {
+		public Guid RowGuid {
 			get;
 			private set;
 		}
@@ -147,7 +147,7 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public static void ValidateUniqueness( SyncList<DprComputerSoftware> rows ) {
-			var guids = new HashSet<System.Guid>( );
+			var guids = new HashSet<Guid>( );
 			foreach( var item in rows ) {
 				Helpers.Assert( !guids.Contains( item.RowGuid ), @"RowGuid's must be unique" );
 				guids.Add( item.RowGuid );

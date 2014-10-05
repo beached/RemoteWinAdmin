@@ -1,10 +1,4 @@
-﻿using System.Collections.Specialized;
-using System.Diagnostics;
-using System.Linq;
-using System.Web.SessionState;
-using System.Web.UI.WebControls.WebParts;
-using System.Windows.Forms;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
 using SyncList;
 using System;
 using System.Collections.Generic;
@@ -98,7 +92,7 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public static IDictionary<string, Func<IDataPageRow, bool>> SetupActions( ) {
-			return new Dictionary<string, Func<IDataPageRow, bool>>( ) {
+			return new Dictionary<string, Func<IDataPageRow, bool>> {
 			{@"Renew Lease", delegate( IDataPageRow rowObj ) {
 				var row = rowObj as DprNetworkInfo;
 				Helpers.Assert( null != row, @"PtNetworkInfo Action called with another class as second parameter" );
@@ -172,8 +166,8 @@ namespace RemoteWindowsAdministrator {
 			ValidateUniqueness( result );
 		}
 
-		public static void ValidateUniqueness( SyncList.SyncList<DprNetworkInfo> rows ) {
-			var guids = new HashSet<System.Guid>( );
+		public static void ValidateUniqueness( SyncList<DprNetworkInfo> rows ) {
+			var guids = new HashSet<Guid>( );
 			foreach( var item in rows ) {
 				Helpers.Assert( !guids.Contains( item.RowGuid ), @"RowGuid's must be unique" );
 				guids.Add( item.RowGuid );
@@ -248,7 +242,7 @@ namespace RemoteWindowsAdministrator {
 				return false;
 			}
 			foreach( var part in parts ) {
-				var currentValue = -1;
+				int currentValue;
 				if( !int.TryParse( part, out currentValue ) ) {
 					return false;
 				}

@@ -1,7 +1,6 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Management;
 using System.Runtime.InteropServices;
@@ -249,7 +248,7 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public static void ValidateUniqueness( SyncList.SyncList<DprCurrentUsers> rows ) {
-			var guids = new HashSet<System.Guid>( );
+			var guids = new HashSet<Guid>( );
 			foreach( var item in rows ) {
 				Helpers.Assert( !guids.Contains( item.RowGuid ), @"RowGuid's must be unique" );
 				guids.Add( item.RowGuid );
@@ -276,7 +275,7 @@ namespace RemoteWindowsAdministrator {
 							return false; // Found, stop loop
 						}
 					}
-				} catch( System.Management.ManagementException ex ) {
+				} catch( ManagementException ex ) {
 					GlobalLogging.WriteLine( Logging.LogSeverity.Error, @"Error finding last logon on {0} for {1}\{2}\n{3}", user.ComputerName, user.Domain, user.UserName, ex.Message );
 				}
 				return true;

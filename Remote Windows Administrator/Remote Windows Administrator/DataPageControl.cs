@@ -11,7 +11,7 @@ using System.Windows.Forms;
 namespace RemoteWindowsAdministrator {
 	public partial class DataPageControl<T>: UserControl where T: IDataPageRow, new() {
 		private Action<DataGridView> _setupColumnsCb;
-		private Int32 _actionDepth = 0;
+		private Int32 _actionDepth;
 		private Int32 _dsThreadCount;
 		private SyncList<T> _ds;
 		private readonly Form _parent;
@@ -159,7 +159,7 @@ namespace RemoteWindowsAdministrator {
 			return menu;
 		}
 
-		private static void FilterText<U>( DataGridView dgv, ref SyncList<U> values, string filter ) where U: IDataPageRow {
+		private static void FilterText<TValue>( DataGridView dgv, ref SyncList<TValue> values, string filter ) where TValue: IDataPageRow {
 			if( null == filter ) {
 				filter = string.Empty;
 			}
@@ -251,7 +251,7 @@ namespace RemoteWindowsAdministrator {
 							QueryDataCb( computerName, _ds );
 						} else {
 							lock( _ds ) {
-								var value = new T( ) {
+								var value = new T {
 									ComputerName = computerName, ConnectionStatus = ConnectionStatuses.ConnectionError
 								};
 								_ds.Add( value );
@@ -287,7 +287,7 @@ namespace RemoteWindowsAdministrator {
 
 						var curDsItem = _ds[_ds.Find( @"RowGuid", rowGuid )] as IDataPageRow;
 
-						if( curDsItem.GetActions(  )[curCell.Value as string]( curDsItem ) ) {
+						if( curDsItem.GetActions(  )[(string)curCell.Value]( curDsItem ) ) {
 							Query( );
 						}
 					} finally {

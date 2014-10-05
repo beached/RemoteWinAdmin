@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Management;
-using System.Windows.Forms;
 
 namespace RemoteWindowsAdministrator {
 	public sealed class DprComputerInfo: IDataPageRow {
@@ -62,10 +61,10 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public static IDictionary<string, Func<IDataPageRow, bool>> SetupActions( ) {
-			return new Dictionary<string, Func<IDataPageRow, bool>>( ) {{@"Shutdown", delegate( IDataPageRow rowObj ) {
+			return new Dictionary<string, Func<IDataPageRow, bool>> {{@"Shutdown", delegate( IDataPageRow rowObj ) {
 				var row = rowObj as DprComputerInfo;
 				Helpers.Assert( null != row, @"PtComputerSoftware Action called with another class as second parameter" );
-				using( var csd = new ConfirmShutdownDialog( new DprComputerInfo.ShutdownComputerParameters( row.ComputerName ) ) ) {
+				using( var csd = new ConfirmShutdownDialog( new ShutdownComputerParameters( row.ComputerName ) ) ) {
 					csd.ShowDialog( );
 				}
 				return false;
@@ -113,7 +112,7 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public static void ValidateUniqueness( SyncList.SyncList<DprComputerInfo> rows ) {
-			var guids = new HashSet<System.Guid>( );
+			var guids = new HashSet<Guid>( );
 			foreach( var item in rows ) {
 				Helpers.Assert( !guids.Contains( item.RowGuid ), @"RowGuid's must be unique" );
 				guids.Add( item.RowGuid );
