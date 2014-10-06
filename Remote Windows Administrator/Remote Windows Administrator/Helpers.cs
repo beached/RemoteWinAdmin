@@ -5,14 +5,24 @@ using System.Windows.Forms;
 
 namespace RemoteWindowsAdministrator {
 	public static class Helpers {
-		public static void Assert( bool condition, string message = "" ) {
+// 		public static void Assert( bool condition, string message = "" ) {
+// 			if( condition ) {
+// 				return;
+// 			}
+// 			var trace = new StackTrace( 1 );
+// 			GlobalLogging.WriteLine( Logging.LogSeverity.Fatal, @"Assertion Failure - {0} - {1}", message, trace );
+// 			MessageBox.Show( String.Format( "{0}\n{1}", message, trace ), @"Assertion Fail", MessageBoxButtons.OK, MessageBoxIcon.Error );
+// 			Application.Exit( );
+// 		}
+
+		public static void Assert( bool condition, string messageFormat, params object[] messageValues ) {
 			if( condition ) {
 				return;
-			}
+			}						
 			var trace = new StackTrace( 1 );
+			var message = string.Format( messageFormat, messageValues );
 			GlobalLogging.WriteLine( Logging.LogSeverity.Fatal, @"Assertion Failure - {0} - {1}", message, trace );
-			MessageBox.Show( String.Format( "{0}\n{1}", message, trace ), @"Assertion Fail", MessageBoxButtons.OK, MessageBoxIcon.Error );
-			Application.Exit( );
+			throw new AssertionException( message );
 		}
 
 		public static string StraToStr( IEnumerable<string> stringArray ) {
@@ -91,5 +101,11 @@ namespace RemoteWindowsAdministrator {
 				return typeof( string[] ) == type || typeof( IEnumerable<string> ) == type;
 			}
 		}
+	}
+
+	[Serializable]
+	public class AssertionException: Exception {
+		public AssertionException( ) { }
+		public AssertionException( string message ) : base( message ) { }
 	}
 }
