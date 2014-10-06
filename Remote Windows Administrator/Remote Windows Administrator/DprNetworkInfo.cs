@@ -221,7 +221,7 @@ namespace RemoteWindowsAdministrator {
 			Helpers.AssertString( functionName, @"functionName is not specified, it is required" );			
 			WmiHelpers.ForEach( computerName, string.Format( @"SELECT * FROM Win32_NetworkAdapterConfiguration WHERE InterfaceIndex={0}", interfaceIndex ), obj => {
 				var outParams = obj.InvokeMethod( functionName, null, null );
-				Helpers.AssertNotNull( outParams, string.Format( @"Return value from {0} was null.  This is not allowed", functionName ) );
+				Helpers.AssertNotNull( outParams, @"Return value from {0} was null.  This is not allowed", functionName );
 				var retVal = (NetworkAdapterConfigurationReturnCodes)uint.Parse( outParams[@"returnValue"].ToString( ) );
 				switch( retVal ) {
 				case NetworkAdapterConfigurationReturnCodes.Sucessful:
@@ -262,7 +262,7 @@ namespace RemoteWindowsAdministrator {
 			var allNameServers = string.Empty;
 			var isFirst = true;
 			foreach( var nameServer in nameServers ) {
-				Helpers.Assert( ValidateNameServer( nameServer ), string.Format( @"Nameserver '{0}' is not valid", nameServer ) );
+				Helpers.Assert( ValidateNameServer( nameServer ), @"Nameserver '{0}' is not valid", nameServer );
 				if( isFirst ) {
 					isFirst = false;
 				} else {

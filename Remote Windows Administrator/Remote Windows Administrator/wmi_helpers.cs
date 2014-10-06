@@ -33,7 +33,7 @@ namespace RemoteWindowsAdministrator {
 			var scope = new ManagementScope( string.Format( @"\\{0}\root\CIMV2", computerName ), conOpt );
 			var query = new ObjectQuery( queryString );
 			using( var objSearch = new ManagementObjectSearcher( scope, query ) ) {
-				Helpers.Assert( !expectOne || 1 == objSearch.Get( ).Count, string.Format( @"Only expecting one result, {0} found", objSearch.Get( ).Count ) );
+				Helpers.Assert( !expectOne || 1 == objSearch.Get( ).Count, @"Only expecting one result, {0} found", objSearch.Get( ).Count );
 				foreach( var obj in objSearch.Get( ) ) {
 					Helpers.AssertNotNull( obj, @"WMI Error, null value returned." );
 					if( !func( (ManagementObject)obj ) ) {
