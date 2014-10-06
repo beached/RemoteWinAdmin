@@ -40,7 +40,7 @@ namespace RemoteWindowsAdministrator {
 		}
 		
 		public void WriteLine( LogSeverity severity, string message ) {
-			Helpers.Assert( null != _sink, @"Sink cannot be null" );
+			Helpers.AssertNotNull( _sink, @"Sink cannot be null" );
 			if( Filter > severity ) {
 				return;
 			}
@@ -92,7 +92,7 @@ namespace RemoteWindowsAdministrator {
 		private static string _lock = string.Empty;
 
 		public static void ResetFilter( ) {
-			Helpers.Assert( _logger != null, @"Attempt to set filter on an unopened log" );
+			Helpers.AssertNotNull( _logger, @"Attempt to set filter on an unopened log" );
 			_logger.ResetFilter( );
 		}
 

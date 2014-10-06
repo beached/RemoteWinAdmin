@@ -8,7 +8,7 @@ namespace RemoteWindowsAdministrator {
 		public string ComputerName {
 			get { return _computerName; }
 			set {
-				Helpers.Assert( !string.IsNullOrEmpty( value ), @"Attempt to set ComputerName to a null or empty value" );
+				Helpers.AssertString( value, @"Attempt to set ComputerName to a null or empty value" );
 				_computerName = value;
 			}
 		}
@@ -49,21 +49,21 @@ namespace RemoteWindowsAdministrator {
 
 		public DprComputerInfo( ) {
 			ConnectionStatus = ConnectionStatuses.Ok;
-			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
+			Helpers.AssertString( ComputerName, @"ComputerName is required" );
 			RowGuid = Guid.NewGuid( );
 		}
 
 		public DprComputerInfo( string computerName, ConnectionStatuses connectionStatus = ConnectionStatuses.Ok ) {			
 			ComputerName = computerName;
 			ConnectionStatus = connectionStatus;
-			Helpers.Assert( !string.IsNullOrEmpty( ComputerName ), @"ComputerName is required" );
+			Helpers.AssertString( ComputerName, @"ComputerName is required" );
 			RowGuid = Guid.NewGuid( );
 		}
 
 		public static IDictionary<string, Func<IDataPageRow, bool>> SetupActions( ) {
 			return new Dictionary<string, Func<IDataPageRow, bool>> {{@"Shutdown", delegate( IDataPageRow rowObj ) {
 				var row = rowObj as DprComputerInfo;
-				Helpers.Assert( null != row, @"PtComputerSoftware Action called with another class as second parameter" );
+				Helpers.AssertNotNull( row, @"PtComputerSoftware Action called with another class as second parameter" );
 				using( var csd = new ConfirmShutdownDialog( new ShutdownComputerParameters( row.ComputerName ) ) ) {
 					csd.ShowDialog( );
 				}
@@ -80,8 +80,8 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public static void Generate( string computerName, SyncList.SyncList<DprComputerInfo> result ) {
-			Helpers.Assert( null != result, @"result SyncList cannot be null" );
-			Helpers.Assert( !string.IsNullOrEmpty( computerName ), @"Computer name cannot be empty" );
+			Helpers.AssertNotNull( result, @"result SyncList cannot be null" );
+			Helpers.AssertString( computerName, @"Computer name cannot be empty" );
 			var ci = new DprComputerInfo( computerName ) { LocalSystemDateTime = DateTime.Now };
 			try {
 				WmiHelpers.ForEach( computerName, @"SELECT * FROM Win32_OperatingSystem WHERE Primary=TRUE", obj => {
@@ -147,7 +147,7 @@ namespace RemoteWindowsAdministrator {
 			public bool Forced { get; set; }
 
 			public ShutdownComputerParameters( string computerName ) {
-				Helpers.Assert( !string.IsNullOrEmpty( computerName ), @"computerName cannot be empty or null" );
+				Helpers.AssertString( computerName, @"computerName cannot be empty or null" );
 				ComputerName = computerName;
 				Timeout = 120;
 				ShutdownType = ShutdownTypes.Reboot;

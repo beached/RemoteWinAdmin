@@ -155,7 +155,7 @@ namespace RemoteWindowsAdministrator {
 				}
 				var curCellValue = DgvHelpers.GetCellString( dataGridView, rowIndex, column.Index );
 				var menuName = column.HeaderText;
-				Helpers.Assert( menuName != null, @"All columns must have a header defined" );
+				Helpers.AssertNotNull( menuName, @"All columns must have a header defined" );
 				if( 0 == string.Compare( clickedColumnName, column.Name, StringComparison.InvariantCulture ) ) {
 					menuName = "*" + menuName;
 				}
@@ -289,7 +289,7 @@ namespace RemoteWindowsAdministrator {
 					OnActionStart(  );
 					try {
 						var rowGuid = dgv.Rows[e.RowIndex].Cells[@"RowGuid"].Value as Guid?;
-						Helpers.Assert( null != rowGuid, @"All IDataPageRows must have a valid RowGuid" );
+						Helpers.AssertNotNull( rowGuid, @"All IDataPageRows must have a valid RowGuid" );
 
 						var curDsItem = _ds[_ds.Find( @"RowGuid", rowGuid )] as IDataPageRow;
 

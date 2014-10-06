@@ -17,11 +17,11 @@ namespace RemoteWindowsAdministrator {
 		private string _computerName;
 		public string ComputerName {
 			get {
-				Helpers.Assert( !string.IsNullOrEmpty( _computerName ), @"Computer name is mandatory and must be set" );
+				Helpers.AssertString( _computerName, @"Computer name is mandatory and must be set" );
 				return _computerName;
 			}
 			set {
-				Helpers.Assert( !string.IsNullOrEmpty( value ), @"Attempt to set ComputerName to a null or empty value" );
+				Helpers.AssertString( value, @"Attempt to set ComputerName to a null or empty value" );
 				_computerName = value;
 			}
 		}
@@ -224,8 +224,8 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public static void Generate( string computerName, SyncList.SyncList<DprCurrentUsers> result ) {
-			Helpers.Assert( null != result, @"result SyncList cannot be null" );
-			Helpers.Assert( !string.IsNullOrEmpty( computerName ), @"Computer name cannot be empty" );
+			Helpers.AssertNotNull( result, @"result SyncList cannot be null" );
+			Helpers.AssertString( computerName, @"Computer name cannot be empty" );
 
 			switch( GetNetworkUsers( computerName, ref result ) ) {
 			case Win32.Error.Success:
@@ -264,7 +264,7 @@ namespace RemoteWindowsAdministrator {
 					var roq = new RelatedObjectQuery( string.Format( @"associators of {{Win32_LogonSession.LogonId='{0}'}} WHERE AssocClass = Win32_LoggedOnUser", WmiHelpers.GetString( obj, @"LogonId" ) ) );
 					using( var searcher = new ManagementObjectSearcher( scope, roq ) ) {
 						foreach( var mobObj in searcher.Get( ) ) {
-							Helpers.Assert( null != mobObj, @"WMI Error, null value returned." );
+							Helpers.AssertNotNull( mobObj, @"WMI Error, null value returned." );
 							var mob = (ManagementObject)mobObj;
 							var name = WmiHelpers.GetString( mob, @"Name" );
 							var domain = WmiHelpers.GetString( mob, @"Domain" );

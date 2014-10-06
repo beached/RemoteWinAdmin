@@ -8,11 +8,11 @@ namespace RemoteWindowsAdministrator {
 		private string _computerName;
 		public string ComputerName {
 			get {
-				Helpers.Assert( !string.IsNullOrEmpty( _computerName ), @"Computer name is mandatory and must be set" );
+				Helpers.AssertString( _computerName, @"Computer name is mandatory and must be set" );
 				return _computerName;
 			}
 			set {
-				Helpers.Assert( !string.IsNullOrEmpty( value ), @"Attempt to set ComputerName to a null or empty value" );
+				Helpers.AssertString( value, @"Attempt to set ComputerName to a null or empty value" );
 				_computerName = value;
 			}
 		}
@@ -95,13 +95,13 @@ namespace RemoteWindowsAdministrator {
 			return new Dictionary<string, Func<IDataPageRow, bool>> {
 			{@"Renew Lease", delegate( IDataPageRow rowObj ) {
 				var row = rowObj as DprNetworkInfo;
-				Helpers.Assert( null != row, @"PtNetworkInfo Action called with another class as second parameter" );
+				Helpers.AssertNotNull( row, @"PtNetworkInfo Action called with another class as second parameter" );
 				RunWin32ConfigurationFunction( row.ComputerName, row.InterfaceIndex, @"RenewDHCPLease" );
 				return true;
 			}},
 			{@"Enable DHCP",delegate( IDataPageRow rowObj ) {
 				var row = rowObj as DprNetworkInfo;
-				Helpers.Assert( null != row, @"PtNetworkInfo Action called with another class as second parameter" );
+				Helpers.AssertNotNull( row, @"PtNetworkInfo Action called with another class as second parameter" );
 				if( !SetDnsServers( row.ComputerName, row.SettingId ) ) {
 					NotificationWindow.NotificationWindow.AddErrorMessage( @"Error setting DNS to use DHCP" );
 				}
@@ -120,8 +120,8 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		public static void Generate( string computerName, SyncList<DprNetworkInfo> result ) {
-			Helpers.Assert( null != result, @"result SyncList cannot be null" );
-			Helpers.Assert( !string.IsNullOrEmpty( computerName ), @"Computer name cannot be empty" );
+			Helpers.AssertNotNull( result, @"result SyncList cannot be null" );
+			Helpers.AssertString( computerName, @"Computer name cannot be empty" );
 			var networkInfoList = new List<DprNetworkInfo>( );
 			try {
 				WmiHelpers.ForEach( computerName, @"SELECT * FROM Win32_NetworkAdapterConfiguration", obj => {
@@ -217,11 +217,11 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private static void RunWin32ConfigurationFunction( string computerName, uint interfaceIndex, string functionName ) {
-			Helpers.Assert( !string.IsNullOrEmpty( computerName ), @"computerName is not specified, it is required" );
-			Helpers.Assert( !string.IsNullOrEmpty( functionName ), @"functionName is not specified, it is required" );
+			Helpers.AssertString( computerName, @"computerName is not specified, it is required" );
+			Helpers.AssertString( functionName, @"functionName is not specified, it is required" );			
 			WmiHelpers.ForEach( computerName, string.Format( @"SELECT * FROM Win32_NetworkAdapterConfiguration WHERE InterfaceIndex={0}", interfaceIndex ), obj => {
 				var outParams = obj.InvokeMethod( functionName, null, null );
-				Helpers.Assert( outParams != null, string.Format( @"Return value from {0} was null.  This is not allowed", functionName ) );
+				Helpers.AssertNotNull( outParams, string.Format( @"Return value from {0} was null.  This is not allowed", functionName ) );
 				var retVal = (NetworkAdapterConfigurationReturnCodes)uint.Parse( outParams[@"returnValue"].ToString( ) );
 				switch( retVal ) {
 				case NetworkAdapterConfigurationReturnCodes.Sucessful:
@@ -254,8 +254,8 @@ namespace RemoteWindowsAdministrator {
 		}
 
 		private static bool SetDnsServers( string computerName, string settingId, IList<string> nameServers = null ) {
-			Helpers.Assert( !string.IsNullOrEmpty( computerName ), @"computerName is not specified, it is required" );
-			Helpers.Assert( !string.IsNullOrEmpty( settingId ), @"settingId is not specified, it is required" );
+			Helpers.AssertString( computerName, @"computerName is not specified, it is required" );
+			Helpers.AssertString( settingId, @"settingId is not specified, it is required" );
 			if( null == nameServers ) {
 				nameServers = new List<string>( );
 			}

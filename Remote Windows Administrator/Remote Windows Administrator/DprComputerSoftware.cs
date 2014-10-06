@@ -12,11 +12,11 @@ namespace RemoteWindowsAdministrator {
 		private string _computerName;
 		public string ComputerName {
 			get {
-				Helpers.Assert( !string.IsNullOrEmpty( _computerName ), @"Computer name is mandatory and must be set" );
+				Helpers.AssertString( _computerName, @"Computer name is mandatory and must be set" );
 				return _computerName;
 			}
 			set {
-				Helpers.Assert( !string.IsNullOrEmpty( value ), @"Attempt to set ComputerName to a null or empty value" );
+				Helpers.AssertString( value, @"Attempt to set ComputerName to a null or empty value" );
 				_computerName = value;
 			}
 		}
@@ -59,8 +59,8 @@ namespace RemoteWindowsAdministrator {
 		public static Dictionary<string, Func<IDataPageRow, bool>> SetupActions( ) {
 			var result = new Dictionary<string, Func<IDataPageRow, bool>> {{@"Uninstall", delegate( IDataPageRow rowObj ) {
 				var row = rowObj as DprComputerSoftware;
-				Helpers.Assert( null != row, @"PtComputerSoftware Action called with another class as second parameter" );
-				Helpers.Assert( !string.IsNullOrEmpty( row.Guid ), @"Guid is empty or null, it is a mandatory field" );
+				Helpers.AssertNotNull( row, @"PtComputerSoftware Action called with another class as second parameter" );
+				Helpers.AssertString( row.Guid, @"Guid is empty or null, it is a mandatory field" );
 				if( DialogResult.Yes != MessageBox.Show( @"Are you sure?", @"Alert", MessageBoxButtons.YesNo ) ) {
 					return false;
 				}
@@ -91,7 +91,7 @@ namespace RemoteWindowsAdministrator {
 
 		public static void Generate( string computerName, SyncList<DprComputerSoftware> result ) {
 			Debug.Assert( null != result, @"result SyncList cannot be null" );
-			Debug.Assert( !string.IsNullOrEmpty( computerName ), @"Computer name cannot be empty" );
+			Helpers.AssertString( computerName, @"Computer name cannot be empty" );
 			var softwareList = new List<DprComputerSoftware>();
 			try {
 				string[] regPaths = {
@@ -154,7 +154,9 @@ namespace RemoteWindowsAdministrator {
 			}
 		}
 
-		public static void UninstallGuidOnComputerName( string computerName, string guid ) {			
+		public static void UninstallGuidOnComputerName( string computerName, string guid ) {
+			Helpers.AssertString( computerName, @"computerName cannot be null or empty" );
+			Helpers.AssertString( guid, @"Guid cannot be null or empty" );
 			WmiHelpers.ForEach( computerName, string.Format( @"SELECT * FROM Win32_Product WHERE IdentifyingNumber='{0}'", guid ), obj => {
 				GlobalLogging.WriteLine( Logging.LogSeverity.Info, @"Uninstalling '{0}' from {1}", obj.Properties["Name"].Value, computerName ) ;
 				var outParams = obj.InvokeMethod( @"Uninstall", null, null );

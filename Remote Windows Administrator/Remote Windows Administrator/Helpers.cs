@@ -14,15 +14,36 @@ namespace RemoteWindowsAdministrator {
 // 			MessageBox.Show( String.Format( "{0}\n{1}", message, trace ), @"Assertion Fail", MessageBoxButtons.OK, MessageBoxIcon.Error );
 // 			Application.Exit( );
 // 		}
-
-		public static void Assert( bool condition, string messageFormat, params object[] messageValues ) {
+// 		
+		private static void AssertCondition( bool condition, string messageFormat, params object[] messageValues ) {
 			if( condition ) {
 				return;
-			}						
-			var trace = new StackTrace( 1 );
+			}
+			var trace = new StackTrace( 2 );
 			var message = string.Format( messageFormat, messageValues );
 			GlobalLogging.WriteLine( Logging.LogSeverity.Fatal, @"Assertion Failure - {0} - {1}", message, trace );
-			throw new AssertionException( message );
+			throw new AssertionException( message );			
+		}
+
+		/// <summary>
+		/// Asserts that the condition returns true
+		/// </summary>
+		public static void Assert( bool condition, string messageFormat, params object[] messageValues ) {
+			AssertCondition( condition, messageFormat, messageValues );
+		}
+
+		/// <summary>
+		/// Asserts that the string is neither empty or null
+		/// </summary>
+		public static void AssertString( string value, string messageFormat, params object[] messageValues ) {
+			AssertCondition( !string.IsNullOrEmpty( value ), messageFormat, messageValues );
+		}
+
+		/// <summary>
+		/// Asserts that the value is not null
+		/// </summary>
+		public static void AssertNotNull( object value, string messageFormat, params object[] messageValues ) {
+			AssertCondition( null != value, messageFormat, messageValues );
 		}
 
 		public static string StraToStr( IEnumerable<string> stringArray ) {

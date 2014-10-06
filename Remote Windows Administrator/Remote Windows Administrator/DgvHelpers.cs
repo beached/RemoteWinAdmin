@@ -79,10 +79,10 @@ namespace RemoteWindowsAdministrator {
 
 
 		public static int GetColumnIndex( DataGridView dgv, string columnName ) {
-			Helpers.Assert( null != columnName, "Null column propertName's do not make sense" );
+			Helpers.AssertNotNull( columnName, "Null column propertName's do not make sense" );
 			var dataGridViewColumn = dgv.Columns[columnName];
 
-			Helpers.Assert( null != dataGridViewColumn, "Column names must exist" );			
+			Helpers.AssertNotNull( dataGridViewColumn, "Column names must exist" );			
 			return dataGridViewColumn.Index;
 		}
 
@@ -163,7 +163,7 @@ namespace RemoteWindowsAdministrator {
 
 		public static DataGridViewColumn GetColumn( DataGridView dgv, string columnName ) {
 			var column = dgv.Columns[columnName];
-			Helpers.Assert( null != column, @"Supplied columnName does not exist" );
+			Helpers.AssertNotNull( column, @"Supplied columnName does not exist" );
 			return column;
 		}
 

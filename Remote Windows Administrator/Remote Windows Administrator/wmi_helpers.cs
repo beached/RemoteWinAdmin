@@ -35,7 +35,7 @@ namespace RemoteWindowsAdministrator {
 			using( var objSearch = new ManagementObjectSearcher( scope, query ) ) {
 				Helpers.Assert( !expectOne || 1 == objSearch.Get( ).Count, string.Format( @"Only expecting one result, {0} found", objSearch.Get( ).Count ) );
 				foreach( var obj in objSearch.Get( ) ) {
-					Helpers.Assert( null != obj, @"WMI Error, null value returned." );
+					Helpers.AssertNotNull( obj, @"WMI Error, null value returned." );
 					if( !func( (ManagementObject)obj ) ) {
 						break;
 					}
@@ -75,7 +75,7 @@ namespace RemoteWindowsAdministrator {
 
 		public static int GetInt( ManagementBaseObject mo, string fieldName ) {
 			var item = mo[fieldName];
-			Helpers.Assert( null != item, @"GetInt cannot retrieve null values" );
+			Helpers.AssertNotNull( item, @"GetInt cannot retrieve null values" );
 			return (int)item;
 		}
 
@@ -86,13 +86,13 @@ namespace RemoteWindowsAdministrator {
 
 		public static uint GetUInt( ManagementBaseObject mo, string fieldName ) {
 			var item = mo[fieldName];
-			Helpers.Assert( null != item, @"GetUInt cannot retrieve null values" );
+			Helpers.AssertNotNull( item, @"GetUInt cannot retrieve null values" );
 			return (uint)item;
 		}
 
 		public static ushort GetUShort( ManagementBaseObject mo, string fieldName ) {
 			var item = mo[fieldName];
-			Helpers.Assert( null != item, @"GetUShort cannot retrieve null values" );
+			Helpers.AssertNotNull( item, @"GetUShort cannot retrieve null values" );
 			return (ushort)item;
 		}
 
@@ -103,7 +103,7 @@ namespace RemoteWindowsAdministrator {
 
 		public static bool GetBoolean( ManagementBaseObject mo, string fieldName ) {
 			var item = mo[fieldName];
-			Helpers.Assert( null != item, @"GetBoolean cannot retrieve null values" );
+			Helpers.AssertNotNull( item, @"GetBoolean cannot retrieve null values" );
 			return (bool)item;
 
 		}
@@ -131,7 +131,7 @@ namespace RemoteWindowsAdministrator {
 
 		public static DateTime GetDate( ManagementObject mo, string fieldName, bool isLocalTime = false ) {
 			var item = mo[fieldName];
-			Helpers.Assert( null == item, @"GetDate cannot retrieve null items. Use GetNullableDate" );
+			Helpers.AssertNotNull( item, @"GetDate cannot retrieve null items. Use GetNullableDate" );
 			return DateTimeFromMsDateTimeString( item as string, isLocalTime );
 		}
 
