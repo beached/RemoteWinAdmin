@@ -99,7 +99,7 @@ namespace RemoteWindowsAdministrator {
 			}
 
 			public static bool IsUInt( Type type ) {
-				return typeof( uint ) == type || typeof( uint? ) == type;
+				return typeof( uint ) == type || typeof( uint? ) == type || typeof( UInt64 ) == type || typeof( UInt64? ) == type;
 			}
 
 			public static bool IsShort( Type type ) {

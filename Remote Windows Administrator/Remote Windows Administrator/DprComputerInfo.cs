@@ -29,6 +29,10 @@ namespace RemoteWindowsAdministrator {
 		public string Manufacturer { get; set; }
 		public string SerialNumber { get; set; }
 		public string Version { get; set; }
+
+		public string Model { get; set; }
+		public UInt64 TotalPhysicalMemory { get; set; }
+
 		public string Uptime {
 			get {
 				if( null == SystemTime || null == LastBootTime ) {
@@ -98,6 +102,12 @@ namespace RemoteWindowsAdministrator {
 					ci.HwReleaseDate = WmiHelpers.GetNullableDate( obj, @"ReleaseDate" );
 					ci.SerialNumber = WmiHelpers.GetString( obj, @"SerialNumber" );
 					ci.BiosVersion = WmiHelpers.GetString( obj, @"SMBIOSBIOSVersion" );
+					return true;
+				} );
+
+				WmiHelpers.ForEach( computerName, @"SELECT * FROM Win32_ComputerSystem", obj => {
+					ci.Model = WmiHelpers.GetString( obj, @"Model" );
+					ci.TotalPhysicalMemory = WmiHelpers.GetUInt( obj, @"TotalPhysicalMemory" );
 					return true;
 				} );
 			} catch( UnauthorizedAccessException uae ) {

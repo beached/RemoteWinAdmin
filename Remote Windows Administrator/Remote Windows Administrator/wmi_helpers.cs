@@ -90,6 +90,17 @@ namespace RemoteWindowsAdministrator {
 			return (uint)item;
 		}
 
+		public static UInt64? GetNullableUInt64( ManagementBaseObject mo, string fieldName ) {
+			var item = mo[fieldName];
+			return item as UInt64?;
+		}
+
+		public static UInt64 GetUInt64( ManagementBaseObject mo, string fieldName ) {
+			var item = mo[fieldName];
+			Helpers.AssertNotNull( item, @"GetUInt64 cannot retrieve null values" );
+			return (UInt64)item;
+		}
+
 		public static ushort GetUShort( ManagementBaseObject mo, string fieldName ) {
 			var item = mo[fieldName];
 			Helpers.AssertNotNull( item, @"GetUShort cannot retrieve null values" );
