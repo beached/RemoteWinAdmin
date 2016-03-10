@@ -9,7 +9,7 @@ using System.Threading;
 using System.Windows.Forms;
 
 namespace RemoteWindowsAdministrator {
-	public partial class DataPageControl<T>: UserControl where T: IDataPageRow, new() {
+	public partial class DataPageControl<T>: UserControl where T : IDataPageRow, new() {
 		private Action<DataGridView> _setupColumnsCb;
 		private Int32 _actionDepth;
 		private Int32 _dsThreadCount;
@@ -21,20 +21,23 @@ namespace RemoteWindowsAdministrator {
 		public string CompletionMessage { get; set; }
 
 		private bool _generateLookupMenu = true;
-		public bool GenerateLookupMenu { 
-			get { return _generateLookupMenu;  } 
-			set { _generateLookupMenu = value; } 
+		public bool GenerateLookupMenu
+		{
+			get { return _generateLookupMenu; }
+			set { _generateLookupMenu = value; }
 		}
 
-		public Action<DataGridView> SetupColumnsCb { 
+		public Action<DataGridView> SetupColumnsCb
+		{
 			get { return _setupColumnsCb; }
-			set {
+			set
+			{
 				_setupColumnsCb = value;
-				dgv.Columns.Clear(  );
+				dgv.Columns.Clear( );
 				_setupColumnsCb( dgv );
 			}
 		}
-		 
+
 		public DataPageControl( Form parent ) {
 			_parent = parent;
 			_ds = new SyncList<T>( parent );
@@ -54,7 +57,7 @@ namespace RemoteWindowsAdministrator {
 			InvokeIfNeeded( ( ) => {
 				_ds.Clear( );
 				txtFilter.Clear( );
-				dgv.DataSource = _ds;				
+				dgv.DataSource = _ds;
 			} );
 		}
 
@@ -106,15 +109,16 @@ namespace RemoteWindowsAdministrator {
 		private void OnActionEnd( ) {
 			OnActionEnd( true );
 		}
-		
+
 		private void OnActionEnd( bool showMessage ) {
 			if( 0 < Interlocked.Decrement( ref _actionDepth ) ) {
 				return;
 			}
 			gbComputers.Enabled = true;
 			txtFilter.Enabled = true;
+			dgv.DataSource = null;
 			dgv.DataSource = _ds;
-			dgv.AutoResizeColumns( DataGridViewAutoSizeColumnsMode.AllCells);
+			dgv.AutoResizeColumns( DataGridViewAutoSizeColumnsMode.AllCells );
 			dgv.AutoResizeRows( DataGridViewAutoSizeRowsMode.AllCells );
 			if( !showMessage || string.IsNullOrEmpty( CompletionMessage ) ) {
 				return;
@@ -147,7 +151,7 @@ namespace RemoteWindowsAdministrator {
 				if( MagicValues.FieldsToNotLoopup.Contains( column.Name ) ) {
 					continue;
 				}
-				if( !DgvHelpers.CanSearch( column )) {
+				if( !DgvHelpers.CanSearch( column ) ) {
 					continue;
 				}
 				if( !column.Visible ) {
@@ -167,7 +171,7 @@ namespace RemoteWindowsAdministrator {
 			return menu;
 		}
 
-		private static void FilterText<TValue>( DataGridView dgv, ref SyncList<TValue> values, string filter ) where TValue: IDataPageRow {
+		private static void FilterText<TValue>( DataGridView dgv, ref SyncList<TValue> values, string filter ) where TValue : IDataPageRow {
 			if( null == filter ) {
 				filter = string.Empty;
 			}
@@ -246,7 +250,7 @@ namespace RemoteWindowsAdministrator {
 			if( null == QueryDataCb ) {
 				return;
 			}
-			Clear(  );
+			Clear( );
 			OnActionStart( );
 			var computerNames = GetComputerNamesFromString( txtComputers.Text );
 			_dsThreadCount = computerNames.Count;
@@ -259,7 +263,8 @@ namespace RemoteWindowsAdministrator {
 							QueryDataCb( computerName, _ds );
 						} else {
 							var value = new T {
-								ComputerName = computerName, ConnectionStatus = ConnectionStatuses.ConnectionError
+								ComputerName = computerName,
+								ConnectionStatus = ConnectionStatuses.ConnectionError
 							};
 							InvokeIfNeeded( ( ) => _ds.Add( value ) );
 						}
@@ -284,33 +289,36 @@ namespace RemoteWindowsAdministrator {
 			}
 			var curCell = dgv.Rows[e.RowIndex].Cells[e.ColumnIndex];
 			switch( e.Button ) {
-			case MouseButtons.Left: {				
-				if( IsButton( curCell ) ) {
-					OnActionStart(  );
-					try {
-						var rowGuid = dgv.Rows[e.RowIndex].Cells[@"RowGuid"].Value as Guid?;
-						Helpers.AssertNotNull( rowGuid, @"All IDataPageRows must have a valid RowGuid" );
+				case MouseButtons.Left: {
+						if( IsButton( curCell ) ) {
+							var strButtonName = (string)curCell.Value;
+							OnActionStart( );
+							try {
+								Debug.Assert( e.RowIndex >= 0 );
+								var rowGuid = _ds[e.RowIndex].RowGuid;
+								//var rowGuid = dgv.Rows[e.RowIndex].Cells[@"RowGuid"].Value as Guid?;
+								Helpers.AssertNotNull( rowGuid, @"All IDataPageRows must have a valid RowGuid" );
 
-						var curDsItem = _ds[_ds.Find( @"RowGuid", rowGuid )] as IDataPageRow;
+								var curDsItem = _ds[_ds.Find( @"RowGuid", rowGuid )] as IDataPageRow;
 
-						if( curDsItem.GetActions(  )[(string)curCell.Value]( curDsItem ) ) {
-							Query( );
+								if( curDsItem.GetActions( )[strButtonName]( curDsItem ) ) {
+									Query( );
+								}
+							} finally {
+								OnActionEnd( false );
+							}
+						} else if( IsLink( curCell ) ) {
+							OpenLink( curCell );
 						}
-					} finally {
-						OnActionEnd( false );
+						break;
 					}
-				} else if( IsLink( curCell ) ) {
-					OpenLink( curCell );
-				}
-				break;
-			}
-			case MouseButtons.Right: {
-				var ctxMnu = MakeCopyLookupMenus( dgv, e.RowIndex, e.ColumnIndex );
-					if( null != ctxMnu && 0 < ctxMnu.MenuItems.Count ) {
-						ctxMnu.Show( dgv, dgv.PointToClient( new Point( Cursor.Position.X, Cursor.Position.Y ) ) );
+				case MouseButtons.Right: {
+						var ctxMnu = MakeCopyLookupMenus( dgv, e.RowIndex, e.ColumnIndex );
+						if( null != ctxMnu && 0 < ctxMnu.MenuItems.Count ) {
+							ctxMnu.Show( dgv, dgv.PointToClient( new Point( Cursor.Position.X, Cursor.Position.Y ) ) );
+						}
+						break;
 					}
-				break;
-			}
 			}
 		}
 

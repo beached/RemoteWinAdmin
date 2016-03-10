@@ -29,7 +29,7 @@ namespace RemoteWindowsAdministrator {
 
 		public DateTime? InstallDate { get; set; }
 		public bool CanRemove { get; set; }
-		public bool SystemComponent { get; set; }
+		//public bool SystemComponent { get; set; }
 		public float? Size { get; set; }
 		public string Guid { get; set; }
 		public string HelpLink { get; set; }
@@ -61,7 +61,7 @@ namespace RemoteWindowsAdministrator {
 				var row = rowObj as DprComputerSoftware;
 				Helpers.AssertNotNull( row, @"PtComputerSoftware Action called with another class as second parameter" );
 				Helpers.AssertString( row.Guid, @"Guid is empty or null, it is a mandatory field" );
-				if( DialogResult.Yes != MessageBox.Show( @"Are you sure?", @"Alert", MessageBoxButtons.YesNo ) ) {
+				if( DialogResult.Yes != MessageBox.Show( @"Are you sure that you would like to uninstall " + row.Name + "?", @"Alert", MessageBoxButtons.YesNo ) ) {
 					return false;
 				}
 				UninstallGuidOnComputerName( row.ComputerName, row.Guid );
@@ -114,7 +114,7 @@ namespace RemoteWindowsAdministrator {
 									Version = RegistryHelpers.GetString( curReg, @"DisplayVersion" ), 
 									InstallDate = RegistryHelpers.GetDateTime( curReg, @"InstallDate" ), 
 									CanRemove = 0 == RegistryHelpers.GetDword( curReg, @"NoRemove", 0 ), 
-									SystemComponent = 1 == RegistryHelpers.GetDword( curReg, @"SystemComponent", 0 )
+									//SystemComponent = 1 == RegistryHelpers.GetDword( curReg, @"SystemComponent", 0 )
 								};
 								{
 									var estSize = RegistryHelpers.GetDword( curReg, @"EstimatedSize" );
